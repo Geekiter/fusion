@@ -130,7 +130,7 @@ export function ArticleDrawer() {
   const handleTranslateContent = async () => {
     if (!article || article.id <= 0) return;
     try {
-      const translated = await translateContent.mutateAsync(article.id);
+      const translated = await translateContent.mutateAsync(article);
       if (translated.translated_content) {
         toast.success(t("article.translate.contentSuccess"));
       } else {
@@ -145,7 +145,7 @@ export function ArticleDrawer() {
   const handleSummarize = async () => {
     if (!article || article.id <= 0) return;
     try {
-      const summarized = await summarizeItem.mutateAsync(article.id);
+      const summarized = await summarizeItem.mutateAsync(article);
       if (summarized.ai_summary) {
         toast.success(t("article.summary.success"));
       }
@@ -237,6 +237,7 @@ export function ArticleDrawer() {
                   {starred ? t("article.action.unstar") : t("article.action.star")}
                 </Button>
                 <Button
+                  nativeButton={false}
                   render={
                     safeArticleLink ? (
                       <a

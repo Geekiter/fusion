@@ -77,16 +77,14 @@ export function ArticleList() {
 
   const unreadCount = articles.filter((a) => a.unread).length;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
-  const translatableIds = articles
-    .filter((article) => {
+  const translatableItems = articles.filter((article) => {
       if (article.id <= 0) return false;
       const summary = extractSummary(article.content, 150);
       return (
         (!article.translated_title && needsTranslation(article.title)) ||
         (!article.translated_summary && needsTranslation(summary))
       );
-    })
-    .map((article) => article.id);
+    });
 
   const handleToggleRead = useCallback(
     async (article: Item) => {
@@ -139,9 +137,9 @@ export function ArticleList() {
   };
 
   const handleTranslateLoaded = async () => {
-    if (translatableIds.length === 0) return;
+    if (translatableItems.length === 0) return;
     try {
-      const result = await translatePreviews.mutateAsync(translatableIds);
+      const result = await translatePreviews.mutateAsync(translatableItems);
       if (result.failed > 0) {
         toast.warning(
           t("article.translate.partial", {
@@ -203,7 +201,7 @@ export function ArticleList() {
             variant="outline"
             size="sm"
             onClick={handleTranslateLoaded}
-            disabled={translatableIds.length === 0 || translatePreviews.isPending}
+            disabled={translatableItems.length === 0 || translatePreviews.isPending}
             className="gap-1.5 text-xs"
           >
             {translatePreviews.isPending ? (
@@ -213,7 +211,7 @@ export function ArticleList() {
             )}
             {translatePreviews.isPending
               ? t("article.translate.translating")
-              : t("article.translate.loaded", { count: translatableIds.length })}
+              : t("article.translate.loaded", { count: translatableItems.length })}
           </Button>
           <Button
             variant="outline"

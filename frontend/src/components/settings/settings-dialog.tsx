@@ -150,6 +150,7 @@ function AppearanceContent() {
           </p>
         </div>
         <Button
+          nativeButton={false}
           variant="outline"
           size="sm"
           onClick={() => {
@@ -215,6 +216,7 @@ function AboutContent() {
           </Button>
         )}
         <Button
+          nativeButton={false}
           variant="outline"
           size="sm"
           render={
