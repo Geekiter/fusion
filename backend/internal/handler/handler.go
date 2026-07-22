@@ -1,0 +1,292 @@
+package handler
+
+import (
+	"context"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"strconv"
+	"strings"
+	"sync"
+
+	"github.com/0x2E/fusion/internal/auth"
+	"github.com/0x2E/fusion/internal/config"
+	"github.com/0x2E/fusion/internal/store"
+	"github.com/0x2E/fusion/internal/translate"
+	"github.com/gin-gonic/gin"
+)
+
+type Handler struct {
+	store        *store.Store
+	config       *config.Config
+	passwordHash string // bcrypt hash computed at startup
+	feverAPIKey  string // md5(username:password) used by Fever API
+	allowAnonAPI bool   // true when both password and OIDC auth are disabled
+	puller       interface {
+		RefreshFeed(ctx context.Context, feedID int64) error
+		RefreshAll(ctx context.Context) (int, error)
+	}
+	sessions   map[string]int64        // sessionID -> unix expiry seconds
+	mu         sync.RWMutex            // protects sessions state
+	oidcAuth   *auth.OIDCAuthenticator // nil when OIDC is disabled
+	limiter    *loginLimiter
+	translator *translate.Translator
+	lastSweep  int64
+
+	refreshAllMu      sync.Mutex
+	refreshAllRunning bool
+}
+
+func New(store *store.Store, config *config.Config, puller interface {
+	RefreshFeed(ctx context.Context, feedID int64) error
+	RefreshAll(ctx context.Context) (int, error)
+}) (*Handler, error) {
+	// Hash password at startup for later verification
+	passwordHash, err := auth.HashPassword(config.Password)
+	if err != nil {
+		return nil, fmt.Errorf("hash password: %w", err)
+	}
+
+	h := &Handler{
+		store:        store,
+		config:       config,
+		passwordHash: passwordHash,
+		feverAPIKey:  deriveFeverAPIKey(config.FeverUsername, config.Password),
+		allowAnonAPI: strings.TrimSpace(config.Password) == "" && strings.TrimSpace(config.OIDCIssuer) == "",
+		puller:       puller,
+		sessions:     make(map[string]int64),
+		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
+		translator: translate.New(translate.Config{
+			Enabled:     config.TranslateEnabled,
+			APIKey:      config.TranslateAPIKey,
+			APIURL:      config.TranslateAPIURL,
+			Model:       config.TranslateModel,
+			Models:      []string{config.TranslateModel},
+			FallbackURL: config.TranslateFallbackURL,
+			Prompts:     translate.DefaultPrompts(),
+		}),
+	}
+	if settings, loadErr := h.loadTranslationSettings(); loadErr != nil {
+		slog.Warn("failed to load persisted translation settings", "error", loadErr)
+	} else {
+		h.applyTranslationSettings(settings)
+	}
+
+	if h.allowAnonAPI {
+		slog.Warn("authentication is disabled because both password and OIDC are empty")
+	}
+
+	if config.OIDCIssuer != "" {
+		if strings.TrimSpace(config.OIDCRedirectURI) == "" {
+			return nil, fmt.Errorf("FUSION_OIDC_REDIRECT_URI is required when OIDC is enabled")
+		}
+
+		oidcAuth, err := auth.NewOIDC(
+			context.Background(),
+			config.OIDCIssuer,
+			config.OIDCClientID,
+			config.OIDCClientSecret,
+			config.OIDCRedirectURI,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("initialize OIDC: %w", err)
+		}
+		if config.OIDCAllowedUser != "" {
+			oidcAuth.SetAllowedUser(config.OIDCAllowedUser)
+		}
+		h.oidcAuth = oidcAuth
+		slog.Info("OIDC authentication enabled", "issuer", config.OIDCIssuer)
+	}
+
+	return h, nil
+}
+
+func (h *Handler) SetupRouter() *gin.Engine {
+	r := gin.New()
+	r.Use(requestLogMiddleware(), recoveryMiddleware())
+
+	if err := h.configureTrustedProxies(r); err != nil {
+		slog.Warn("failed to configure trusted proxies", "error", err)
+	}
+
+	r.Use(h.corsMiddleware())
+	r.POST("/fever", h.fever)
+	r.POST("/fever/", h.fever)
+	r.POST("/fever.php", h.fever)
+
+	api := r.Group("/api")
+	{
+		api.POST("/sessions", h.login)
+		api.DELETE("/sessions", h.logout)
+
+		// OIDC routes (public, no auth middleware)
+		api.GET("/oidc/enabled", h.oidcEnabled)
+		if h.oidcAuth != nil {
+			api.GET("/oidc/login", h.oidcLogin)
+			api.GET("/oidc/callback", h.oidcCallback)
+			// Compatibility route for deployments that configured redirect_uri without /api.
+			r.GET("/oidc/callback", h.oidcCallback)
+		}
+
+		auth := api.Group("")
+		auth.Use(h.authMiddleware())
+		{
+			auth.GET("/groups", h.listGroups)
+			auth.POST("/groups", h.createGroup)
+			auth.GET("/groups/:id", h.getGroup)
+			auth.PATCH("/groups/:id", h.updateGroup)
+			auth.DELETE("/groups/:id", h.deleteGroup)
+
+			auth.GET("/feeds", h.listFeeds)
+			auth.POST("/feeds", h.createFeed)
+			auth.POST("/feeds/batch", h.batchCreateFeeds)
+			auth.POST("/feeds/refresh", h.refreshAllFeeds)
+			auth.GET("/feeds/:id", h.getFeed)
+			auth.PATCH("/feeds/:id", h.updateFeed)
+			auth.DELETE("/feeds/:id", h.deleteFeed)
+			auth.POST("/feeds/validate", h.validateFeed)
+			auth.POST("/feeds/:id/refresh", h.refreshFeed)
+
+			auth.GET("/items", h.listItems)
+			auth.GET("/items/:id", h.getItem)
+			auth.POST("/items/-/translate", h.translateItemPreviews)
+			auth.POST("/items/:id/translate", h.translateItemContent)
+			auth.POST("/items/:id/summarize", h.summarizeItem)
+			auth.GET("/images/proxy", h.proxyArticleImage)
+			auth.GET("/settings/translation", h.getTranslationSettings)
+			auth.PUT("/settings/translation", h.updateTranslationSettings)
+			auth.POST("/settings/translation/test", h.testTranslationSettings)
+			auth.PATCH("/items/-/read", h.markItemsRead)
+			auth.PATCH("/items/-/unread", h.markItemsUnread)
+
+			auth.GET("/search", h.search)
+
+			auth.GET("/bookmarks", h.listBookmarks)
+			auth.POST("/bookmarks", h.createBookmark)
+			auth.GET("/bookmarks/:id", h.getBookmark)
+			auth.DELETE("/bookmarks/:id", h.deleteBookmark)
+		}
+	}
+
+	if err := h.setupFrontendRoutes(r); err != nil {
+		slog.Warn("failed to configure frontend routes", "error", err)
+	}
+
+	return r
+}
+
+func (h *Handler) configureTrustedProxies(r *gin.Engine) error {
+	if h.config == nil || len(h.config.TrustedProxies) == 0 {
+		return r.SetTrustedProxies(nil)
+	}
+
+	return r.SetTrustedProxies(h.config.TrustedProxies)
+}
+
+func (h *Handler) corsMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		origin := strings.TrimSpace(c.Request.Header.Get("Origin"))
+		if origin != "" {
+			if !h.isOriginAllowed(origin) {
+				c.AbortWithStatus(http.StatusForbidden)
+				return
+			}
+			c.Writer.Header().Set("Access-Control-Allow-Origin", origin)
+			c.Writer.Header().Set("Vary", "Origin")
+			c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		} else {
+			c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
+		}
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, PATCH, DELETE")
+
+		if c.Request.Method == "OPTIONS" {
+			c.AbortWithStatus(204)
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func (h *Handler) isOriginAllowed(origin string) bool {
+	if h.config == nil {
+		return true
+	}
+
+	if len(h.config.CORSAllowedOrigins) == 0 {
+		return true
+	}
+
+	normalizedOrigin := normalizeOrigin(origin)
+	for _, allowed := range h.config.CORSAllowedOrigins {
+		normalizedAllowed := normalizeOrigin(allowed)
+		if normalizedAllowed == "*" || normalizedAllowed == normalizedOrigin {
+			return true
+		}
+	}
+
+	return false
+}
+
+func normalizeOrigin(origin string) string {
+	origin = strings.TrimSpace(origin)
+	origin = strings.TrimSuffix(origin, "/")
+	return strings.ToLower(origin)
+}
+
+func (h *Handler) authMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		if h.allowAnonAPI {
+			c.Next()
+			return
+		}
+
+		sessionID, err := c.Cookie("session")
+		if err != nil {
+			unauthorizedError(c)
+			c.Abort()
+			return
+		}
+
+		if !h.isSessionValid(sessionID) {
+			unauthorizedError(c)
+			c.Abort()
+			return
+		}
+
+		c.Next()
+	}
+}
+
+func dataResponse(c *gin.Context, data any) {
+	c.JSON(200, gin.H{"data": data})
+}
+
+func listResponse(c *gin.Context, data any, total int) {
+	c.JSON(200, gin.H{"data": data, "total": total})
+}
+
+// paginatedListResponse emits a list payload with a cursor-based next_cursor.
+// nextCursor is non-nil only when more pages may exist; nil means "no more".
+func paginatedListResponse(c *gin.Context, data any, total int, nextCursor *string) {
+	c.JSON(200, gin.H{"data": data, "total": total, "next_cursor": nextCursor})
+}
+
+// parseCursor decodes a "<value>_<id>" cursor into its two int64 components.
+// Shared by list endpoints that paginate on a composite (timestamp, id) key.
+func parseCursor(cursor string) (first int64, second int64, err error) {
+	parts := strings.SplitN(cursor, "_", 2)
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	first, err = strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	second, err = strconv.ParseInt(parts[1], 10, 64)
+	if err != nil {
+		return 0, 0, fmt.Errorf("malformed cursor")
+	}
+	return first, second, nil
+}

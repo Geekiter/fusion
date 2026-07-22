@@ -1,0 +1,37 @@
+# Stage 1: Build frontend
+FROM node:22-alpine AS frontend-builder
+RUN corepack enable && corepack prepare pnpm@latest --activate
+WORKDIR /src
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/
+RUN cd frontend && pnpm install --frozen-lockfile --prefer-offline
+COPY frontend/ frontend/
+RUN cd frontend && VITE_FUSION_VERSION=custom-translate pnpm run build
+
+# Stage 2: Build backend
+FROM golang:1.26-alpine AS backend-builder
+WORKDIR /src
+COPY backend/ backend/
+
+# Embed frontend dist into backend
+COPY --from=frontend-builder /src/frontend/dist backend/internal/web/dist/
+RUN echo "This file keeps the embedded dist directory." > backend/internal/web/dist/.keep
+
+RUN cd backend && CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
+    -trimpath \
+    -ldflags '-extldflags "-static"' \
+    -o /fusion \
+    ./cmd/fusion
+
+# Stage 3: Runtime
+FROM alpine:3.21.0
+RUN addgroup -S fusion && adduser -S -D -H -h /fusion -G fusion fusion && \
+    mkdir -p /data && chown -R fusion:fusion /data
+
+WORKDIR /fusion
+COPY --from=backend-builder --chown=fusion:fusion --chmod=755 /fusion ./fusion
+EXPOSE 8080
+VOLUME ["/data"]
+ENV DB="/data/fusion.db"
+HEALTHCHECK --interval=10s --timeout=3s --start-period=2s --retries=3 \
+  CMD wget -q -O /dev/null http://127.0.0.1:8080/api/oidc/enabled || exit 1
+CMD [ "./fusion" ]
