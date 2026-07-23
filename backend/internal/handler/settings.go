@@ -21,33 +21,36 @@ import (
 const translationSettingsKey = "translation"
 
 type translationSettings struct {
-	Enabled          bool                   `json:"enabled"`
-	APIURL           string                 `json:"api_url"`
-	APIKey           string                 `json:"api_key,omitempty"`
-	APIKeyConfigured bool                   `json:"api_key_configured"`
-	Models           []string               `json:"models"`
-	FallbackURL      string                 `json:"fallback_url"`
-	Prompts          translate.PromptConfig `json:"prompts"`
+	Enabled               bool                   `json:"enabled"`
+	AutoTranslateNewItems bool                   `json:"auto_translate_new_items"`
+	APIURL                string                 `json:"api_url"`
+	APIKey                string                 `json:"api_key,omitempty"`
+	APIKeyConfigured      bool                   `json:"api_key_configured"`
+	Models                []string               `json:"models"`
+	FallbackURL           string                 `json:"fallback_url"`
+	Prompts               translate.PromptConfig `json:"prompts"`
 }
 
 type persistedTranslationSettings struct {
-	Enabled      bool                   `json:"enabled"`
-	APIURL       string                 `json:"api_url"`
-	EncryptedKey string                 `json:"encrypted_key"`
-	Models       []string               `json:"models"`
-	FallbackURL  string                 `json:"fallback_url"`
-	Prompts      translate.PromptConfig `json:"prompts"`
+	Enabled               bool                   `json:"enabled"`
+	AutoTranslateNewItems bool                   `json:"auto_translate_new_items"`
+	APIURL                string                 `json:"api_url"`
+	EncryptedKey          string                 `json:"encrypted_key"`
+	Models                []string               `json:"models"`
+	FallbackURL           string                 `json:"fallback_url"`
+	Prompts               translate.PromptConfig `json:"prompts"`
 }
 
 func (h *Handler) defaultTranslationSettings() translationSettings {
 	return translationSettings{
-		Enabled:          h.config.TranslateEnabled,
-		APIURL:           h.config.TranslateAPIURL,
-		APIKey:           h.config.TranslateAPIKey,
-		APIKeyConfigured: strings.TrimSpace(h.config.TranslateAPIKey) != "",
-		Models:           []string{h.config.TranslateModel},
-		FallbackURL:      h.config.TranslateFallbackURL,
-		Prompts:          translate.DefaultPrompts(),
+		Enabled:               h.config.TranslateEnabled,
+		AutoTranslateNewItems: false,
+		APIURL:                h.config.TranslateAPIURL,
+		APIKey:                h.config.TranslateAPIKey,
+		APIKeyConfigured:      strings.TrimSpace(h.config.TranslateAPIKey) != "",
+		Models:                []string{h.config.TranslateModel},
+		FallbackURL:           h.config.TranslateFallbackURL,
+		Prompts:               translate.DefaultPrompts(),
 	}
 }
 
@@ -68,13 +71,14 @@ func (h *Handler) loadTranslationSettings() (translationSettings, error) {
 		return translationSettings{}, fmt.Errorf("decrypt translation API key: %w", err)
 	}
 	settings := translationSettings{
-		Enabled:          persisted.Enabled,
-		APIURL:           persisted.APIURL,
-		APIKey:           apiKey,
-		APIKeyConfigured: apiKey != "",
-		Models:           persisted.Models,
-		FallbackURL:      persisted.FallbackURL,
-		Prompts:          persisted.Prompts,
+		Enabled:               persisted.Enabled,
+		AutoTranslateNewItems: persisted.AutoTranslateNewItems,
+		APIURL:                persisted.APIURL,
+		APIKey:                apiKey,
+		APIKeyConfigured:      apiKey != "",
+		Models:                persisted.Models,
+		FallbackURL:           persisted.FallbackURL,
+		Prompts:               persisted.Prompts,
 	}
 	return normalizeTranslationSettings(settings), nil
 }
@@ -128,6 +132,9 @@ func (h *Handler) applyTranslationSettings(settings translationSettings) {
 	if updater, ok := h.puller.(interface{ UpdateTranslationConfig(translate.Config) }); ok {
 		updater.UpdateTranslationConfig(cfg)
 	}
+	if updater, ok := h.puller.(interface{ SetAutoTranslateNewItems(bool) }); ok {
+		updater.SetAutoTranslateNewItems(settings.AutoTranslateNewItems)
+	}
 }
 
 func (h *Handler) getTranslationSettings(c *gin.Context) {
@@ -166,7 +173,8 @@ func (h *Handler) updateTranslationSettings(c *gin.Context) {
 	}
 	persisted := persistedTranslationSettings{
 		Enabled: requested.Enabled, APIURL: requested.APIURL, EncryptedKey: encrypted,
-		Models: requested.Models, FallbackURL: requested.FallbackURL, Prompts: requested.Prompts,
+		AutoTranslateNewItems: requested.AutoTranslateNewItems,
+		Models:                requested.Models, FallbackURL: requested.FallbackURL, Prompts: requested.Prompts,
 	}
 	value, err := json.Marshal(persisted)
 	if err != nil {

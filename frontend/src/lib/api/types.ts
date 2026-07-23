@@ -156,6 +156,7 @@ export interface TranslationPrompts {
 
 export interface TranslationSettings {
   enabled: boolean;
+  auto_translate_new_items: boolean;
   api_url: string;
   api_key?: string;
   api_key_configured: boolean;

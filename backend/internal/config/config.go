@@ -38,7 +38,7 @@ type Config struct {
 	OIDCAllowedUser  string // Optional: restrict to specific user identity (email or sub)
 
 	// Translation Configuration (optional)
-	TranslateEnabled     bool   // Enable automatic title translation
+	TranslateEnabled     bool   // Enable server-side manual translation and summaries
 	TranslateAPIURL      string // OpenAI-compatible API base URL
 	TranslateAPIKey      string // API key for translation service
 	TranslateModel       string // Model name (e.g. "openai/gpt-oss-20b:free")

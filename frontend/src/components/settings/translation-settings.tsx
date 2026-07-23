@@ -18,6 +18,7 @@ import { useAISettingsStore, type AIRequestMode } from "@/store";
 
 const emptySettings: TranslationSettings = {
   enabled: false,
+  auto_translate_new_items: false,
   api_url: "",
   api_key: "",
   api_key_configured: false,
@@ -170,6 +171,25 @@ export function TranslationSettingsContent() {
               onCheckedChange={(checked) =>
                 setSettings((current) => ({ ...current, enabled: checked }))
               }
+            />
+          </div>
+
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <p className="text-sm font-medium">自动翻译新文章</p>
+              <p className="text-xs text-muted-foreground">
+                关闭后 RSS 更新只保存原文；仍可在列表和详情页手动翻译
+              </p>
+            </div>
+            <Switch
+              checked={settings.auto_translate_new_items}
+              onCheckedChange={(checked) =>
+                setSettings((current) => ({
+                  ...current,
+                  auto_translate_new_items: checked,
+                }))
+              }
+              disabled={!settings.enabled}
             />
           </div>
 

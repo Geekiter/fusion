@@ -17,14 +17,16 @@ import (
 )
 
 type Puller struct {
-	store       *store.Store
-	config      *config.Config
-	logger      *slog.Logger
-	interval    time.Duration
-	timeout     time.Duration
-	maxBackoff  time.Duration
-	concurrency *semaphore.Weighted
-	translator  *translate.Translator
+	store                 *store.Store
+	config                *config.Config
+	logger                *slog.Logger
+	interval              time.Duration
+	timeout               time.Duration
+	maxBackoff            time.Duration
+	concurrency           *semaphore.Weighted
+	translator            *translate.Translator
+	autoTranslateMu       sync.RWMutex
+	autoTranslateNewItems bool
 }
 
 func New(st *store.Store, cfg *config.Config) *Puller {
@@ -52,6 +54,20 @@ func New(st *store.Store, cfg *config.Config) *Puller {
 
 func (p *Puller) UpdateTranslationConfig(cfg translate.Config) {
 	p.translator.UpdateConfig(cfg)
+}
+
+// SetAutoTranslateNewItems controls whether newly pulled articles are translated
+// before being saved. Manual translation remains available regardless of this.
+func (p *Puller) SetAutoTranslateNewItems(enabled bool) {
+	p.autoTranslateMu.Lock()
+	defer p.autoTranslateMu.Unlock()
+	p.autoTranslateNewItems = enabled
+}
+
+func (p *Puller) shouldAutoTranslateNewItems() bool {
+	p.autoTranslateMu.RLock()
+	defer p.autoTranslateMu.RUnlock()
+	return p.autoTranslateNewItems
 }
 
 // Start begins periodic feed pulling. Blocks until context is cancelled.
@@ -187,30 +203,33 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 		result.ExpiresAt,
 	)
 
-	guids := make([]string, len(result.Items))
-	for i, item := range result.Items {
-		guids[i] = item.GUID
-	}
-	existingGUIDs, err := p.store.ExistingItemGUIDs(feed.ID, guids)
-	if err != nil {
-		p.logger.Error("failed to check existing items", "feed_id", feed.ID, "error", err)
-		return
-	}
-
-	// Translate only items that are not already stored. Feed responses normally
-	// contain many old entries, so translating the full response would repeatedly
-	// spend API quota on duplicates that the insert below ignores.
-	titles := make([]string, len(result.Items))
-	for i, item := range result.Items {
-		if _, exists := existingGUIDs[item.GUID]; exists {
-			continue
+	translations := map[int]string{}
+	if p.shouldAutoTranslateNewItems() {
+		guids := make([]string, len(result.Items))
+		for i, item := range result.Items {
+			guids[i] = item.GUID
 		}
-		titles[i] = item.Title
-		existingGUIDs[item.GUID] = struct{}{}
-	}
-	translations := p.translator.TranslateTitles(ctx, titles)
-	if len(translations) > 0 {
-		p.logger.Info("translated titles", "feed_id", feed.ID, "count", len(translations))
+		existingGUIDs, err := p.store.ExistingItemGUIDs(feed.ID, guids)
+		if err != nil {
+			p.logger.Error("failed to check existing items", "feed_id", feed.ID, "error", err)
+			return
+		}
+
+		// Translate only items that are not already stored. Feed responses normally
+		// contain many old entries, so translating the full response would repeatedly
+		// spend API quota on duplicates that the insert below ignores.
+		titles := make([]string, len(result.Items))
+		for i, item := range result.Items {
+			if _, exists := existingGUIDs[item.GUID]; exists {
+				continue
+			}
+			titles[i] = item.Title
+			existingGUIDs[item.GUID] = struct{}{}
+		}
+		translations = p.translator.TranslateTitles(ctx, titles)
+		if len(translations) > 0 {
+			p.logger.Info("translated titles", "feed_id", feed.ID, "count", len(translations))
+		}
 	}
 
 	inputs := make([]store.BatchCreateItemInput, 0, len(result.Items))
