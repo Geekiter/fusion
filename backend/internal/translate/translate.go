@@ -129,6 +129,11 @@ type chatRequest struct {
 	Messages    []chatMessage `json:"messages"`
 	Temperature float64       `json:"temperature"`
 	MaxTokens   int           `json:"max_tokens"`
+	Thinking    thinkingMode  `json:"thinking"`
+}
+
+type thinkingMode struct {
+	Type string `json:"type"`
 }
 
 type chatMessage struct {
@@ -425,6 +430,7 @@ func (t *Translator) completeModel(ctx context.Context, cfg Config, model, syste
 		},
 		Temperature: 0.2,
 		MaxTokens:   maxTokens,
+		Thinking:    thinkingMode{Type: "disabled"},
 	}
 	body, err := json.Marshal(req)
 	if err != nil {

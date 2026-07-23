@@ -62,6 +62,9 @@ func TestTranslatePreview(t *testing.T) {
 		if !strings.Contains(request.Messages[1].Content, `"title":"OpenAI launches a model"`) {
 			t.Fatalf("unexpected prompt: %q", request.Messages[1].Content)
 		}
+		if request.Thinking.Type != "disabled" {
+			t.Fatalf("thinking mode = %q, want disabled", request.Thinking.Type)
+		}
 		_ = json.NewEncoder(w).Encode(map[string]any{
 			"choices": []any{map[string]any{
 				"message": map[string]any{"content": "```json\n{\"title\":\"OpenAI 发布新模型\",\"summary\":\"这是中文摘要\"}\n```"},
