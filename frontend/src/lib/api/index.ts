@@ -116,6 +116,9 @@ export const itemAPI = {
 
   summarize: (id: number) =>
     api.post<APIResponse<Item>>(`/items/${id}/summarize`),
+
+  fetchFulltext: (id: number) =>
+    api.post<APIResponse<Item>>(`/items/${id}/fulltext`),
 };
 
 export const settingsAPI = {

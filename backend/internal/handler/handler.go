@@ -152,6 +152,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.POST("/items/-/translate", h.translateItemPreviews)
 			auth.POST("/items/:id/translate", h.translateItemContent)
 			auth.POST("/items/:id/summarize", h.summarizeItem)
+			auth.POST("/items/:id/fulltext", h.fetchItemFullText)
 			auth.GET("/images/proxy", h.proxyArticleImage)
 			auth.GET("/settings/translation", h.getTranslationSettings)
 			auth.PUT("/settings/translation", h.updateTranslationSettings)

@@ -50,6 +50,8 @@ export interface Item {
   translated_summary?: string;
   translated_content?: string;
   ai_summary?: string;
+  // Full article HTML fetched from the item's original link on demand.
+  extracted_content?: string;
 }
 
 export interface Bookmark {

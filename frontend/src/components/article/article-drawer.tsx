@@ -4,6 +4,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ExternalLink,
+  FileText,
   Languages,
   Loader2,
   Sparkles,
@@ -18,6 +19,7 @@ import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
 import {
   useItem,
+  useFetchItemFulltext,
   useMarkItemsRead,
   useMarkItemsUnread,
   useTranslateItemContent,
@@ -62,6 +64,7 @@ export function ArticleDrawer() {
   const deleteBookmark = useDeleteBookmark();
   const translateContent = useTranslateItemContent();
   const summarizeItem = useSummarizeItem();
+  const fetchFulltext = useFetchItemFulltext();
 
   const articleIds = articles.map((a) => a.id);
 
@@ -155,6 +158,19 @@ export function ArticleDrawer() {
     }
   };
 
+  const handleFetchFulltext = async () => {
+    if (!article || article.id <= 0) return;
+    try {
+      const fetched = await fetchFulltext.mutateAsync(article);
+      if (fetched.extracted_content) {
+        toast.success(t("article.fulltext.success"));
+      }
+    } catch (error) {
+      console.error("Failed to fetch full article content:", error);
+      toast.error(t("article.fulltext.failed"));
+    }
+  };
+
   const getLinkDomain = (url: string) => {
     try {
       return new URL(url).hostname;
@@ -187,6 +203,29 @@ export function ArticleDrawer() {
             {/* Header */}
             <div className="flex items-center justify-between border-b px-4 py-3 sm:px-6">
               <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleFetchFulltext}
+                  disabled={
+                    article.id <= 0 ||
+                    !safeArticleLink ||
+                    Boolean(article.extracted_content) ||
+                    fetchFulltext.isPending
+                  }
+                  className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  {fetchFulltext.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <FileText className="h-4 w-4" />
+                  )}
+                  {article.extracted_content
+                    ? t("article.fulltext.completed")
+                    : fetchFulltext.isPending
+                      ? t("article.fulltext.fetching")
+                      : t("article.fulltext.action")}
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -264,7 +303,9 @@ export function ArticleDrawer() {
                     article.id <= 0 ||
                     Boolean(article.translated_content) ||
                     translateContent.isPending ||
-                    !needsTranslation(extractSummary(article.content, 500))
+                    !needsTranslation(
+                      extractSummary(article.extracted_content || article.content, 500),
+                    )
                   }
                   className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
                 >
@@ -374,11 +415,16 @@ export function ArticleDrawer() {
                       {t("article.translate.original")}
                     </h2>
                   )}
+                  {article.extracted_content && !article.translated_content && (
+                    <h2 className="mb-4 text-sm font-semibold text-muted-foreground">
+                      {t("article.fulltext.title")}
+                    </h2>
+                  )}
                   <div
                     className="typeset typeset-article min-w-0 max-w-none"
                     dangerouslySetInnerHTML={{
                       __html: processArticleContent(
-                        article.content,
+                        article.extracted_content || article.content,
                         safeArticleLink ?? undefined,
                       ),
                     }}

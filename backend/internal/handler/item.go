@@ -8,7 +8,9 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
+	"github.com/0x2E/fusion/internal/fulltext"
 	"github.com/0x2E/fusion/internal/model"
 	"github.com/0x2E/fusion/internal/store"
 	"github.com/0x2E/fusion/internal/translate"
@@ -295,7 +297,7 @@ func (h *Handler) translateItemContent(c *gin.Context) {
 		return
 	}
 	if item.TranslatedContent == nil {
-		plainText := translate.ExtractText(item.Content)
+		plainText := itemTextForAI(item)
 		translatedContent, err := h.translator.TranslateContent(c.Request.Context(), plainText)
 		if err != nil {
 			slog.Warn("item content translation failed", "item_id", id, "error", err)
@@ -317,6 +319,46 @@ func (h *Handler) translateItemContent(c *gin.Context) {
 	dataResponse(c, item)
 }
 
+func (h *Handler) fetchItemFullText(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		badRequestError(c, "invalid id")
+		return
+	}
+	item, err := h.store.GetItem(id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "item")
+			return
+		}
+		internalError(c, err, "get item for full text extraction")
+		return
+	}
+	feed, err := h.store.GetFeed(item.FeedID)
+	if err != nil {
+		internalError(c, err, "get item feed for full text extraction")
+		return
+	}
+
+	allowPrivate := h.config != nil && h.config.AllowPrivateFeeds
+	content, err := fulltext.Fetch(c.Request.Context(), item.Link, feed.Proxy, 30*time.Second, allowPrivate)
+	if err != nil {
+		slog.Warn("item full text extraction failed", "item_id", id, "link", item.Link, "error", err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "full text extraction failed"})
+		return
+	}
+	if err := h.store.UpdateItemExtractedContent(id, content); err != nil {
+		internalError(c, err, "save item full text")
+		return
+	}
+	item, err = h.store.GetItem(id)
+	if err != nil {
+		internalError(c, err, "get item with full text")
+		return
+	}
+	dataResponse(c, item)
+}
+
 func (h *Handler) summarizeItem(c *gin.Context) {
 	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
 	if err != nil || id <= 0 {
@@ -333,7 +375,7 @@ func (h *Handler) summarizeItem(c *gin.Context) {
 		return
 	}
 	if item.AISummary == nil {
-		plainText := translate.ExtractText(item.Content)
+		plainText := itemTextForAI(item)
 		if item.TranslatedContent != nil && strings.TrimSpace(*item.TranslatedContent) != "" {
 			plainText = *item.TranslatedContent
 		}
@@ -356,4 +398,11 @@ func (h *Handler) summarizeItem(c *gin.Context) {
 		}
 	}
 	dataResponse(c, item)
+}
+
+func itemTextForAI(item *model.Item) string {
+	if item.ExtractedContent != nil && strings.TrimSpace(*item.ExtractedContent) != "" {
+		return translate.ExtractText(*item.ExtractedContent)
+	}
+	return translate.ExtractText(item.Content)
 }

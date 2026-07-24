@@ -70,6 +70,7 @@ type Item struct {
 	TranslatedSummary *string `json:"translated_summary,omitempty"`
 	TranslatedContent *string `json:"translated_content,omitempty"`
 	AISummary         *string `json:"ai_summary,omitempty"`
+	ExtractedContent  *string `json:"extracted_content,omitempty"`
 }
 
 // Bookmark represents a saved item snapshot.

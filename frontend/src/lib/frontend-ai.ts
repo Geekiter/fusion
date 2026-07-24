@@ -170,7 +170,7 @@ function splitText(value: string, maxLength: number): string[] {
 export async function translateContentInFrontend(item: Item): Promise<Item> {
   const prompt = useAISettingsStore.getState().contentPrompt.trim();
   if (!prompt) throw new Error("正文翻译提示词不能为空");
-  const text = extractSummary(item.content, 50_000);
+  const text = extractSummary(item.extracted_content || item.content, 50_000);
   if (!text || !needsTranslation(text)) return item;
 
   const outputs: string[] = [];
@@ -186,7 +186,7 @@ export async function translateContentInFrontend(item: Item): Promise<Item> {
 export async function summarizeInFrontend(item: Item): Promise<Item> {
   const prompt = useAISettingsStore.getState().summaryPrompt.trim();
   if (!prompt) throw new Error("总结提示词不能为空");
-  const text = extractSummary(item.content, 40_000);
+  const text = extractSummary(item.extracted_content || item.content, 40_000);
   if (!text) throw new Error("文章正文为空，无法总结");
   const summary = await complete(prompt, `标题：${item.title}\n\n正文：${text}`);
   return { ...item, ai_summary: summary };

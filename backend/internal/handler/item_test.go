@@ -130,6 +130,76 @@ func TestTranslateItemPreviewAndContent(t *testing.T) {
 	}
 }
 
+func TestFetchItemFullText(t *testing.T) {
+	h, st := newFeverTestHandler(t)
+	h.config.AllowPrivateFeeds = true
+
+	articleServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`
+			<html><body><article>
+				<p>The full article starts here and contains substantially more content than the RSS summary.</p>
+				<p>It has a second paragraph so the extractor can reliably identify the article body.</p>
+			</article></body></html>`))
+	}))
+	defer articleServer.Close()
+
+	group, err := st.CreateGroup("Full text")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	feed, err := st.CreateFeed(group.ID, "Feed", "https://example.com/feed", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	item, err := st.CreateItem(feed.ID, "full-text-item", "Article", articleServer.URL+"/article", "<p>RSS summary</p>", 100)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+	oldTranslation := "Old translation"
+	if err := st.UpdateItemTranslations(item.ID, nil, nil, &oldTranslation); err != nil {
+		t.Fatalf("UpdateItemTranslations: %v", err)
+	}
+	if err := st.UpdateItemAISummary(item.ID, "Old summary"); err != nil {
+		t.Fatalf("UpdateItemAISummary: %v", err)
+	}
+
+	r := newTestRouter()
+	r.POST("/api/items/:id/fulltext", h.fetchItemFullText)
+	w := performRequest(r, http.MethodPost, "/api/items/"+strconv.FormatInt(item.ID, 10)+"/fulltext", nil, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("full text status=%d body=%s", w.Code, w.Body.String())
+	}
+
+	var response struct {
+		Data model.Item `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if response.Data.ExtractedContent == nil || !strings.Contains(*response.Data.ExtractedContent, "full article starts") {
+		t.Fatalf("unexpected extracted content: %#v", response.Data.ExtractedContent)
+	}
+	if response.Data.TranslatedContent != nil || response.Data.AISummary != nil {
+		t.Fatalf("derived content was not cleared: translation=%#v summary=%#v", response.Data.TranslatedContent, response.Data.AISummary)
+	}
+
+	updated, err := st.GetItem(item.ID)
+	if err != nil {
+		t.Fatalf("GetItem: %v", err)
+	}
+	if updated.ExtractedContent == nil || updated.TranslatedContent != nil || updated.AISummary != nil {
+		t.Fatalf("unexpected persisted item: %#v", updated)
+	}
+}
+
+func TestItemTextForAIPrefersExtractedContent(t *testing.T) {
+	extracted := "<p>Full article text</p>"
+	item := &model.Item{Content: "<p>RSS summary</p>", ExtractedContent: &extracted}
+	if got := itemTextForAI(item); got != "Full article text" {
+		t.Fatalf("itemTextForAI() = %q, want extracted article text", got)
+	}
+}
+
 func TestListItemsCursorPagination(t *testing.T) {
 	h, st := newFeverTestHandler(t)
 

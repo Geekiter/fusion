@@ -374,3 +374,17 @@ export function useSummarizeItem() {
     },
   });
 }
+
+export function useFetchItemFulltext() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (item: Item) => {
+      const response = await itemAPI.fetchFulltext(item.id);
+      return response.data!;
+    },
+    onSuccess: (item) => {
+      applyTranslatedItems(qc, [item]);
+    },
+  });
+}

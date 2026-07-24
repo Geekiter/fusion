@@ -29,7 +29,7 @@ type ListItemsParams struct {
 func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	query := `
 		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.content, items.pub_date, items.unread, items.created_at,
-		       items.translated_title, items.translated_summary, items.translated_content, items.ai_summary
+		       items.translated_title, items.translated_summary, items.translated_content, items.ai_summary, items.extracted_content
 		FROM items
 	`
 	args := []any{}
@@ -97,7 +97,7 @@ func (s *Store) GetItem(id int64) (*model.Item, error) {
 	var unread int
 	row := s.db.QueryRow(`
 		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at,
-		       translated_title, translated_summary, translated_content, ai_summary
+		       translated_title, translated_summary, translated_content, ai_summary, extracted_content
 		FROM items
 		WHERE id = :id
 	`, sql.Named("id", id))
@@ -132,6 +132,7 @@ func scanItem(scanner itemScanner, item *model.Item, unread *int) error {
 		&item.TranslatedSummary,
 		&item.TranslatedContent,
 		&item.AISummary,
+		&item.ExtractedContent,
 	)
 }
 
@@ -331,6 +332,29 @@ func (s *Store) UpdateItemAISummary(id int64, summary string) error {
 	return nil
 }
 
+// UpdateItemExtractedContent saves explicitly fetched full text. Derived full-content
+// translation and summary are cleared because they no longer describe the source text.
+func (s *Store) UpdateItemExtractedContent(id int64, content string) error {
+	result, err := s.db.Exec(`
+		UPDATE items
+		SET extracted_content = :extracted_content,
+		    translated_content = NULL,
+		    ai_summary = NULL
+		WHERE id = :id
+	`, sql.Named("extracted_content", content), sql.Named("id", id))
+	if err != nil {
+		return fmt.Errorf("update item extracted content: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: item", ErrNotFound)
+	}
+	return nil
+}
+
 func (s *Store) UpdateItemUnread(id int64, unread bool) error {
 	result, err := s.db.Exec(`UPDATE items SET unread = :unread WHERE id = :id`,
 		sql.Named("unread", boolToInt(unread)), sql.Named("id", id))
@@ -477,7 +501,7 @@ type ListFeverItemsParams struct {
 func (s *Store) ListFeverItems(params ListFeverItemsParams) ([]*model.Item, error) {
 	query := `
 		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at,
-		       translated_title, translated_summary, translated_content, ai_summary
+		       translated_title, translated_summary, translated_content, ai_summary, extracted_content
 		FROM items
 		WHERE 1=1
 	`
