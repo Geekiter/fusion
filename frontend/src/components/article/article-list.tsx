@@ -1,6 +1,12 @@
-import { useCallback } from "react";
+import { useCallback, useRef } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { CheckCheck, Languages, Loader2, RefreshCw } from "lucide-react";
+import {
+  ArrowDown,
+  CheckCheck,
+  Languages,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,6 +14,9 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
 import { MovieCard } from "./movie-card";
 import { TwitterCard } from "./twitter-card";
+import { SwipeableRow } from "./swipeable-row";
+import { MobileFeedTabs } from "./mobile-feed-tabs";
+import { MobileActionBar } from "./mobile-action-bar";
 import { isDoubanMovieFeed } from "@/lib/douban";
 import { isTwitterFeed } from "@/lib/twitter";
 import { ContentHeader } from "@/components/layout/content-header";
@@ -15,12 +24,14 @@ import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
 import { useArticleList } from "@/hooks/use-article-list";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import {
   useMarkItemsRead,
   useMarkItemsUnread,
   useTranslateItemPreviews,
 } from "@/queries/items";
-import { useFeedLookup, useRefreshFeed } from "@/queries/feeds";
+import { useFeedLookup, useRefreshFeed, useRefreshFeeds } from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
 import { getFaviconUrl } from "@/lib/api/favicon";
@@ -62,6 +73,9 @@ export function ArticleList() {
   const deleteBookmark = useDeleteBookmark();
   const translatePreviews = useTranslateItemPreviews();
   const refreshFeed = useRefreshFeed();
+  const refreshFeeds = useRefreshFeeds();
+  const isMobile = useIsMobile();
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
 
   const articleIds = articles.map((a) => a.id);
   useArticleNavigation(articleIds, {
@@ -195,6 +209,37 @@ export function ArticleList() {
     }
   };
 
+  // Mobile pull-to-refresh: refreshes the currently selected feed if any,
+  // otherwise refreshes every feed. Desktop keeps the explicit "Update"
+  // button in the header instead.
+  const handlePullRefresh = useCallback(async () => {
+    try {
+      if (selectedFeed) {
+        await refreshFeed.mutateAsync(selectedFeed.id);
+      } else {
+        await refreshFeeds.mutateAsync();
+      }
+    } catch {
+      toast.error(t("article.mobile.refreshFailed"));
+    }
+  }, [refreshFeed, refreshFeeds, selectedFeed, t]);
+
+  const {
+    pullDistance,
+    isRefreshing,
+    isTriggered,
+    handlers: pullHandlers,
+  } = usePullToRefresh({
+    onRefresh: handlePullRefresh,
+    disabled: !isMobile,
+    getScrollTop: () => {
+      const viewport = scrollViewportRef.current?.closest(
+        '[data-slot="scroll-area-viewport"]',
+      );
+      return viewport?.scrollTop ?? 0;
+    },
+  });
+
   return (
     <div className="flex h-full flex-col">
       <ContentHeader>
@@ -202,7 +247,9 @@ export function ArticleList() {
           <SidebarTrigger />
           <h2 className="truncate text-lg font-semibold">{title}</h2>
         </div>
-        <div className="flex items-center gap-2">
+        {/* Desktop: full button row, unchanged. Hidden on mobile in favor
+            of the bottom action bar + pull-to-refresh gesture below. */}
+        <div className="hidden items-center gap-2 md:flex">
           {selectedFeed && (
             <Button
               variant="outline"
@@ -249,6 +296,14 @@ export function ArticleList() {
         </div>
       </ContentHeader>
 
+      {/* Mobile: horizontal swipeable feed switcher, replaces having to open
+          the sidebar sheet just to switch feeds. Desktop is unaffected. */}
+      {isMobile && (
+        <div className="border-b py-2">
+          <MobileFeedTabs />
+        </div>
+      )}
+
       {/* Article area with filter tabs */}
       <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 py-4 sm:px-6">
         {/* Filter tabs - hidden when no articles exist */}
@@ -267,9 +322,37 @@ export function ArticleList() {
           </Tabs>
         )}
 
+        {/* Mobile: pull-to-refresh indicator, shown above the list while
+            dragging down from the top of the scroll area. */}
+        {isMobile && (pullDistance > 0 || isRefreshing) && (
+          <div
+            className="flex items-center justify-center overflow-hidden text-xs text-muted-foreground transition-[height]"
+            style={{ height: isRefreshing ? 32 : pullDistance }}
+          >
+            {isRefreshing ? (
+              <span className="flex items-center gap-1.5">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                {t("article.mobile.refreshing")}
+              </span>
+            ) : (
+              <span className="flex items-center gap-1.5">
+                <ArrowDown
+                  className={cn(
+                    "h-3.5 w-3.5 transition-transform",
+                    isTriggered && "rotate-180",
+                  )}
+                />
+                {isTriggered
+                  ? t("article.mobile.releaseToRefresh")
+                  : t("article.mobile.pullToRefresh")}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Article list */}
         <ScrollArea className="min-h-0 flex-1">
-          <div>
+          <div ref={scrollViewportRef} {...pullHandlers}>
             {isLoading && articles.length === 0 ? (
               <div className="space-y-2 p-2">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -343,15 +426,23 @@ export function ArticleList() {
                 {articles.map((article) => {
                   if (getArticleKind(article) === "twitter") {
                     return (
-                      <TwitterCard
+                      <SwipeableRow
                         key={article.id}
-                        article={article}
-                        selectedArticleId={selectedArticleId}
-                        onSelectArticle={setSelectedArticle}
-                        onToggleRead={handleToggleRead}
-                        onToggleStar={handleToggleStar}
+                        unread={article.unread}
                         isStarred={isItemStarred(article.id)}
-                      />
+                        canToggleRead={article.id > 0}
+                        onToggleRead={() => handleToggleRead(article)}
+                        onToggleStar={() => handleToggleStar(article)}
+                      >
+                        <TwitterCard
+                          article={article}
+                          selectedArticleId={selectedArticleId}
+                          onSelectArticle={setSelectedArticle}
+                          onToggleRead={handleToggleRead}
+                          onToggleStar={handleToggleStar}
+                          isStarred={isItemStarred(article.id)}
+                        />
+                      </SwipeableRow>
                     );
                   }
 
@@ -359,20 +450,28 @@ export function ArticleList() {
                   const bookmark = getBookmarkByItemId(article.id);
 
                   return (
-                    <ArticleItem
+                    <SwipeableRow
                       key={article.id}
-                      article={article}
-                      selectedArticleId={selectedArticleId}
-                      onSelectArticle={setSelectedArticle}
-                      onToggleRead={handleToggleRead}
-                      onToggleStar={handleToggleStar}
-                      canToggleRead={article.id > 0}
+                      unread={article.unread}
                       isStarred={isItemStarred(article.id)}
-                      feedName={feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
-                      feedFaviconUrl={
-                        feed ? getFaviconUrl(feed.link, feed.site_url) : null
-                      }
-                    />
+                      canToggleRead={article.id > 0}
+                      onToggleRead={() => handleToggleRead(article)}
+                      onToggleStar={() => handleToggleStar(article)}
+                    >
+                      <ArticleItem
+                        article={article}
+                        selectedArticleId={selectedArticleId}
+                        onSelectArticle={setSelectedArticle}
+                        onToggleRead={handleToggleRead}
+                        onToggleStar={handleToggleStar}
+                        canToggleRead={article.id > 0}
+                        isStarred={isItemStarred(article.id)}
+                        feedName={feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
+                        feedFaviconUrl={
+                          feed ? getFaviconUrl(feed.link, feed.site_url) : null
+                        }
+                      />
+                    </SwipeableRow>
                   );
                 })}
                 {hasMore && (
@@ -398,6 +497,18 @@ export function ArticleList() {
           </div>
         </ScrollArea>
       </div>
+
+      {/* Mobile: bottom action bar replaces the header's translate / mark-all
+          -read buttons with larger, thumb-reachable targets. */}
+      {isMobile && (
+        <MobileActionBar
+          translatableCount={translatableItems.length}
+          isTranslating={translatePreviews.isPending}
+          onTranslate={handleTranslateLoaded}
+          unreadCount={unreadCount}
+          onMarkAllRead={handleMarkAllAsRead}
+        />
+      )}
     </div>
   );
 }
