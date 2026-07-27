@@ -3,6 +3,7 @@ package handler
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/url"
 	"strings"
@@ -26,22 +27,43 @@ func validateArticleImageURL(raw string) (*url.URL, error) {
 	if err != nil {
 		return nil, fmt.Errorf("invalid image URL: %w", err)
 	}
-	if parsed.Scheme != "https" || articleImageReferer(parsed.Hostname()) == "" || parsed.Port() != "" || parsed.User != nil {
+
+	// Allow local Nitter instance over HTTP (for self-hosted Nitter image proxying)
+	if parsed.Scheme == "http" && parsed.Hostname() == "172.17.0.1" && parsed.Port() == "8082" {
+		return parsed, nil
+	}
+
+	if parsed.Scheme != "https" || parsed.Port() != "" || parsed.User != nil {
+		return nil, fmt.Errorf("image URL must be HTTPS without port or userinfo")
+	}
+	host := parsed.Hostname()
+	if host == "" {
 		return nil, fmt.Errorf("image host is not allowed")
+	}
+	// Reject literal IP addresses to prevent SSRF to internal services
+	if ip := net.ParseIP(host); ip != nil {
+		return nil, fmt.Errorf("image host must be a domain name, not an IP address")
 	}
 	return parsed, nil
 }
 
-func articleImageReferer(host string) string {
+// articleImageReferer derives the Referer header value for a given image host.
+// Known special cases use a parent domain; all other hosts use their own origin.
+func articleImageReferer(host string, rawURL string) string {
 	host = strings.ToLower(host)
+	// Local Nitter instance - use its own URL as referer
+	if strings.Contains(rawURL, "172.17.0.1:8082") {
+		return "http://172.17.0.1:8082/"
+	}
+	// Known special cases where the Referer must be a parent domain
 	if host == "cdnfile.sspai.com" {
 		return "https://sspai.com/"
 	}
-	const doubanSuffix = ".doubanio.com"
-	if len(host) == len("img9"+doubanSuffix) && strings.HasPrefix(host, "img") && strings.HasSuffix(host, doubanSuffix) && host[3] >= '1' && host[3] <= '9' {
+	if strings.HasSuffix(host, ".doubanio.com") {
 		return "https://www.douban.com/"
 	}
-	return ""
+	// General case: use the image's own origin as Referer
+	return "https://" + host + "/"
 }
 
 func (h *Handler) proxyArticleImage(c *gin.Context) {
@@ -54,8 +76,11 @@ func (h *Handler) proxyArticleImage(c *gin.Context) {
 	client := &http.Client{
 		Timeout: 30 * time.Second,
 		CheckRedirect: func(req *http.Request, _ []*http.Request) error {
-			_, err := validateArticleImageURL(req.URL.String())
-			return err
+			if _, err := validateArticleImageURL(req.URL.String()); err != nil {
+				return err
+			}
+			req.Header.Set("Referer", articleImageReferer(req.URL.Hostname(), req.URL.String()))
+			return nil
 		},
 	}
 	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, target.String(), nil)
@@ -63,7 +88,7 @@ func (h *Handler) proxyArticleImage(c *gin.Context) {
 		internalError(c, err, "create article image request")
 		return
 	}
-	req.Header.Set("Referer", articleImageReferer(target.Hostname()))
+	req.Header.Set("Referer", articleImageReferer(target.Hostname(), target.String()))
 	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; FusionFeedReader/1.0)")
 	req.Header.Set("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
 

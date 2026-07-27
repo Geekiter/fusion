@@ -1,7 +1,8 @@
+import { useMemo } from "react";
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import { cn, formatDate, extractSummary } from "@/lib/utils";
+import { cn, formatDate, extractSummary, extractFirstImage } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
@@ -34,6 +35,10 @@ export function ArticleItem({
   const isSelected = selectedArticleId === article.id;
   const safeArticleLink = toSafeExternalUrl(article.link);
   const originalSummary = extractSummary(article.content, 150);
+  const thumbnailUrl = useMemo(
+    () => extractFirstImage(article.content, article.link),
+    [article.content, article.link],
+  );
 
   const handleToggleRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -71,6 +76,19 @@ export function ArticleItem({
         isSelected && "bg-accent",
       )}
     >
+      {/* Thumbnail */}
+      {thumbnailUrl && (
+        <div className="size-16 shrink-0 overflow-hidden rounded-md bg-muted">
+          <img
+            src={thumbnailUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Article Content */}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <h3

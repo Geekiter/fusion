@@ -1,6 +1,8 @@
+import { useState } from "react";
 import {
   Circle,
   CircleCheck,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   ExternalLink,
@@ -33,11 +35,50 @@ import {
 import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useI18n } from "@/lib/i18n";
-import { extractSummary, formatDate, needsTranslation } from "@/lib/utils";
+import { cn, extractSummary, formatDate, needsTranslation } from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+
+/**
+ * Collapsible full-title section shown in the article body.
+ * Collapsed by default — click to expand.
+ * Styled distinctly from body text: muted background, border, smaller italic font.
+ */
+function FullTitleToggle({ title }: { title: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  return (
+    <div className="mb-4">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center gap-1.5 rounded-lg border border-border/50 bg-muted/40 px-3 py-2 text-left transition-colors hover:bg-muted/60"
+      >
+        <ChevronDown
+          className={cn(
+            "h-3.5 w-3.5 shrink-0 text-muted-foreground transition-transform duration-200",
+            expanded && "rotate-180",
+          )}
+        />
+        <span
+          className={cn(
+            "text-[13px] leading-snug text-muted-foreground",
+            !expanded && "truncate",
+          )}
+        >
+          {expanded ? title : "查看完整标题"}
+        </span>
+      </button>
+      {expanded && (
+        <p className="mt-2 px-3 text-[13px] italic leading-relaxed text-muted-foreground">
+          {title}
+        </p>
+      )}
+    </div>
+  );
+}
 
 export function ArticleDrawer() {
   const { t } = useI18n();
@@ -338,7 +379,7 @@ export function ArticleDrawer() {
             <ScrollArea className="min-h-0 flex-1">
               <article className="min-w-0 px-5 py-6 sm:px-12 sm:py-8">
                 <div className="space-y-3">
-                  <h1 className="text-[28px] font-bold leading-[1.3]">
+                  <h1 className="line-clamp-2 text-[28px] font-bold leading-[1.3]">
                     {article.translated_title || article.title}
                   </h1>
                   {article.translated_title && (
@@ -420,6 +461,7 @@ export function ArticleDrawer() {
                       {t("article.fulltext.title")}
                     </h2>
                   )}
+                  <FullTitleToggle title={article.title} />
                   <div
                     className="typeset typeset-article min-w-0 max-w-none"
                     dangerouslySetInnerHTML={{

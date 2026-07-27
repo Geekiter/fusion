@@ -33,9 +33,38 @@ func TestListGroups(t *testing.T) {
 		t.Fatalf("expected 3 groups (1 default + 2 created), got %d", len(groups))
 	}
 
-	// Verify created IDs are in the list (skip index 0 which is default group)
+	// Groups are sorted by name: "Default" < "Group 1" < "Group 2"
+	if groups[0].Name != "Default" {
+		t.Errorf("expected 'Default' at index 0, got %q", groups[0].Name)
+	}
 	if groups[1].ID != g1.ID || groups[2].ID != g2.ID {
 		t.Error("group IDs don't match")
+	}
+}
+
+func TestListGroupsSortedByName(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	// Create groups whose names sort differently from insertion order
+	mustCreateGroup(t, store, "3-Charlie")
+	mustCreateGroup(t, store, "1-Alpha")
+	mustCreateGroup(t, store, "2-Bravo")
+
+	groups, err := store.ListGroups()
+	if err != nil {
+		t.Fatalf("ListGroups() failed: %v", err)
+	}
+
+	// Expected order: "1-Alpha" < "2-Bravo" < "3-Charlie" < "Default"
+	expected := []string{"1-Alpha", "2-Bravo", "3-Charlie", "Default"}
+	if len(groups) != len(expected) {
+		t.Fatalf("expected %d groups, got %d", len(expected), len(groups))
+	}
+	for i, want := range expected {
+		if groups[i].Name != want {
+			t.Errorf("index %d: expected %q, got %q", i, want, groups[i].Name)
+		}
 	}
 }
 

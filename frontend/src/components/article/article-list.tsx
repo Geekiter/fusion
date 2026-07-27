@@ -6,6 +6,10 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArticleItem } from "./article-item";
+import { MovieCard } from "./movie-card";
+import { TwitterCard } from "./twitter-card";
+import { isDoubanMovieFeed } from "@/lib/douban";
+import { isTwitterFeed } from "@/lib/twitter";
 import { ContentHeader } from "@/components/layout/content-header";
 import { SidebarTrigger } from "@/components/layout/sidebar-trigger";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
@@ -74,6 +78,25 @@ export function ArticleList() {
     const group = groups.find((g) => g.id === selectedGroupId);
     title = group?.name ?? t("article.groupFallback");
   }
+
+  // Movie feeds keep their own dedicated grid layout: only activated when the
+  // user has drilled into a single Douban movie feed, since a movie grid
+  // can't sensibly interleave with the list-style article/tweet rows.
+  const isMovieView =
+    !!selectedFeed &&
+    isDoubanMovieFeed(selectedFeed.name, selectedFeed.site_url);
+
+  // Everywhere else (including cross-feed views like the unread list), the
+  // card type is decided per item based on the item's own feed, so plain
+  // articles and tweets can be mixed together in a single list.
+  const getArticleKind = useCallback(
+    (article: Item): "twitter" | "article" => {
+      const feed = getFeedById(article.feed_id);
+      if (isTwitterFeed(feed?.name, feed?.site_url)) return "twitter";
+      return "article";
+    },
+    [getFeedById],
+  );
 
   const unreadCount = articles.filter((a) => a.unread).length;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
@@ -277,9 +300,61 @@ export function ArticleList() {
                   </p>
                 </div>
               )
+            ) : isMovieView ? (
+              <>
+                <div className="grid grid-cols-2 gap-3 pb-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                  {articles.map((article) => {
+                    return (
+                      <MovieCard
+                        key={article.id}
+                        article={article}
+                        selectedArticleId={selectedArticleId}
+                        onSelectArticle={setSelectedArticle}
+                        onToggleRead={handleToggleRead}
+                        onToggleStar={handleToggleStar}
+                        isStarred={isItemStarred(article.id)}
+                      />
+                    );
+                  })}
+                </div>
+                {hasMore && (
+                  <div className="flex justify-center py-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fetchNextPage()}
+                      disabled={isLoadingMore}
+                      className="gap-2"
+                    >
+                      {isLoadingMore && (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      )}
+                      {isLoadingMore
+                        ? t("article.list.loading")
+                        : t("article.list.loadMore")}
+                    </Button>
+                  </div>
+                )}
+              </>
             ) : (
               <>
+                {/* Plain articles and tweets are interleaved in one list;
+                    each item picks its own card based on its source feed. */}
                 {articles.map((article) => {
+                  if (getArticleKind(article) === "twitter") {
+                    return (
+                      <TwitterCard
+                        key={article.id}
+                        article={article}
+                        selectedArticleId={selectedArticleId}
+                        onSelectArticle={setSelectedArticle}
+                        onToggleRead={handleToggleRead}
+                        onToggleStar={handleToggleStar}
+                        isStarred={isItemStarred(article.id)}
+                      />
+                    );
+                  }
+
                   const feed = getFeedById(article.feed_id);
                   const bookmark = getBookmarkByItemId(article.id);
 

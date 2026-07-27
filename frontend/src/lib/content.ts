@@ -195,13 +195,16 @@ function sanitizeSrcset(
   return candidates.length > 0 ? candidates.join(", ") : null;
 }
 
-function proxyArticleImageUrl(url: string): string {
+export function proxyArticleImageUrl(url: string): string {
   try {
     const parsed = new URL(url);
-    const proxyRequired =
-      parsed.hostname === "cdnfile.sspai.com" ||
-      /^img[1-9]\.doubanio\.com$/.test(parsed.hostname);
-    if (parsed.protocol === "https:" && proxyRequired) {
+    if (
+      parsed.protocol === "https:" &&
+      !parsed.port &&
+      !parsed.username &&
+      !parsed.password &&
+      parsed.hostname
+    ) {
       return `/api/images/proxy?url=${encodeURIComponent(url)}`;
     }
   } catch {

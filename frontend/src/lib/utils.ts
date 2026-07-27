@@ -2,6 +2,8 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import DOMPurify from "dompurify";
 import { getPreferredLocale } from "@/store/preferences";
+import { resolveSafeExternalUrl, toSafeExternalUrl } from "@/lib/safe-url";
+import { proxyArticleImageUrl } from "@/lib/content";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -70,6 +72,64 @@ export function extractSummary(html: string, maxLength = 120): string {
   if (text.length <= maxLength) return text;
   // Truncate and add ellipsis
   return text.slice(0, maxLength).trimEnd() + "…";
+}
+
+const TRACKER_PATTERNS = [
+  /feedburner/i,
+  /doubleclick/i,
+  /\/pixel[./]/i,
+  /\/beacon[./]/i,
+  /\/track[./]/i,
+  /\/open[./]/i,
+  /mail\.google\.com\/.*\/pixel/i,
+  /emailtracking/i,
+];
+
+export function extractFirstImage(
+  html: string,
+  articleUrl?: string,
+): string | null {
+  const fragment = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: ["img", "picture", "source"],
+    ALLOWED_ATTR: [
+      "src",
+      "srcset",
+      "data-src",
+      "data-lazy-src",
+      "data-original",
+      "data-srcset",
+      "width",
+      "height",
+    ],
+    RETURN_DOM_FRAGMENT: true,
+  }) as DocumentFragment;
+
+  const safeArticleUrl = toSafeExternalUrl(articleUrl);
+
+  for (const img of fragment.querySelectorAll("img")) {
+    const width = img.getAttribute("width");
+    const height = img.getAttribute("height");
+    if ((width === "1" || width === "0") && (height === "1" || height === "0")) {
+      continue;
+    }
+
+    const rawSrc =
+      img.getAttribute("src") ||
+      img.getAttribute("data-src") ||
+      img.getAttribute("data-lazy-src") ||
+      img.getAttribute("data-original");
+
+    if (!rawSrc) continue;
+
+    const resolved = resolveSafeExternalUrl(rawSrc, safeArticleUrl);
+    if (!resolved) continue;
+
+    if (TRACKER_PATTERNS.some((p) => p.test(resolved))) continue;
+
+    return proxyArticleImageUrl(resolved);
+  }
+
+  return null;
 }
 
 export function needsTranslation(text: string): boolean {

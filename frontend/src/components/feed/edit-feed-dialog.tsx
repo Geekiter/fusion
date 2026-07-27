@@ -253,7 +253,11 @@ export function EditFeedDialog() {
               <label className="text-[13px] font-medium" id="edit-feed-group-label">
                 {t("feed.add.groupLabel")}
               </label>
-              <Select value={groupId} onValueChange={(v) => { if (v) setGroupId(v); }}>
+              <Select
+                value={groupId}
+                onValueChange={(v) => { if (v) setGroupId(v); }}
+                items={Object.fromEntries(groups.map((g) => [g.id.toString(), g.name]))}
+              >
                 <SelectTrigger className="h-10" aria-labelledby="edit-feed-group-label">
                   <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>
