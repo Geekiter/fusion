@@ -1,6 +1,6 @@
 # Stage 1: Build frontend
 FROM node:22-alpine AS frontend-builder
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
 WORKDIR /src
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/
 RUN cd frontend && pnpm install --frozen-lockfile --prefer-offline
