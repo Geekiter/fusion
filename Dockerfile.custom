@@ -2,7 +2,7 @@
 FROM node:22-alpine AS frontend-builder
 RUN corepack enable && corepack prepare pnpm@11.25.0 --activate
 WORKDIR /src
-COPY frontend/package.json frontend/pnpm-lock.yaml frontend/
+COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml frontend/
 RUN cd frontend && pnpm install --frozen-lockfile --prefer-offline
 COPY frontend/ frontend/
 RUN cd frontend && VITE_FUSION_VERSION=custom-translate pnpm run build
