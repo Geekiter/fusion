@@ -202,6 +202,8 @@ export const esMessages: PartialMessages = {
   "article.list.noArticles": "No se encontraron articulos",
   "article.list.noFeeds": "Aun no hay feeds. Ve a Gestion de feeds para agregar el primero.",
   "article.list.openFeedManagement": "Abrir gestion de feeds",
+  "article.mobile.actions": "Acciones de articulos",
+  "article.mobile.categories": "Categorias",
   "article.mobile.feedSwitcher": "Selector de feeds",
   "article.mobile.pullToRefresh": "Desliza para actualizar",
   "article.mobile.releaseToRefresh": "Suelta para actualizar",

@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowDown,
@@ -15,8 +15,8 @@ import { ArticleItem } from "./article-item";
 import { MovieCard } from "./movie-card";
 import { TwitterCard } from "./twitter-card";
 import { SwipeableRow } from "./swipeable-row";
-import { MobileFeedTabs } from "./mobile-feed-tabs";
 import { MobileActionBar } from "./mobile-action-bar";
+import { MobileCategoryDrawer } from "./mobile-category-drawer";
 import { isDoubanMovieFeed } from "@/lib/douban";
 import { isTwitterFeed } from "@/lib/twitter";
 import { ContentHeader } from "@/components/layout/content-header";
@@ -76,6 +76,7 @@ export function ArticleList() {
   const refreshFeeds = useRefreshFeeds();
   const isMobile = useIsMobile();
   const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const [isCategoryOpen, setCategoryOpen] = useState(false);
 
   const articleIds = articles.map((a) => a.id);
   useArticleNavigation(articleIds, {
@@ -115,13 +116,13 @@ export function ArticleList() {
   const unreadCount = articles.filter((a) => a.unread).length;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
   const translatableItems = articles.filter((article) => {
-      if (article.id <= 0) return false;
-      const summary = extractSummary(article.content, 150);
-      return (
-        (!article.translated_title && needsTranslation(article.title)) ||
-        (!article.translated_summary && needsTranslation(summary))
-      );
-    });
+    if (article.id <= 0) return false;
+    const summary = extractSummary(article.content, 150);
+    return (
+      (!article.translated_title && needsTranslation(article.title)) ||
+      (!article.translated_summary && needsTranslation(summary))
+    );
+  });
 
   const handleToggleRead = useCallback(
     async (article: Item) => {
@@ -241,15 +242,12 @@ export function ArticleList() {
   });
 
   return (
-    <div className="flex h-full flex-col">
-      <ContentHeader>
+    <div className="relative flex h-full flex-col">
+      <ContentHeader className="hidden md:flex">
         <div className="flex min-w-0 items-center gap-1">
-          <SidebarTrigger />
           <h2 className="truncate text-lg font-semibold">{title}</h2>
         </div>
-        {/* Desktop: full button row, unchanged. Hidden on mobile in favor
-            of the bottom action bar + pull-to-refresh gesture below. */}
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="flex items-center gap-2">
           {selectedFeed && (
             <Button
               variant="outline"
@@ -271,7 +269,9 @@ export function ArticleList() {
             variant="outline"
             size="sm"
             onClick={handleTranslateLoaded}
-            disabled={translatableItems.length === 0 || translatePreviews.isPending}
+            disabled={
+              translatableItems.length === 0 || translatePreviews.isPending
+            }
             className="gap-1.5 text-xs"
           >
             {translatePreviews.isPending ? (
@@ -281,7 +281,9 @@ export function ArticleList() {
             )}
             {translatePreviews.isPending
               ? t("article.translate.translating")
-              : t("article.translate.loaded", { count: translatableItems.length })}
+              : t("article.translate.loaded", {
+                  count: translatableItems.length,
+                })}
           </Button>
           <Button
             variant="outline"
@@ -296,25 +298,24 @@ export function ArticleList() {
         </div>
       </ContentHeader>
 
-      {/* Mobile: horizontal swipeable feed switcher, replaces having to open
-          the sidebar sheet just to switch feeds. Desktop is unaffected. */}
-      {isMobile && (
-        <div className="border-b py-2">
-          <MobileFeedTabs />
-        </div>
-      )}
+      <div className="absolute top-[calc(env(safe-area-inset-top)+0.75rem)] left-3 z-40 md:hidden">
+        <SidebarTrigger className="size-11 rounded-full border border-border/70 bg-background/90 shadow-lg shadow-black/10 ring-1 ring-black/5 backdrop-blur-xl hover:bg-background dark:bg-background/80 dark:ring-white/5" />
+      </div>
 
-      {/* Article area with filter tabs */}
-      <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden px-4 py-4 sm:px-6">
-        {/* Filter tabs - hidden when no articles exist */}
+      {/* Article area with desktop filter tabs */}
+      <div className="flex min-h-0 flex-1 flex-col gap-0 overflow-hidden px-0 py-0 md:gap-4 md:px-6 md:py-4">
+        {/* Mobile filtering moves into the bottom category drawer. */}
         {!hasNoFeeds && (articles.length > 0 || articleFilter !== "all") && (
           <Tabs
             value={articleFilter}
             onValueChange={(v) => setArticleFilter(v as ArticleFilter)}
+            className="hidden md:block"
           >
             <TabsList>
               <TabsTrigger value="all">{t("article.filter.all")}</TabsTrigger>
-              <TabsTrigger value="unread">{t("article.filter.unread")}</TabsTrigger>
+              <TabsTrigger value="unread">
+                {t("article.filter.unread")}
+              </TabsTrigger>
               <TabsTrigger value="starred">
                 {t("article.filter.starred")}
               </TabsTrigger>
@@ -352,7 +353,11 @@ export function ArticleList() {
 
         {/* Article list */}
         <ScrollArea className="min-h-0 flex-1">
-          <div ref={scrollViewportRef} {...pullHandlers}>
+          <div
+            ref={scrollViewportRef}
+            {...pullHandlers}
+            className="px-4 pt-[calc(env(safe-area-inset-top)+4.25rem)] pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-0 md:pt-0 md:pb-0"
+          >
             {isLoading && articles.length === 0 ? (
               <div className="space-y-2 p-2">
                 {[1, 2, 3, 4, 5].map((i) => (
@@ -466,7 +471,11 @@ export function ArticleList() {
                         onToggleStar={handleToggleStar}
                         canToggleRead={article.id > 0}
                         isStarred={isItemStarred(article.id)}
-                        feedName={feed?.name ?? bookmark?.feed_name ?? t("common.unknown")}
+                        feedName={
+                          feed?.name ??
+                          bookmark?.feed_name ??
+                          t("common.unknown")
+                        }
                         feedFaviconUrl={
                           feed ? getFaviconUrl(feed.link, feed.site_url) : null
                         }
@@ -498,16 +507,28 @@ export function ArticleList() {
         </ScrollArea>
       </div>
 
-      {/* Mobile: bottom action bar replaces the header's translate / mark-all
-          -read buttons with larger, thumb-reachable targets. */}
       {isMobile && (
-        <MobileActionBar
-          translatableCount={translatableItems.length}
-          isTranslating={translatePreviews.isPending}
-          onTranslate={handleTranslateLoaded}
-          unreadCount={unreadCount}
-          onMarkAllRead={handleMarkAllAsRead}
-        />
+        <>
+          <MobileActionBar
+            translatableCount={translatableItems.length}
+            isTranslating={translatePreviews.isPending}
+            onTranslate={handleTranslateLoaded}
+            isCategoryOpen={isCategoryOpen}
+            onOpenCategories={() => setCategoryOpen(true)}
+            isUpdating={
+              isRefreshing ||
+              refreshFeed.isPending ||
+              refreshFeeds.isPending
+            }
+            onUpdate={handlePullRefresh}
+            unreadCount={unreadCount}
+            onMarkAllRead={handleMarkAllAsRead}
+          />
+          <MobileCategoryDrawer
+            open={isCategoryOpen}
+            onOpenChange={setCategoryOpen}
+          />
+        </>
       )}
     </div>
   );

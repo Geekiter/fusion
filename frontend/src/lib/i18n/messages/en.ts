@@ -201,6 +201,8 @@ export const enMessages = {
   "article.list.noArticles": "No articles found",
   "article.list.noFeeds": "No feeds yet. Go to Feed Management to add your first feed.",
   "article.list.openFeedManagement": "Open Feed Management",
+  "article.mobile.actions": "Article actions",
+  "article.mobile.categories": "Categories",
   "article.mobile.feedSwitcher": "Feed switcher",
   "article.mobile.pullToRefresh": "Pull to refresh",
   "article.mobile.releaseToRefresh": "Release to refresh",

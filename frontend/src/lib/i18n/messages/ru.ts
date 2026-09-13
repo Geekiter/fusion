@@ -202,6 +202,8 @@ export const ruMessages: PartialMessages = {
   "article.list.noArticles": "Статьи не найдены",
   "article.list.noFeeds": "Лент пока нет. Перейдите в управление лентами, чтобы добавить первую.",
   "article.list.openFeedManagement": "Открыть управление лентами",
+  "article.mobile.actions": "Действия со статьями",
+  "article.mobile.categories": "Категории",
   "article.mobile.feedSwitcher": "Переключатель лент",
   "article.mobile.pullToRefresh": "Потяните для обновления",
   "article.mobile.releaseToRefresh": "Отпустите для обновления",

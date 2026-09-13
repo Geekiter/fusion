@@ -202,6 +202,8 @@ export const frMessages: PartialMessages = {
   "article.list.noArticles": "Aucun article trouve",
   "article.list.noFeeds": "Aucun flux. Allez dans la gestion des flux pour ajouter votre premier flux.",
   "article.list.openFeedManagement": "Ouvrir la gestion des flux",
+  "article.mobile.actions": "Actions d'article",
+  "article.mobile.categories": "Categories",
   "article.mobile.feedSwitcher": "Selecteur de flux",
   "article.mobile.pullToRefresh": "Tirer pour actualiser",
   "article.mobile.releaseToRefresh": "Relacher pour actualiser",

@@ -202,6 +202,8 @@ export const deMessages: PartialMessages = {
   "article.list.noArticles": "Keine Artikel gefunden",
   "article.list.noFeeds": "Noch keine Feeds. Gehen Sie zur Feed-Verwaltung und fugen Sie den ersten Feed hinzu.",
   "article.list.openFeedManagement": "Feed-Verwaltung offnen",
+  "article.mobile.actions": "Artikelaktionen",
+  "article.mobile.categories": "Kategorien",
   "article.mobile.feedSwitcher": "Feed-Umschalter",
   "article.mobile.pullToRefresh": "Zum Aktualisieren ziehen",
   "article.mobile.releaseToRefresh": "Loslassen zum Aktualisieren",

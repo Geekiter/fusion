@@ -202,6 +202,8 @@ export const zhMessages: PartialMessages = {
   "article.list.noArticles": "未找到文章",
   "article.list.noFeeds": "暂无订阅。前往订阅管理添加你的第一个订阅。",
   "article.list.openFeedManagement": "打开订阅管理",
+  "article.mobile.actions": "文章操作",
+  "article.mobile.categories": "分类",
   "article.mobile.feedSwitcher": "订阅切换",
   "article.mobile.pullToRefresh": "下拉刷新",
   "article.mobile.releaseToRefresh": "松手刷新",
