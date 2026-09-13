@@ -49,6 +49,94 @@ func TestMarkItemsBatchValidation(t *testing.T) {
 	}
 }
 
+func TestMarkAllItemsRead(t *testing.T) {
+	h, st := newFeverTestHandler(t)
+	group1, err := st.CreateGroup("Group 1")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	group2, err := st.CreateGroup("Group 2")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	feed1, err := st.CreateFeed(group1.ID, "Feed 1", "https://example.com/feed-1", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	feed2, err := st.CreateFeed(group1.ID, "Feed 2", "https://example.com/feed-2", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	feed3, err := st.CreateFeed(group2.ID, "Feed 3", "https://example.com/feed-3", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	item1, err := st.CreateItem(feed1.ID, "item-1", "Item 1", "https://example.com/item-1", "content", 1)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+	item2, err := st.CreateItem(feed2.ID, "item-2", "Item 2", "https://example.com/item-2", "content", 2)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+	item3, err := st.CreateItem(feed3.ID, "item-3", "Item 3", "https://example.com/item-3", "content", 3)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+
+	r := newTestRouter()
+	r.PATCH("/api/items/-/read-all", h.markAllItemsRead)
+
+	request := func(body any) *httptest.ResponseRecorder {
+		return performRequest(
+			r,
+			http.MethodPatch,
+			"/api/items/-/read-all",
+			mustJSONBody(t, body),
+			map[string]string{"Content-Type": "application/json"},
+		)
+	}
+	assertUnread := func(id int64, want bool) {
+		t.Helper()
+		item, err := st.GetItem(id)
+		if err != nil {
+			t.Fatalf("GetItem(%d): %v", id, err)
+		}
+		if item.Unread != want {
+			t.Fatalf("item %d unread = %v, want %v", id, item.Unread, want)
+		}
+	}
+
+	if w := request(gin.H{"feed_id": feed1.ID}); w.Code != http.StatusNoContent {
+		t.Fatalf("feed scope: expected status 204, got %d", w.Code)
+	}
+	assertUnread(item1.ID, false)
+	assertUnread(item2.ID, true)
+	assertUnread(item3.ID, true)
+
+	if w := request(gin.H{"group_id": group1.ID}); w.Code != http.StatusNoContent {
+		t.Fatalf("group scope: expected status 204, got %d", w.Code)
+	}
+	assertUnread(item1.ID, false)
+	assertUnread(item2.ID, false)
+	assertUnread(item3.ID, true)
+
+	if w := request(gin.H{}); w.Code != http.StatusNoContent {
+		t.Fatalf("global scope: expected status 204, got %d", w.Code)
+	}
+	assertUnread(item3.ID, false)
+
+	for _, body := range []any{
+		gin.H{"feed_id": feed1.ID, "group_id": group1.ID},
+		gin.H{"feed_id": 0},
+		gin.H{"group_id": 0},
+	} {
+		if w := request(body); w.Code != http.StatusBadRequest {
+			t.Fatalf("invalid scope: expected status 400, got %d", w.Code)
+		}
+	}
+}
+
 func TestTranslateItemPreviewAndContent(t *testing.T) {
 	h, st := newFeverTestHandler(t)
 	group, err := st.CreateGroup("Translation")

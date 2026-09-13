@@ -265,6 +265,25 @@ export function useMarkItemsUnread() {
   return useSetItemsReadState(true);
 }
 
+export function useMarkAllItemsRead() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      scope: Parameters<typeof itemAPI.markAllRead>[0] = {},
+    ) => {
+      await itemAPI.markAllRead(scope);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: queryKeys.items.all }),
+        qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+        qc.invalidateQueries({ queryKey: queryKeys.bookmarks.all }),
+      ]);
+    },
+  });
+}
+
 function applyTranslatedItems(qc: QueryClient, items: Item[]) {
   const byID = new Map(items.map((item) => [item.id, item]));
 

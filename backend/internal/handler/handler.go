@@ -158,6 +158,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 			auth.PUT("/settings/translation", h.updateTranslationSettings)
 			auth.POST("/settings/translation/test", h.testTranslationSettings)
 			auth.PATCH("/items/-/read", h.markItemsRead)
+			auth.PATCH("/items/-/read-all", h.markAllItemsRead)
 			auth.PATCH("/items/-/unread", h.markItemsUnread)
 
 			auth.GET("/search", h.search)

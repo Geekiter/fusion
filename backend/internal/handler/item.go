@@ -3,6 +3,7 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
@@ -22,6 +23,11 @@ const maxBatchUpdateIDs = 1000
 
 type markItemsReadRequest struct {
 	IDs []int64 `json:"ids" binding:"required"`
+}
+
+type markAllItemsReadRequest struct {
+	FeedID  *int64 `json:"feed_id"`
+	GroupID *int64 `json:"group_id"`
 }
 
 type translateItemsRequest struct {
@@ -155,6 +161,38 @@ func (h *Handler) markItemsRead(c *gin.Context) {
 
 	if err := h.store.BatchUpdateItemsUnread(req.IDs, false); err != nil {
 		internalError(c, err, "mark items as read")
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) markAllItemsRead(c *gin.Context) {
+	var req markAllItemsReadRequest
+	if err := c.ShouldBindJSON(&req); err != nil && !errors.Is(err, io.EOF) {
+		badRequestError(c, "invalid request")
+		return
+	}
+	if req.FeedID != nil && req.GroupID != nil {
+		badRequestError(c, "feed_id and group_id are mutually exclusive")
+		return
+	}
+	if (req.FeedID != nil && *req.FeedID <= 0) || (req.GroupID != nil && *req.GroupID <= 0) {
+		badRequestError(c, "invalid scope")
+		return
+	}
+
+	var err error
+	switch {
+	case req.FeedID != nil:
+		err = h.store.MarkAllAsRead(req.FeedID)
+	case req.GroupID != nil:
+		err = h.store.MarkGroupAsRead(*req.GroupID)
+	default:
+		err = h.store.MarkAllAsRead(nil)
+	}
+	if err != nil {
+		internalError(c, err, "mark all items as read")
 		return
 	}
 

@@ -139,6 +139,11 @@ export interface MarkItemsReadRequest {
   ids: number[];
 }
 
+export interface MarkAllItemsReadRequest {
+  feed_id?: number;
+  group_id?: number;
+}
+
 export interface TranslateItemsRequest {
   ids: number[];
 }
