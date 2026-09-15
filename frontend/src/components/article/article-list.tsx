@@ -27,17 +27,11 @@ import { useArticleList } from "@/hooks/use-article-list";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import {
-  useMarkAllItemsRead,
   useMarkItemsRead,
   useMarkItemsUnread,
   useTranslateItemPreviews,
 } from "@/queries/items";
-import {
-  useFeedLookup,
-  useRefreshFeed,
-  useRefreshFeeds,
-  useUnreadCounts,
-} from "@/queries/feeds";
+import { useFeedLookup, useRefreshFeed, useRefreshFeeds } from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
 import { getFaviconUrl } from "@/lib/api/favicon";
@@ -74,7 +68,6 @@ export function ArticleList() {
   const { data: groups = [] } = useGroups();
   const { feeds, getFeedById, isLoading: isFeedsLoading } = useFeedLookup();
   const markItemsRead = useMarkItemsRead();
-  const markAllItemsRead = useMarkAllItemsRead();
   const markItemsUnread = useMarkItemsUnread();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
@@ -120,12 +113,7 @@ export function ArticleList() {
     [getFeedById],
   );
 
-  const { getGroupUnreadCount, getTotalUnreadCount } = useUnreadCounts();
-  const unreadCount = selectedFeedId
-    ? (selectedFeed?.unread_count ?? 0)
-    : selectedGroupId
-      ? getGroupUnreadCount(selectedGroupId)
-      : getTotalUnreadCount();
+  const unreadCount = articles.filter((a) => a.unread).length;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
   const translatableItems = articles.filter((article) => {
     if (article.id <= 0) return false;
@@ -173,16 +161,14 @@ export function ArticleList() {
   );
 
   const handleMarkAllAsRead = async () => {
-    if (unreadCount === 0) return;
+    const unreadIds = articles
+      .filter((a) => a.unread && a.id > 0)
+      .map((a) => a.id);
+
+    if (unreadIds.length === 0) return;
 
     try {
-      await markAllItemsRead.mutateAsync(
-        selectedFeedId
-          ? { feed_id: selectedFeedId }
-          : selectedGroupId
-            ? { group_id: selectedGroupId }
-            : {},
-      );
+      await markItemsRead.mutateAsync(unreadIds);
     } catch (error) {
       console.error("Failed to mark all as read:", error);
     }
@@ -303,7 +289,7 @@ export function ArticleList() {
             variant="outline"
             size="sm"
             onClick={handleMarkAllAsRead}
-            disabled={unreadCount === 0 || markAllItemsRead.isPending}
+            disabled={unreadCount === 0 || markItemsRead.isPending}
             className="gap-1.5 text-xs"
           >
             <CheckCheck className="h-4 w-4" />
