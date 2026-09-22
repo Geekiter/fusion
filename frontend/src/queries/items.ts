@@ -16,6 +16,12 @@ import {
   type NormalizedItemFilters,
 } from "./keys";
 import { usePreferencesStore } from "@/store";
+import { useAISettingsStore } from "@/store";
+import {
+  summarizeInFrontend,
+  translateContentInFrontend,
+  translatePreviewsInFrontend,
+} from "@/lib/frontend-ai";
 import type { BookmarksInfiniteData } from "./bookmarks";
 
 type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
@@ -243,7 +249,10 @@ function useSetItemsReadState(targetUnread: boolean) {
       rollbackItemsMutation(qc, context);
     },
     onSettled: async () => {
-      await qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: queryKeys.items.all }),
+        qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+      ]);
     },
   });
 }
@@ -254,4 +263,150 @@ export function useMarkItemsRead() {
 
 export function useMarkItemsUnread() {
   return useSetItemsReadState(true);
+}
+
+export function useMarkAllItemsRead() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      scope: Parameters<typeof itemAPI.markAllRead>[0] = {},
+    ) => {
+      await itemAPI.markAllRead(scope);
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        qc.invalidateQueries({ queryKey: queryKeys.items.all }),
+        qc.invalidateQueries({ queryKey: queryKeys.feeds.all }),
+        qc.invalidateQueries({ queryKey: queryKeys.bookmarks.all }),
+      ]);
+    },
+  });
+}
+
+function applyTranslatedItems(qc: QueryClient, items: Item[]) {
+  const byID = new Map(items.map((item) => [item.id, item]));
+
+  qc.setQueriesData<ItemsInfiniteData>(
+    { queryKey: queryKeys.items.lists() },
+    (old) => {
+      if (!old) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page) => ({
+          ...page,
+          data: page.data.map((item) => byID.get(item.id) ?? item),
+        })),
+      };
+    },
+  );
+
+  for (const item of items) {
+    qc.setQueryData(queryKeys.items.detail(item.id), item);
+  }
+
+  qc.setQueriesData<BookmarksInfiniteData>(
+    { queryKey: queryKeys.bookmarks.lists() },
+    (old) => {
+      if (!old) return old;
+      return {
+        ...old,
+        pages: old.pages.map((page) => ({
+          ...page,
+          data: page.data.map((bookmark) => {
+            if (bookmark.item_id == null) return bookmark;
+            const item = byID.get(bookmark.item_id);
+            return item
+              ? {
+                  ...bookmark,
+                  translated_title: item.translated_title,
+                  translated_summary: item.translated_summary,
+                  translated_content: item.translated_content,
+                  ai_summary: item.ai_summary,
+                }
+              : bookmark;
+          }),
+        })),
+      };
+    },
+  );
+}
+
+export function useTranslateItemPreviews() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (items: Item[]) => {
+      if (useAISettingsStore.getState().mode === "server") {
+        const response = await itemAPI.translatePreviews({
+          ids: items.map((item) => item.id),
+        });
+        return response.data!;
+      }
+
+      const translatedItems = await translatePreviewsInFrontend(items);
+      const translated = translatedItems.filter((item, index) => {
+        const original = items[index];
+        return (
+          item.translated_title !== original.translated_title ||
+          item.translated_summary !== original.translated_summary
+        );
+      }).length;
+      return {
+        items: translatedItems,
+        translated,
+        failed: items.length - translated,
+      };
+    },
+    onSuccess: (response) => {
+      applyTranslatedItems(qc, response.items);
+    },
+  });
+}
+
+export function useTranslateItemContent() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (item: Item) => {
+      if (useAISettingsStore.getState().mode === "frontend") {
+        return translateContentInFrontend(item);
+      }
+      const response = await itemAPI.translateContent(item.id);
+      return response.data!;
+    },
+    onSuccess: (item) => {
+      applyTranslatedItems(qc, [item]);
+    },
+  });
+}
+
+export function useSummarizeItem() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (item: Item) => {
+      if (useAISettingsStore.getState().mode === "frontend") {
+        return summarizeInFrontend(item);
+      }
+      const response = await itemAPI.summarize(item.id);
+      return response.data!;
+    },
+    onSuccess: (item) => {
+      applyTranslatedItems(qc, [item]);
+    },
+  });
+}
+
+export function useFetchItemFulltext() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (item: Item) => {
+      const response = await itemAPI.fetchFulltext(item.id);
+      return response.data!;
+    },
+    onSuccess: (item) => {
+      applyTranslatedItems(qc, [item]);
+    },
+  });
 }

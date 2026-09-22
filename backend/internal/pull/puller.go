@@ -12,20 +12,34 @@ import (
 	"github.com/0x2E/fusion/internal/model"
 	"github.com/0x2E/fusion/internal/pullpolicy"
 	"github.com/0x2E/fusion/internal/store"
+	"github.com/0x2E/fusion/internal/translate"
 	"golang.org/x/sync/semaphore"
 )
 
 type Puller struct {
-	store       *store.Store
-	config      *config.Config
-	logger      *slog.Logger
-	interval    time.Duration
-	timeout     time.Duration
-	maxBackoff  time.Duration
-	concurrency *semaphore.Weighted
+	store                 *store.Store
+	config                *config.Config
+	logger                *slog.Logger
+	interval              time.Duration
+	timeout               time.Duration
+	maxBackoff            time.Duration
+	concurrency           *semaphore.Weighted
+	translator            *translate.Translator
+	autoTranslateMu       sync.RWMutex
+	autoTranslateNewItems bool
 }
 
 func New(st *store.Store, cfg *config.Config) *Puller {
+	t := translate.New(translate.Config{
+		Enabled:     cfg.TranslateEnabled,
+		APIKey:      cfg.TranslateAPIKey,
+		APIURL:      cfg.TranslateAPIURL,
+		Model:       cfg.TranslateModel,
+		Models:      []string{cfg.TranslateModel},
+		FallbackURL: cfg.TranslateFallbackURL,
+		Prompts:     translate.DefaultPrompts(),
+	})
+
 	return &Puller{
 		store:       st,
 		config:      cfg,
@@ -34,7 +48,26 @@ func New(st *store.Store, cfg *config.Config) *Puller {
 		timeout:     time.Duration(cfg.PullTimeout) * time.Second,
 		maxBackoff:  time.Duration(cfg.PullMaxBackoff) * time.Second,
 		concurrency: semaphore.NewWeighted(int64(cfg.PullConcurrency)),
+		translator:  t,
 	}
+}
+
+func (p *Puller) UpdateTranslationConfig(cfg translate.Config) {
+	p.translator.UpdateConfig(cfg)
+}
+
+// SetAutoTranslateNewItems controls whether newly pulled articles are translated
+// before being saved. Manual translation remains available regardless of this.
+func (p *Puller) SetAutoTranslateNewItems(enabled bool) {
+	p.autoTranslateMu.Lock()
+	defer p.autoTranslateMu.Unlock()
+	p.autoTranslateNewItems = enabled
+}
+
+func (p *Puller) shouldAutoTranslateNewItems() bool {
+	p.autoTranslateMu.RLock()
+	defer p.autoTranslateMu.RUnlock()
+	return p.autoTranslateNewItems
 }
 
 // Start begins periodic feed pulling. Blocks until context is cancelled.
@@ -170,15 +203,48 @@ func (p *Puller) pullFeed(ctx context.Context, feed *model.Feed) {
 		result.ExpiresAt,
 	)
 
+	translations := map[int]string{}
+	if p.shouldAutoTranslateNewItems() {
+		guids := make([]string, len(result.Items))
+		for i, item := range result.Items {
+			guids[i] = item.GUID
+		}
+		existingGUIDs, err := p.store.ExistingItemGUIDs(feed.ID, guids)
+		if err != nil {
+			p.logger.Error("failed to check existing items", "feed_id", feed.ID, "error", err)
+			return
+		}
+
+		// Translate only items that are not already stored. Feed responses normally
+		// contain many old entries, so translating the full response would repeatedly
+		// spend API quota on duplicates that the insert below ignores.
+		titles := make([]string, len(result.Items))
+		for i, item := range result.Items {
+			if _, exists := existingGUIDs[item.GUID]; exists {
+				continue
+			}
+			titles[i] = item.Title
+			existingGUIDs[item.GUID] = struct{}{}
+		}
+		translations = p.translator.TranslateTitles(ctx, titles)
+		if len(translations) > 0 {
+			p.logger.Info("translated titles", "feed_id", feed.ID, "count", len(translations))
+		}
+	}
+
 	inputs := make([]store.BatchCreateItemInput, 0, len(result.Items))
-	for _, item := range result.Items {
-		inputs = append(inputs, store.BatchCreateItemInput{
+	for idx, item := range result.Items {
+		input := store.BatchCreateItemInput{
 			GUID:    item.GUID,
 			Title:   item.Title,
 			Link:    item.Link,
 			Content: item.Content,
 			PubDate: item.PubDate,
-		})
+		}
+		if t, ok := translations[idx]; ok {
+			input.TranslatedTitle = &t
+		}
+		inputs = append(inputs, input)
 	}
 
 	newCount, err := p.store.BatchCreateItemsIgnore(feed.ID, inputs)

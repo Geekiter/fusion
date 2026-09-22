@@ -13,7 +13,7 @@ export const groupQueries = {
       queryKey: queryKeys.groups.list(),
       queryFn: async () => {
         const res = await groupAPI.list();
-        return res.data;
+        return [...res.data].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true }));
       },
     }),
 };
@@ -31,7 +31,7 @@ export function useCreateGroup() {
     },
     onSuccess: (group) => {
       qc.setQueryData(queryKeys.groups.list(), (old: Group[] | undefined) =>
-        old ? [...old, group] : [group],
+        old ? [...old, group].sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })) : [group],
       );
     },
   });
@@ -46,7 +46,7 @@ export function useUpdateGroup() {
     },
     onSuccess: ({ id, name }) => {
       qc.setQueryData(queryKeys.groups.list(), (old: Group[] | undefined) =>
-        old?.map((g) => (g.id === id ? { ...g, name } : g)),
+        old?.map((g) => (g.id === id ? { ...g, name } : g)).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })),
       );
     },
   });

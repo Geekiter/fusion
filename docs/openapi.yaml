@@ -509,6 +509,27 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /items/-/read-all:
+    patch:
+      tags: [Items]
+      summary: Mark all items as read
+      description: Marks all items as read, optionally limited to one feed or group.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkAllItemsReadRequest"
+      responses:
+        "204":
+          description: Read state updated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /search:
     get:
       tags: [Search]
@@ -1056,6 +1077,19 @@ components:
           items:
             type: integer
             format: int64
+
+    MarkAllItemsReadRequest:
+      type: object
+      properties:
+        feed_id:
+          type: integer
+          format: int64
+          minimum: 1
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+      description: Leave empty to mark all items as read. Set exactly one of feed_id or group_id to limit the scope.
 
     SearchFeed:
       type: object

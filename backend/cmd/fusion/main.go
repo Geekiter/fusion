@@ -54,7 +54,7 @@ func run() error {
 		Handler:           r,
 		ReadHeaderTimeout: 5 * time.Second,
 		ReadTimeout:       15 * time.Second,
-		WriteTimeout:      30 * time.Second,
+		WriteTimeout:      180 * time.Second,
 		IdleTimeout:       60 * time.Second,
 	}
 

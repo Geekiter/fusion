@@ -12,6 +12,7 @@ import (
 	"github.com/0x2E/fusion/internal/auth"
 	"github.com/0x2E/fusion/internal/config"
 	"github.com/0x2E/fusion/internal/store"
+	"github.com/0x2E/fusion/internal/translate"
 	"github.com/gin-gonic/gin"
 )
 
@@ -25,11 +26,12 @@ type Handler struct {
 		RefreshFeed(ctx context.Context, feedID int64) error
 		RefreshAll(ctx context.Context) (int, error)
 	}
-	sessions  map[string]int64        // sessionID -> unix expiry seconds
-	mu        sync.RWMutex            // protects sessions state
-	oidcAuth  *auth.OIDCAuthenticator // nil when OIDC is disabled
-	limiter   *loginLimiter
-	lastSweep int64
+	sessions   map[string]int64        // sessionID -> unix expiry seconds
+	mu         sync.RWMutex            // protects sessions state
+	oidcAuth   *auth.OIDCAuthenticator // nil when OIDC is disabled
+	limiter    *loginLimiter
+	translator *translate.Translator
+	lastSweep  int64
 
 	refreshAllMu      sync.Mutex
 	refreshAllRunning bool
@@ -54,6 +56,20 @@ func New(store *store.Store, config *config.Config, puller interface {
 		puller:       puller,
 		sessions:     make(map[string]int64),
 		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
+		translator: translate.New(translate.Config{
+			Enabled:     config.TranslateEnabled,
+			APIKey:      config.TranslateAPIKey,
+			APIURL:      config.TranslateAPIURL,
+			Model:       config.TranslateModel,
+			Models:      []string{config.TranslateModel},
+			FallbackURL: config.TranslateFallbackURL,
+			Prompts:     translate.DefaultPrompts(),
+		}),
+	}
+	if settings, loadErr := h.loadTranslationSettings(); loadErr != nil {
+		slog.Warn("failed to load persisted translation settings", "error", loadErr)
+	} else {
+		h.applyTranslationSettings(settings)
 	}
 
 	if h.allowAnonAPI {
@@ -133,7 +149,16 @@ func (h *Handler) SetupRouter() *gin.Engine {
 
 			auth.GET("/items", h.listItems)
 			auth.GET("/items/:id", h.getItem)
+			auth.POST("/items/-/translate", h.translateItemPreviews)
+			auth.POST("/items/:id/translate", h.translateItemContent)
+			auth.POST("/items/:id/summarize", h.summarizeItem)
+			auth.POST("/items/:id/fulltext", h.fetchItemFullText)
+			auth.GET("/images/proxy", h.proxyArticleImage)
+			auth.GET("/settings/translation", h.getTranslationSettings)
+			auth.PUT("/settings/translation", h.updateTranslationSettings)
+			auth.POST("/settings/translation/test", h.testTranslationSettings)
 			auth.PATCH("/items/-/read", h.markItemsRead)
+			auth.PATCH("/items/-/read-all", h.markAllItemsRead)
 			auth.PATCH("/items/-/unread", h.markItemsUnread)
 
 			auth.GET("/search", h.search)

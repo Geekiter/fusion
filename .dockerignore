@@ -1,5 +1,6 @@
-*
-!Dockerfile
-!.dockerignore
-!build/
-!build/**
+.git
+node_modules
+build
+dist
+*.tar.gz
+._*

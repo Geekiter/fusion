@@ -36,6 +36,13 @@ type Config struct {
 	OIDCClientSecret string // OAuth2 client secret
 	OIDCRedirectURI  string // Callback URL (required when OIDC is enabled)
 	OIDCAllowedUser  string // Optional: restrict to specific user identity (email or sub)
+
+	// Translation Configuration (optional)
+	TranslateEnabled     bool   // Enable server-side manual translation and summaries
+	TranslateAPIURL      string // OpenAI-compatible API base URL
+	TranslateAPIKey      string // API key for translation service
+	TranslateModel       string // Model name (e.g. "openai/gpt-oss-20b:free")
+	TranslateFallbackURL string // Optional rate-limit fallback API URL
 }
 
 func Load() (*Config, error) {
@@ -128,6 +135,15 @@ func Load() (*Config, error) {
 		logFormat = "auto"
 	}
 
+	translateEnabled, err := getEnvBool("FUSION_TRANSLATE_ENABLED", false)
+	if err != nil {
+		return nil, err
+	}
+	translateAPIKey := getEnvString("FUSION_TRANSLATE_API_KEY", "")
+	if translateEnabled && strings.TrimSpace(translateAPIKey) == "" {
+		return nil, fmt.Errorf("FUSION_TRANSLATE_API_KEY is required when translation is enabled")
+	}
+
 	return &Config{
 		DBPath:             dbPath,
 		Password:           password,
@@ -151,6 +167,12 @@ func Load() (*Config, error) {
 		OIDCClientSecret: os.Getenv("FUSION_OIDC_CLIENT_SECRET"),
 		OIDCRedirectURI:  os.Getenv("FUSION_OIDC_REDIRECT_URI"),
 		OIDCAllowedUser:  os.Getenv("FUSION_OIDC_ALLOWED_USER"),
+
+		TranslateEnabled:     translateEnabled,
+		TranslateAPIURL:      getEnvString("FUSION_TRANSLATE_API_URL", "https://openrouter.ai/api/v1"),
+		TranslateAPIKey:      translateAPIKey,
+		TranslateModel:       getEnvString("FUSION_TRANSLATE_MODEL", "openai/gpt-oss-20b:free"),
+		TranslateFallbackURL: getEnvString("FUSION_TRANSLATE_FALLBACK_URL", "https://api.mymemory.translated.net/get"),
 	}, nil
 }
 

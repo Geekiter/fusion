@@ -3,10 +3,13 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/0x2E/fusion/internal/model"
+	"github.com/0x2E/fusion/internal/translate"
 	"github.com/gin-gonic/gin"
 )
 
@@ -43,6 +46,245 @@ func TestMarkItemsBatchValidation(t *testing.T) {
 				t.Fatalf("expected status 400, got %d", w.Code)
 			}
 		})
+	}
+}
+
+func TestMarkAllItemsRead(t *testing.T) {
+	h, st := newFeverTestHandler(t)
+	group1, err := st.CreateGroup("Group 1")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	group2, err := st.CreateGroup("Group 2")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	feed1, err := st.CreateFeed(group1.ID, "Feed 1", "https://example.com/feed-1", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	feed2, err := st.CreateFeed(group1.ID, "Feed 2", "https://example.com/feed-2", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	feed3, err := st.CreateFeed(group2.ID, "Feed 3", "https://example.com/feed-3", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	item1, err := st.CreateItem(feed1.ID, "item-1", "Item 1", "https://example.com/item-1", "content", 1)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+	item2, err := st.CreateItem(feed2.ID, "item-2", "Item 2", "https://example.com/item-2", "content", 2)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+	item3, err := st.CreateItem(feed3.ID, "item-3", "Item 3", "https://example.com/item-3", "content", 3)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+
+	r := newTestRouter()
+	r.PATCH("/api/items/-/read-all", h.markAllItemsRead)
+
+	request := func(body any) *httptest.ResponseRecorder {
+		return performRequest(
+			r,
+			http.MethodPatch,
+			"/api/items/-/read-all",
+			mustJSONBody(t, body),
+			map[string]string{"Content-Type": "application/json"},
+		)
+	}
+	assertUnread := func(id int64, want bool) {
+		t.Helper()
+		item, err := st.GetItem(id)
+		if err != nil {
+			t.Fatalf("GetItem(%d): %v", id, err)
+		}
+		if item.Unread != want {
+			t.Fatalf("item %d unread = %v, want %v", id, item.Unread, want)
+		}
+	}
+
+	if w := request(gin.H{"feed_id": feed1.ID}); w.Code != http.StatusNoContent {
+		t.Fatalf("feed scope: expected status 204, got %d", w.Code)
+	}
+	assertUnread(item1.ID, false)
+	assertUnread(item2.ID, true)
+	assertUnread(item3.ID, true)
+
+	if w := request(gin.H{"group_id": group1.ID}); w.Code != http.StatusNoContent {
+		t.Fatalf("group scope: expected status 204, got %d", w.Code)
+	}
+	assertUnread(item1.ID, false)
+	assertUnread(item2.ID, false)
+	assertUnread(item3.ID, true)
+
+	if w := request(gin.H{}); w.Code != http.StatusNoContent {
+		t.Fatalf("global scope: expected status 204, got %d", w.Code)
+	}
+	assertUnread(item3.ID, false)
+
+	for _, body := range []any{
+		gin.H{"feed_id": feed1.ID, "group_id": group1.ID},
+		gin.H{"feed_id": 0},
+		gin.H{"group_id": 0},
+	} {
+		if w := request(body); w.Code != http.StatusBadRequest {
+			t.Fatalf("invalid scope: expected status 400, got %d", w.Code)
+		}
+	}
+}
+
+func TestTranslateItemPreviewAndContent(t *testing.T) {
+	h, st := newFeverTestHandler(t)
+	group, err := st.CreateGroup("Translation")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	feed, err := st.CreateFeed(group.ID, "Feed", "https://example.com/translate-feed", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	item, err := st.CreateItem(feed.ID, "translate-item", "OpenAI launches a new model", "https://example.com/item", "<p>This is a useful English summary and full article body.</p>", 100)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+
+	translationServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var request struct {
+			Messages []struct {
+				Content string `json:"content"`
+			} `json:"messages"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+			t.Fatalf("decode translation request: %v", err)
+		}
+		content := "这是翻译后的完整正文。"
+		if len(request.Messages) > 1 && strings.Contains(request.Messages[1].Content, "合法 JSON") {
+			content = `{"title":"OpenAI 发布新模型","summary":"这是中文摘要"}`
+		}
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"choices": []any{map[string]any{"message": map[string]any{"content": content}}},
+		})
+	}))
+	defer translationServer.Close()
+	h.translator = translate.New(translate.Config{
+		Enabled: true,
+		APIKey:  "test-key",
+		APIURL:  translationServer.URL,
+		Model:   "test-model",
+	})
+
+	r := newTestRouter()
+	r.POST("/api/items/-/translate", h.translateItemPreviews)
+	r.POST("/api/items/:id/translate", h.translateItemContent)
+
+	w := performRequest(
+		r,
+		http.MethodPost,
+		"/api/items/-/translate",
+		mustJSONBody(t, gin.H{"ids": []int64{item.ID}}),
+		map[string]string{"Content-Type": "application/json"},
+	)
+	if w.Code != http.StatusOK {
+		t.Fatalf("preview translation status=%d body=%s", w.Code, w.Body.String())
+	}
+
+	w = performRequest(
+		r,
+		http.MethodPost,
+		"/api/items/"+strconv.FormatInt(item.ID, 10)+"/translate",
+		nil,
+		nil,
+	)
+	if w.Code != http.StatusOK {
+		t.Fatalf("content translation status=%d body=%s", w.Code, w.Body.String())
+	}
+
+	updated, err := st.GetItem(item.ID)
+	if err != nil {
+		t.Fatalf("GetItem: %v", err)
+	}
+	if updated.TranslatedTitle == nil || *updated.TranslatedTitle != "OpenAI 发布新模型" {
+		t.Fatalf("unexpected translated title: %#v", updated.TranslatedTitle)
+	}
+	if updated.TranslatedSummary == nil || *updated.TranslatedSummary != "这是中文摘要" {
+		t.Fatalf("unexpected translated summary: %#v", updated.TranslatedSummary)
+	}
+	if updated.TranslatedContent == nil || *updated.TranslatedContent != "这是翻译后的完整正文。" {
+		t.Fatalf("unexpected translated content: %#v", updated.TranslatedContent)
+	}
+}
+
+func TestFetchItemFullText(t *testing.T) {
+	h, st := newFeverTestHandler(t)
+	h.config.AllowPrivateFeeds = true
+
+	articleServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`
+			<html><body><article>
+				<p>The full article starts here and contains substantially more content than the RSS summary.</p>
+				<p>It has a second paragraph so the extractor can reliably identify the article body.</p>
+			</article></body></html>`))
+	}))
+	defer articleServer.Close()
+
+	group, err := st.CreateGroup("Full text")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	feed, err := st.CreateFeed(group.ID, "Feed", "https://example.com/feed", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	item, err := st.CreateItem(feed.ID, "full-text-item", "Article", articleServer.URL+"/article", "<p>RSS summary</p>", 100)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+	oldTranslation := "Old translation"
+	if err := st.UpdateItemTranslations(item.ID, nil, nil, &oldTranslation); err != nil {
+		t.Fatalf("UpdateItemTranslations: %v", err)
+	}
+	if err := st.UpdateItemAISummary(item.ID, "Old summary"); err != nil {
+		t.Fatalf("UpdateItemAISummary: %v", err)
+	}
+
+	r := newTestRouter()
+	r.POST("/api/items/:id/fulltext", h.fetchItemFullText)
+	w := performRequest(r, http.MethodPost, "/api/items/"+strconv.FormatInt(item.ID, 10)+"/fulltext", nil, nil)
+	if w.Code != http.StatusOK {
+		t.Fatalf("full text status=%d body=%s", w.Code, w.Body.String())
+	}
+
+	var response struct {
+		Data model.Item `json:"data"`
+	}
+	if err := json.Unmarshal(w.Body.Bytes(), &response); err != nil {
+		t.Fatalf("decode response: %v", err)
+	}
+	if response.Data.ExtractedContent == nil || !strings.Contains(*response.Data.ExtractedContent, "full article starts") {
+		t.Fatalf("unexpected extracted content: %#v", response.Data.ExtractedContent)
+	}
+	if response.Data.TranslatedContent != nil || response.Data.AISummary != nil {
+		t.Fatalf("derived content was not cleared: translation=%#v summary=%#v", response.Data.TranslatedContent, response.Data.AISummary)
+	}
+
+	updated, err := st.GetItem(item.ID)
+	if err != nil {
+		t.Fatalf("GetItem: %v", err)
+	}
+	if updated.ExtractedContent == nil || updated.TranslatedContent != nil || updated.AISummary != nil {
+		t.Fatalf("unexpected persisted item: %#v", updated)
+	}
+}
+
+func TestItemTextForAIPrefersExtractedContent(t *testing.T) {
+	extracted := "<p>Full article text</p>"
+	item := &model.Item{Content: "<p>RSS summary</p>", ExtractedContent: &extracted}
+	if got := itemTextForAI(item); got != "Full article text" {
+		t.Fatalf("itemTextForAI() = %q, want extracted article text", got)
 	}
 }
 

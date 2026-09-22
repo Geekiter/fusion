@@ -25,7 +25,8 @@ type ListBookmarksParams struct {
 func (s *Store) ListBookmarks(params ListBookmarksParams) ([]*model.Bookmark, error) {
 	query := `
 		SELECT b.id, b.item_id, b.link, b.title, b.content, b.pub_date, b.feed_name, b.feed_id, b.created_at,
-		       COALESCE(i.unread, 0) AS unread
+		       COALESCE(i.unread, 0) AS unread,
+		       i.translated_title, i.translated_summary, i.translated_content, i.ai_summary
 		FROM bookmarks b
 	`
 	args := []any{}
@@ -72,7 +73,7 @@ func (s *Store) ListBookmarks(params ListBookmarksParams) ([]*model.Bookmark, er
 	for rows.Next() {
 		b := &model.Bookmark{}
 		var unread int
-		if err := rows.Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.FeedID, &b.CreatedAt, &unread); err != nil {
+		if err := rows.Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.FeedID, &b.CreatedAt, &unread, &b.TranslatedTitle, &b.TranslatedSummary, &b.TranslatedContent, &b.AISummary); err != nil {
 			return nil, err
 		}
 		b.Unread = intToBool(unread)
@@ -86,11 +87,12 @@ func (s *Store) GetBookmark(id int64) (*model.Bookmark, error) {
 	var unread int
 	err := s.db.QueryRow(`
 		SELECT b.id, b.item_id, b.link, b.title, b.content, b.pub_date, b.feed_name, b.feed_id, b.created_at,
-		       COALESCE(i.unread, 0) AS unread
+		       COALESCE(i.unread, 0) AS unread,
+		       i.translated_title, i.translated_summary, i.translated_content, i.ai_summary
 		FROM bookmarks b
 		LEFT JOIN items i ON i.id = b.item_id
 		WHERE b.id = :id
-	`, sql.Named("id", id)).Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.FeedID, &b.CreatedAt, &unread)
+	`, sql.Named("id", id)).Scan(&b.ID, &b.ItemID, &b.Link, &b.Title, &b.Content, &b.PubDate, &b.FeedName, &b.FeedID, &b.CreatedAt, &unread, &b.TranslatedTitle, &b.TranslatedSummary, &b.TranslatedContent, &b.AISummary)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: bookmark", ErrNotFound)

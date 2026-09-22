@@ -414,6 +414,62 @@ func TestBatchUpdateItemsUnreadChunked(t *testing.T) {
 	}
 }
 
+func TestExistingItemGUIDs(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Existing GUID Group")
+	feed := mustCreateFeed(t, store, group.ID, "Existing GUID Feed", "https://example.com/existing", "https://example.com", "")
+	otherFeed := mustCreateFeed(t, store, group.ID, "Other Feed", "https://example.com/other", "https://example.com", "")
+	mustCreateItem(t, store, feed.ID, "present-1", "Item 1", "https://example.com/1", "Content", 100)
+	mustCreateItem(t, store, feed.ID, "present-2", "Item 2", "https://example.com/2", "Content", 200)
+	mustCreateItem(t, store, otherFeed.ID, "other-feed", "Item 3", "https://example.com/3", "Content", 300)
+
+	guids := []string{"present-1", "missing", "present-2", "present-1", "other-feed"}
+	existing, err := store.ExistingItemGUIDs(feed.ID, guids)
+	if err != nil {
+		t.Fatalf("ExistingItemGUIDs() failed: %v", err)
+	}
+	if len(existing) != 2 {
+		t.Fatalf("expected 2 existing GUIDs, got %d", len(existing))
+	}
+	for _, guid := range []string{"present-1", "present-2"} {
+		if _, ok := existing[guid]; !ok {
+			t.Errorf("expected %q to exist", guid)
+		}
+	}
+}
+
+func TestUpdateItemTranslations(t *testing.T) {
+	store, _ := setupTestDB(t)
+	defer closeStore(t, store)
+
+	group := mustCreateGroup(t, store, "Translation Group")
+	feed := mustCreateFeed(t, store, group.ID, "Translation Feed", "https://example.com/translation", "https://example.com", "")
+	item := mustCreateItem(t, store, feed.ID, "translation-guid", "English title", "https://example.com/item", "English content", 100)
+
+	title := "中文标题"
+	summary := "中文摘要"
+	content := "中文正文"
+	if err := store.UpdateItemTranslations(item.ID, &title, &summary, &content); err != nil {
+		t.Fatalf("UpdateItemTranslations() failed: %v", err)
+	}
+
+	updated, err := store.GetItem(item.ID)
+	if err != nil {
+		t.Fatalf("GetItem() failed: %v", err)
+	}
+	if updated.TranslatedTitle == nil || *updated.TranslatedTitle != title {
+		t.Fatalf("unexpected translated title: %#v", updated.TranslatedTitle)
+	}
+	if updated.TranslatedSummary == nil || *updated.TranslatedSummary != summary {
+		t.Fatalf("unexpected translated summary: %#v", updated.TranslatedSummary)
+	}
+	if updated.TranslatedContent == nil || *updated.TranslatedContent != content {
+		t.Fatalf("unexpected translated content: %#v", updated.TranslatedContent)
+	}
+}
+
 func TestMarkAllAsRead(t *testing.T) {
 	store, _ := setupTestDB(t)
 	defer closeStore(t, store)

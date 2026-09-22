@@ -12,7 +12,7 @@ func (s *Store) ListGroups() ([]*model.Group, error) {
 	rows, err := s.db.Query(`
 		SELECT id, name, created_at, updated_at
 		FROM groups
-		ORDER BY id
+		ORDER BY name
 	`)
 	if err != nil {
 		return nil, err

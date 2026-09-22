@@ -28,7 +28,8 @@ type ListItemsParams struct {
 
 func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	query := `
-		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.content, items.pub_date, items.unread, items.created_at
+		SELECT items.id, items.feed_id, items.guid, items.title, items.link, items.content, items.pub_date, items.unread, items.created_at,
+		       items.translated_title, items.translated_summary, items.translated_content, items.ai_summary, items.extracted_content
 		FROM items
 	`
 	args := []any{}
@@ -82,7 +83,7 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	for rows.Next() {
 		i := &model.Item{}
 		var unread int
-		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt); err != nil {
+		if err := scanItem(rows, i, &unread); err != nil {
 			return nil, err
 		}
 		i.Unread = intToBool(unread)
@@ -94,11 +95,13 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 func (s *Store) GetItem(id int64) (*model.Item, error) {
 	i := &model.Item{}
 	var unread int
-	err := s.db.QueryRow(`
-		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at
+	row := s.db.QueryRow(`
+		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at,
+		       translated_title, translated_summary, translated_content, ai_summary, extracted_content
 		FROM items
 		WHERE id = :id
-	`, sql.Named("id", id)).Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt)
+	`, sql.Named("id", id))
+	err := scanItem(row, i, &unread)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, fmt.Errorf("%w: item", ErrNotFound)
@@ -108,6 +111,29 @@ func (s *Store) GetItem(id int64) (*model.Item, error) {
 
 	i.Unread = intToBool(unread)
 	return i, nil
+}
+
+type itemScanner interface {
+	Scan(dest ...any) error
+}
+
+func scanItem(scanner itemScanner, item *model.Item, unread *int) error {
+	return scanner.Scan(
+		&item.ID,
+		&item.FeedID,
+		&item.GUID,
+		&item.Title,
+		&item.Link,
+		&item.Content,
+		&item.PubDate,
+		unread,
+		&item.CreatedAt,
+		&item.TranslatedTitle,
+		&item.TranslatedSummary,
+		&item.TranslatedContent,
+		&item.AISummary,
+		&item.ExtractedContent,
+	)
 }
 
 func (s *Store) CreateItem(feedID int64, guid, title, link, content string, pubDate int64) (*model.Item, error) {
@@ -129,11 +155,12 @@ func (s *Store) CreateItem(feedID int64, guid, title, link, content string, pubD
 }
 
 type BatchCreateItemInput struct {
-	GUID    string
-	Title   string
-	Link    string
-	Content string
-	PubDate int64
+	GUID            string
+	Title           string
+	Link            string
+	Content         string
+	PubDate         int64
+	TranslatedTitle *string
 }
 
 // BatchCreateItemsIgnore inserts items in one transaction and ignores duplicates by (feed_id, guid).
@@ -150,8 +177,8 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 	defer tx.Rollback()
 
 	stmt, err := tx.Prepare(`
-		INSERT INTO items (feed_id, guid, title, link, content, pub_date)
-		VALUES (:feed_id, :guid, :title, :link, :content, :pub_date)
+		INSERT INTO items (feed_id, guid, title, link, content, pub_date, translated_title)
+		VALUES (:feed_id, :guid, :title, :link, :content, :pub_date, :translated_title)
 		ON CONFLICT(feed_id, guid) DO NOTHING
 	`)
 	if err != nil {
@@ -168,6 +195,7 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 			sql.Named("link", input.Link),
 			sql.Named("content", input.Content),
 			sql.Named("pub_date", input.PubDate),
+			sql.Named("translated_title", input.TranslatedTitle),
 		)
 		if err != nil {
 			return 0, err
@@ -187,6 +215,144 @@ func (s *Store) BatchCreateItemsIgnore(feedID int64, inputs []BatchCreateItemInp
 	}
 
 	return created, nil
+}
+
+// ExistingItemGUIDs returns the subset of guids already stored for a feed.
+// Queries are chunked to keep SQLite parameter counts bounded.
+func (s *Store) ExistingItemGUIDs(feedID int64, guids []string) (map[string]struct{}, error) {
+	existing := make(map[string]struct{})
+	if len(guids) == 0 {
+		return existing, nil
+	}
+
+	unique := make([]string, 0, len(guids))
+	seen := make(map[string]struct{}, len(guids))
+	for _, guid := range guids {
+		if _, ok := seen[guid]; ok {
+			continue
+		}
+		seen[guid] = struct{}{}
+		unique = append(unique, guid)
+	}
+
+	const chunkSize = 500
+	for start := 0; start < len(unique); start += chunkSize {
+		end := min(start+chunkSize, len(unique))
+		placeholders := make([]string, end-start)
+		args := make([]any, 0, end-start+1)
+		args = append(args, sql.Named("feed_id", feedID))
+		for i, guid := range unique[start:end] {
+			paramName := fmt.Sprintf("guid%d", i)
+			placeholders[i] = ":" + paramName
+			args = append(args, sql.Named(paramName, guid))
+		}
+
+		query := fmt.Sprintf(
+			`SELECT guid FROM items WHERE feed_id = :feed_id AND guid IN (%s)`,
+			strings.Join(placeholders, ","),
+		)
+		rows, err := s.db.Query(query, args...)
+		if err != nil {
+			return nil, err
+		}
+		for rows.Next() {
+			var guid string
+			if err := rows.Scan(&guid); err != nil {
+				rows.Close()
+				return nil, err
+			}
+			existing[guid] = struct{}{}
+		}
+		if err := rows.Err(); err != nil {
+			rows.Close()
+			return nil, err
+		}
+		rows.Close()
+	}
+
+	return existing, nil
+}
+
+// GetItemsByIDs returns existing items in request order and silently omits
+// unknown IDs. Callers validate request size before invoking it.
+func (s *Store) GetItemsByIDs(ids []int64) ([]*model.Item, error) {
+	items := make([]*model.Item, 0, len(ids))
+	for _, id := range ids {
+		item, err := s.GetItem(id)
+		if err != nil {
+			if errors.Is(err, ErrNotFound) {
+				continue
+			}
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
+// UpdateItemTranslations updates only non-nil translation fields.
+func (s *Store) UpdateItemTranslations(id int64, title, summary, content *string) error {
+	result, err := s.db.Exec(`
+		UPDATE items
+		SET translated_title = COALESCE(:translated_title, translated_title),
+		    translated_summary = COALESCE(:translated_summary, translated_summary),
+		    translated_content = COALESCE(:translated_content, translated_content)
+		WHERE id = :id
+	`,
+		sql.Named("translated_title", title),
+		sql.Named("translated_summary", summary),
+		sql.Named("translated_content", content),
+		sql.Named("id", id),
+	)
+	if err != nil {
+		return err
+	}
+	affected, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if affected == 0 {
+		return fmt.Errorf("%w: item", ErrNotFound)
+	}
+	return nil
+}
+
+func (s *Store) UpdateItemAISummary(id int64, summary string) error {
+	result, err := s.db.Exec(`UPDATE items SET ai_summary = :summary WHERE id = :id`, sql.Named("summary", summary), sql.Named("id", id))
+	if err != nil {
+		return fmt.Errorf("update item AI summary: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: item", ErrNotFound)
+	}
+	return nil
+}
+
+// UpdateItemExtractedContent saves explicitly fetched full text. Derived full-content
+// translation and summary are cleared because they no longer describe the source text.
+func (s *Store) UpdateItemExtractedContent(id int64, content string) error {
+	result, err := s.db.Exec(`
+		UPDATE items
+		SET extracted_content = :extracted_content,
+		    translated_content = NULL,
+		    ai_summary = NULL
+		WHERE id = :id
+	`, sql.Named("extracted_content", content), sql.Named("id", id))
+	if err != nil {
+		return fmt.Errorf("update item extracted content: %w", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
+		return fmt.Errorf("%w: item", ErrNotFound)
+	}
+	return nil
 }
 
 func (s *Store) UpdateItemUnread(id int64, unread bool) error {
@@ -334,7 +500,8 @@ type ListFeverItemsParams struct {
 
 func (s *Store) ListFeverItems(params ListFeverItemsParams) ([]*model.Item, error) {
 	query := `
-		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at
+		SELECT id, feed_id, guid, title, link, content, pub_date, unread, created_at,
+		       translated_title, translated_summary, translated_content, ai_summary, extracted_content
 		FROM items
 		WHERE 1=1
 	`
@@ -381,7 +548,7 @@ func (s *Store) ListFeverItems(params ListFeverItemsParams) ([]*model.Item, erro
 	for rows.Next() {
 		i := &model.Item{}
 		var unread int
-		if err := rows.Scan(&i.ID, &i.FeedID, &i.GUID, &i.Title, &i.Link, &i.Content, &i.PubDate, &unread, &i.CreatedAt); err != nil {
+		if err := scanItem(rows, i, &unread); err != nil {
 			return nil, err
 		}
 		i.Unread = intToBool(unread)

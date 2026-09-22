@@ -12,6 +12,8 @@ const ALLOWED_TAGS = [
   "s",
   "a",
   "img",
+  "picture",
+  "source",
   "h1",
   "h2",
   "h3",
@@ -39,10 +41,39 @@ const ALLOWED_TAGS = [
   "summary",
 ];
 
-const ALLOWED_ATTR = ["href", "src", "alt", "title", "class", "target", "rel", "open"];
+const ALLOWED_ATTR = [
+  "href",
+  "src",
+  "srcset",
+  "sizes",
+  "type",
+  "media",
+  "alt",
+  "title",
+  "class",
+  "target",
+  "rel",
+  "width",
+  "height",
+  "loading",
+  "decoding",
+  "data-src",
+  "data-lazy-src",
+  "data-original",
+  "data-srcset",
+  "open",
+];
 
 // Tags that are meaningful even when empty
-const SELF_CLOSING_TAGS = new Set(["br", "hr", "img", "td", "th", "li"]);
+const SELF_CLOSING_TAGS = new Set([
+  "br",
+  "hr",
+  "img",
+  "source",
+  "td",
+  "th",
+  "li",
+]);
 
 const TRACKER_PATTERNS = [
   /feedburner/i,
@@ -93,17 +124,96 @@ function sanitizeAnchors(root: DocumentFragment, articleUrl: string | null): voi
 function sanitizeImages(root: DocumentFragment, articleUrl: string | null): void {
   for (const node of root.querySelectorAll("img")) {
     const img = node as HTMLImageElement;
-    const safeSrc = resolveSafeExternalUrl(node.getAttribute("src"), articleUrl);
-    if (!safeSrc) {
+    const rawSrc =
+      node.getAttribute("src") ||
+      node.getAttribute("data-src") ||
+      node.getAttribute("data-lazy-src") ||
+      node.getAttribute("data-original");
+    const resolvedSrc = resolveSafeExternalUrl(rawSrc, articleUrl);
+    const safeSrc = resolvedSrc ? proxyArticleImageUrl(resolvedSrc) : null;
+    const safeSrcset = sanitizeSrcset(
+      node.getAttribute("srcset") || node.getAttribute("data-srcset"),
+      articleUrl,
+    );
+    if (!safeSrc && !safeSrcset) {
       img.remove();
       continue;
     }
 
-    img.setAttribute("src", safeSrc);
+    if (safeSrc) img.setAttribute("src", safeSrc);
+    else img.removeAttribute("src");
+    if (safeSrcset) img.setAttribute("srcset", safeSrcset);
+    else img.removeAttribute("srcset");
+    for (const attr of ["data-src", "data-lazy-src", "data-original", "data-srcset"]) {
+      img.removeAttribute(attr);
+    }
+    img.setAttribute("loading", "lazy");
+    img.setAttribute("decoding", "async");
     if (isTrackingPixel(img)) {
       img.remove();
     }
   }
+
+  for (const node of root.querySelectorAll("source")) {
+    const safeSrcset = sanitizeSrcset(
+      node.getAttribute("srcset") || node.getAttribute("data-srcset"),
+      articleUrl,
+    );
+    if (!safeSrcset) {
+      node.remove();
+      continue;
+    }
+    node.setAttribute("srcset", safeSrcset);
+    node.removeAttribute("data-srcset");
+  }
+}
+
+function sanitizeSrcset(
+  raw: string | null,
+  articleUrl: string | null,
+): string | null {
+  if (!raw) return null;
+
+  const candidates = raw
+    .split(",")
+    .map((candidate) => candidate.trim())
+    .filter(Boolean)
+    .map((candidate) => {
+      const [url, descriptor, ...rest] = candidate.split(/\s+/);
+      if (!url || rest.length > 0) return null;
+      const resolvedUrl = resolveSafeExternalUrl(url, articleUrl);
+      if (!resolvedUrl) return null;
+      const safeUrl = proxyArticleImageUrl(resolvedUrl);
+      if (
+        descriptor &&
+        !/^\d+w$/.test(descriptor) &&
+        !/^\d+(?:\.\d+)?x$/.test(descriptor)
+      ) {
+        return null;
+      }
+      return descriptor ? `${safeUrl} ${descriptor}` : safeUrl;
+    })
+    .filter((candidate): candidate is string => candidate !== null);
+
+  return candidates.length > 0 ? candidates.join(", ") : null;
+}
+
+export function proxyArticleImageUrl(url: string): string {
+  try {
+    const parsed = new URL(url);
+    if (
+      parsed.protocol === "https:" &&
+      !parsed.port &&
+      !parsed.username &&
+      !parsed.password &&
+      parsed.hostname
+    ) {
+      return `/api/images/proxy?url=${encodeURIComponent(url)}`;
+    }
+  } catch {
+    return url;
+  }
+  return url;
 }
 
 function removeEmptyWrappers(root: DocumentFragment): void {

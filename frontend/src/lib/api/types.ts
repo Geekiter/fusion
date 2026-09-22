@@ -46,6 +46,12 @@ export interface Item {
   pub_date: number;
   unread: boolean;
   created_at: number;
+  translated_title?: string;
+  translated_summary?: string;
+  translated_content?: string;
+  ai_summary?: string;
+  // Full article HTML fetched from the item's original link on demand.
+  extracted_content?: string;
 }
 
 export interface Bookmark {
@@ -59,6 +65,10 @@ export interface Bookmark {
   feed_id: number | null;
   unread: boolean;
   created_at: number;
+  translated_title?: string;
+  translated_summary?: string;
+  translated_content?: string;
+  ai_summary?: string;
 }
 
 // API response wrappers
@@ -127,6 +137,39 @@ export interface CreateBookmarkRequest {
 
 export interface MarkItemsReadRequest {
   ids: number[];
+}
+
+export interface MarkAllItemsReadRequest {
+  feed_id?: number;
+  group_id?: number;
+}
+
+export interface TranslateItemsRequest {
+  ids: number[];
+}
+
+export interface TranslateItemsResponse {
+  items: Item[];
+  translated: number;
+  failed: number;
+}
+
+export interface TranslationPrompts {
+  title: string;
+  preview: string;
+  content: string;
+  summary: string;
+}
+
+export interface TranslationSettings {
+  enabled: boolean;
+  auto_translate_new_items: boolean;
+  api_url: string;
+  api_key?: string;
+  api_key_configured: boolean;
+  models: string[];
+  fallback_url: string;
+  prompts: TranslationPrompts;
 }
 
 export interface ListItemsParams {

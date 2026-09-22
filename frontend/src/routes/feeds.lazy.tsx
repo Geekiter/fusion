@@ -40,6 +40,7 @@ import { cn } from "@/lib/utils";
 import {
   useFeedLookup,
   useMoveFeedsToGroup,
+  useRefreshFeed,
   useRefreshFeeds,
 } from "@/queries/feeds";
 import { useDeleteGroup, useGroups, useUpdateGroup } from "@/queries/groups";
@@ -61,6 +62,7 @@ function FeedsPage() {
   const deleteGroupMutation = useDeleteGroup();
   const moveFeedsMutation = useMoveFeedsToGroup();
   const refreshFeedsMutation = useRefreshFeeds();
+  const refreshFeedMutation = useRefreshFeed();
 
   const {
     setEditFeedOpen,
@@ -83,6 +85,7 @@ function FeedsPage() {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const [refreshConfirmOpen, setRefreshConfirmOpen] = useState(false);
+  const [refreshingFeedId, setRefreshingFeedId] = useState<number | null>(null);
   const [mobileErrorTooltipFeedId, setMobileErrorTooltipFeedId] = useState<
     number | null
   >(null);
@@ -137,6 +140,23 @@ function FeedsPage() {
       toast.success(t("feeds.toast.refreshing"));
     } catch {
       toast.error(t("feeds.toast.refreshFailed"));
+    }
+  };
+
+  const handleRefreshFeed = async (feed: Feed) => {
+    if (refreshingFeedId !== null) return;
+    setRefreshingFeedId(feed.id);
+    try {
+      await refreshFeedMutation.mutateAsync(feed.id);
+      toast.success(t("feeds.toast.refreshingOne", { name: feed.name }));
+    } catch {
+      toast.error(t("feeds.toast.refreshOneFailed", { name: feed.name }));
+    } finally {
+      window.setTimeout(() => {
+        setRefreshingFeedId((current) =>
+          current === feed.id ? null : current,
+        );
+      }, 3000);
     }
   };
 
@@ -358,6 +378,7 @@ function FeedsPage() {
                       editingGroupName={editingGroupName}
                       isMobile={isMobile}
                       mobileErrorTooltipFeedId={mobileErrorTooltipFeedId}
+                      refreshingFeedId={refreshingFeedId}
                       onToggleGroup={toggleGroup}
                       onStartEditingGroup={startEditingGroup}
                       onChangeEditingGroupName={setEditingGroupName}
@@ -368,6 +389,9 @@ function FeedsPage() {
                       onOpenAddFeed={() => setAddFeedOpen(true)}
                       onOpenDeleteGroup={setDeletingGroup}
                       onOpenEditFeed={(feed) => setEditFeedOpen(true, feed)}
+                      onRefreshFeed={(feed) => {
+                        void handleRefreshFeed(feed);
+                      }}
                       onChangeMobileErrorTooltipFeedId={setMobileErrorTooltipFeedId}
                       t={t}
                     />

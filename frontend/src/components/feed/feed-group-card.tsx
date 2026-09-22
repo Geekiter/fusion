@@ -1,4 +1,4 @@
-import { AlertCircle, ChevronDown, ChevronRight, Folder, Pause, Pencil, Plus, Trash2 } from "lucide-react";
+import { AlertCircle, ChevronDown, ChevronRight, Folder, Pause, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,7 @@ interface FeedGroupCardProps {
   editingGroupName: string;
   isMobile: boolean;
   mobileErrorTooltipFeedId: number | null;
+  refreshingFeedId: number | null;
   onToggleGroup: (groupId: number) => void;
   onStartEditingGroup: (group: Group) => void;
   onChangeEditingGroupName: (value: string) => void;
@@ -29,6 +30,7 @@ interface FeedGroupCardProps {
   onOpenAddFeed: () => void;
   onOpenDeleteGroup: (group: Group) => void;
   onOpenEditFeed: (feed: Feed) => void;
+  onRefreshFeed: (feed: Feed) => void;
   onChangeMobileErrorTooltipFeedId: Dispatch<SetStateAction<number | null>>;
   t: (key: TranslationKey, params?: Record<string, string | number>) => string;
 }
@@ -49,6 +51,7 @@ export function FeedGroupCard({
   editingGroupName,
   isMobile,
   mobileErrorTooltipFeedId,
+  refreshingFeedId,
   onToggleGroup,
   onStartEditingGroup,
   onChangeEditingGroupName,
@@ -57,6 +60,7 @@ export function FeedGroupCard({
   onOpenAddFeed,
   onOpenDeleteGroup,
   onOpenEditFeed,
+  onRefreshFeed,
   onChangeMobileErrorTooltipFeedId,
   t,
 }: FeedGroupCardProps) {
@@ -259,6 +263,21 @@ export function FeedGroupCard({
                     ? formatDate(feed.fetch_state.last_checked_at)
                     : t("common.unknown")}
                 </span>
+                <button
+                  type="button"
+                  onClick={() => onRefreshFeed(feed)}
+                  disabled={refreshingFeedId !== null}
+                  className="flex items-center gap-1 rounded px-1.5 py-1 text-xs text-muted-foreground hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                  aria-label={t("feeds.refreshOne")}
+                >
+                  <RefreshCw
+                    className={cn(
+                      "h-3.5 w-3.5",
+                      refreshingFeedId === feed.id && "animate-spin",
+                    )}
+                  />
+                  <span className="hidden sm:inline">{t("feeds.refreshOne")}</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => onOpenEditFeed(feed)}

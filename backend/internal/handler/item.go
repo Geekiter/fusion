@@ -3,10 +3,18 @@ package handler
 import (
 	"errors"
 	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 
+	"github.com/0x2E/fusion/internal/fulltext"
+	"github.com/0x2E/fusion/internal/model"
 	"github.com/0x2E/fusion/internal/store"
+	"github.com/0x2E/fusion/internal/translate"
 	"github.com/gin-gonic/gin"
 )
 
@@ -15,6 +23,21 @@ const maxBatchUpdateIDs = 1000
 
 type markItemsReadRequest struct {
 	IDs []int64 `json:"ids" binding:"required"`
+}
+
+type markAllItemsReadRequest struct {
+	FeedID  *int64 `json:"feed_id"`
+	GroupID *int64 `json:"group_id"`
+}
+
+type translateItemsRequest struct {
+	IDs []int64 `json:"ids" binding:"required"`
+}
+
+type translateItemsResponse struct {
+	Items      []*model.Item `json:"items"`
+	Translated int           `json:"translated"`
+	Failed     int           `json:"failed"`
 }
 
 func (h *Handler) listItems(c *gin.Context) {
@@ -144,6 +167,38 @@ func (h *Handler) markItemsRead(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
+func (h *Handler) markAllItemsRead(c *gin.Context) {
+	var req markAllItemsReadRequest
+	if err := c.ShouldBindJSON(&req); err != nil && !errors.Is(err, io.EOF) {
+		badRequestError(c, "invalid request")
+		return
+	}
+	if req.FeedID != nil && req.GroupID != nil {
+		badRequestError(c, "feed_id and group_id are mutually exclusive")
+		return
+	}
+	if (req.FeedID != nil && *req.FeedID <= 0) || (req.GroupID != nil && *req.GroupID <= 0) {
+		badRequestError(c, "invalid scope")
+		return
+	}
+
+	var err error
+	switch {
+	case req.FeedID != nil:
+		err = h.store.MarkAllAsRead(req.FeedID)
+	case req.GroupID != nil:
+		err = h.store.MarkGroupAsRead(*req.GroupID)
+	default:
+		err = h.store.MarkAllAsRead(nil)
+	}
+	if err != nil {
+		internalError(c, err, "mark all items as read")
+		return
+	}
+
+	c.Status(http.StatusNoContent)
+}
+
 func (h *Handler) markItemsUnread(c *gin.Context) {
 	var req markItemsReadRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -161,4 +216,231 @@ func (h *Handler) markItemsUnread(c *gin.Context) {
 	}
 
 	c.Status(http.StatusNoContent)
+}
+
+func (h *Handler) translateItemPreviews(c *gin.Context) {
+	var req translateItemsRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		badRequestError(c, "invalid request")
+		return
+	}
+	if len(req.IDs) == 0 || len(req.IDs) > maxListLimit {
+		badRequestError(c, "invalid ids")
+		return
+	}
+	if h.translator == nil {
+		internalError(c, errors.New("translator unavailable"), "translate item previews")
+		return
+	}
+
+	items, err := h.store.GetItemsByIDs(req.IDs)
+	if err != nil {
+		internalError(c, err, "get items for translation")
+		return
+	}
+
+	type result struct {
+		item    *model.Item
+		changed bool
+		err     error
+	}
+	jobs := make(chan *model.Item)
+	results := make(chan result, len(items))
+	workerCount := min(3, len(items))
+	var workers sync.WaitGroup
+	for range workerCount {
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for item := range jobs {
+				title := ""
+				if item.TranslatedTitle == nil {
+					title = item.Title
+				}
+				summary := ""
+				if item.TranslatedSummary == nil {
+					summary = translate.ExtractSummary(item.Content, 150)
+				}
+				translated, err := h.translator.TranslatePreview(c.Request.Context(), title, summary)
+				if err != nil {
+					results <- result{item: item, err: err}
+					continue
+				}
+				var translatedTitle, translatedSummary *string
+				if translated.Title != "" {
+					translatedTitle = &translated.Title
+				}
+				if translated.Summary != "" {
+					translatedSummary = &translated.Summary
+				}
+				changed := translatedTitle != nil || translatedSummary != nil
+				if changed {
+					if err := h.store.UpdateItemTranslations(item.ID, translatedTitle, translatedSummary, nil); err != nil {
+						results <- result{item: item, err: err}
+						continue
+					}
+					item, err = h.store.GetItem(item.ID)
+					if err != nil {
+						results <- result{item: item, err: err}
+						continue
+					}
+				}
+				results <- result{item: item, changed: changed}
+			}
+		}()
+	}
+	go func() {
+		for _, item := range items {
+			jobs <- item
+		}
+		close(jobs)
+		workers.Wait()
+		close(results)
+	}()
+
+	response := translateItemsResponse{Items: make([]*model.Item, 0, len(items))}
+	byID := make(map[int64]*model.Item, len(items))
+	for translatedResult := range results {
+		if translatedResult.err != nil {
+			response.Failed++
+			slog.Warn("item preview translation failed", "item_id", translatedResult.item.ID, "error", translatedResult.err)
+		} else if translatedResult.changed {
+			response.Translated++
+		}
+		byID[translatedResult.item.ID] = translatedResult.item
+	}
+	for _, item := range items {
+		response.Items = append(response.Items, byID[item.ID])
+	}
+	dataResponse(c, response)
+}
+
+func (h *Handler) translateItemContent(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		badRequestError(c, "invalid id")
+		return
+	}
+	if h.translator == nil {
+		internalError(c, errors.New("translator unavailable"), "translate item content")
+		return
+	}
+	item, err := h.store.GetItem(id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "item")
+			return
+		}
+		internalError(c, err, "get item for content translation")
+		return
+	}
+	if item.TranslatedContent == nil {
+		plainText := itemTextForAI(item)
+		translatedContent, err := h.translator.TranslateContent(c.Request.Context(), plainText)
+		if err != nil {
+			slog.Warn("item content translation failed", "item_id", id, "error", err)
+			c.JSON(http.StatusBadGateway, gin.H{"error": "content translation failed"})
+			return
+		}
+		if translatedContent != "" {
+			if err := h.store.UpdateItemTranslations(id, nil, nil, &translatedContent); err != nil {
+				internalError(c, err, "save item content translation")
+				return
+			}
+			item, err = h.store.GetItem(id)
+			if err != nil {
+				internalError(c, err, "get translated item")
+				return
+			}
+		}
+	}
+	dataResponse(c, item)
+}
+
+func (h *Handler) fetchItemFullText(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		badRequestError(c, "invalid id")
+		return
+	}
+	item, err := h.store.GetItem(id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "item")
+			return
+		}
+		internalError(c, err, "get item for full text extraction")
+		return
+	}
+	feed, err := h.store.GetFeed(item.FeedID)
+	if err != nil {
+		internalError(c, err, "get item feed for full text extraction")
+		return
+	}
+
+	allowPrivate := h.config != nil && h.config.AllowPrivateFeeds
+	content, err := fulltext.Fetch(c.Request.Context(), item.Link, feed.Proxy, 30*time.Second, allowPrivate)
+	if err != nil {
+		slog.Warn("item full text extraction failed", "item_id", id, "link", item.Link, "error", err)
+		c.JSON(http.StatusBadGateway, gin.H{"error": "full text extraction failed"})
+		return
+	}
+	if err := h.store.UpdateItemExtractedContent(id, content); err != nil {
+		internalError(c, err, "save item full text")
+		return
+	}
+	item, err = h.store.GetItem(id)
+	if err != nil {
+		internalError(c, err, "get item with full text")
+		return
+	}
+	dataResponse(c, item)
+}
+
+func (h *Handler) summarizeItem(c *gin.Context) {
+	id, err := strconv.ParseInt(c.Param("id"), 10, 64)
+	if err != nil || id <= 0 {
+		badRequestError(c, "invalid id")
+		return
+	}
+	item, err := h.store.GetItem(id)
+	if err != nil {
+		if errors.Is(err, store.ErrNotFound) {
+			notFoundError(c, "item")
+			return
+		}
+		internalError(c, err, "get item for summary")
+		return
+	}
+	if item.AISummary == nil {
+		plainText := itemTextForAI(item)
+		if item.TranslatedContent != nil && strings.TrimSpace(*item.TranslatedContent) != "" {
+			plainText = *item.TranslatedContent
+		}
+		summary, err := h.translator.Summarize(c.Request.Context(), plainText)
+		if err != nil {
+			slog.Warn("item summary failed", "item_id", id, "error", err)
+			c.JSON(http.StatusBadGateway, gin.H{"error": "article summary failed"})
+			return
+		}
+		if summary != "" {
+			if err := h.store.UpdateItemAISummary(id, summary); err != nil {
+				internalError(c, err, "save item summary")
+				return
+			}
+			item, err = h.store.GetItem(id)
+			if err != nil {
+				internalError(c, err, "get summarized item")
+				return
+			}
+		}
+	}
+	dataResponse(c, item)
+}
+
+func itemTextForAI(item *model.Item) string {
+	if item.ExtractedContent != nil && strings.TrimSpace(*item.ExtractedContent) != "" {
+		return translate.ExtractText(*item.ExtractedContent)
+	}
+	return translate.ExtractText(item.Content)
 }

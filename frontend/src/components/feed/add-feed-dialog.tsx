@@ -48,10 +48,6 @@ export function AddFeedDialog() {
   const [isValidating, setIsValidating] = useState(false);
   const [detectedFeeds, setDetectedFeeds] = useState<DiscoveredFeed[]>([]);
   const [isFeedSelectOpen, setIsFeedSelectOpen] = useState(false);
-  const groupItems = groups.map((group) => ({
-    value: group.id.toString(),
-    label: group.name,
-  }));
 
   const resetForm = () => {
     setUrl("");
@@ -222,19 +218,17 @@ export function AddFeedDialog() {
                 {t("feed.add.groupLabel")}
               </label>
               <Select
-                items={groupItems}
-                value={groupId || null}
-                onValueChange={(v) => {
-                  if (v) setGroupId(v);
-                }}
+                value={groupId}
+                onValueChange={(v) => { if (v) setGroupId(v); }}
+                items={Object.fromEntries(groups.map((g) => [g.id.toString(), g.name]))}
               >
                 <SelectTrigger className="h-10" aria-labelledby="add-feed-group-label">
                   <SelectValue placeholder={t("feed.add.groupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {groupItems.map((group) => (
-                    <SelectItem key={group.value} value={group.value}>
-                      {group.label}
+                  {groups.map((group) => (
+                    <SelectItem key={group.id} value={group.id.toString()}>
+                      {group.name}
                     </SelectItem>
                   ))}
                 </SelectContent>

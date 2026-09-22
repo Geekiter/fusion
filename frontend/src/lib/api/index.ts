@@ -15,6 +15,9 @@ import type {
   ValidateFeedResponse,
   CreateBookmarkRequest,
   MarkItemsReadRequest,
+  MarkAllItemsReadRequest,
+  TranslateItemsRequest,
+  TranslateItemsResponse,
   ListItemsParams,
   ListBookmarksParams,
   BatchCreateFeedsRequest,
@@ -22,6 +25,7 @@ import type {
   SearchResponse,
   OIDCStatusResponse,
   OIDCLoginResponse,
+  TranslationSettings,
 } from "./types";
 
 // Session APIs
@@ -73,6 +77,8 @@ export const feedAPI = {
 
   refresh: () => api.post<void>("/feeds/refresh"),
 
+  refreshOne: (id: number) => api.post<void>(`/feeds/${id}/refresh`),
+
   batchCreate: (data: BatchCreateFeedsRequest) =>
     api.post<APIResponse<BatchCreateFeedsResponse>>("/feeds/batch", data),
 };
@@ -100,8 +106,34 @@ export const itemAPI = {
   markRead: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/read", data),
 
+  markAllRead: (data: MarkAllItemsReadRequest = {}) =>
+    api.patch<void>("/items/-/read-all", data),
+
   markUnread: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/unread", data),
+
+  translatePreviews: (data: TranslateItemsRequest) =>
+    api.post<APIResponse<TranslateItemsResponse>>("/items/-/translate", data),
+
+  translateContent: (id: number) =>
+    api.post<APIResponse<Item>>(`/items/${id}/translate`),
+
+  summarize: (id: number) =>
+    api.post<APIResponse<Item>>(`/items/${id}/summarize`),
+
+  fetchFulltext: (id: number) =>
+    api.post<APIResponse<Item>>(`/items/${id}/fulltext`),
+};
+
+export const settingsAPI = {
+  getTranslation: () =>
+    api.get<APIResponse<TranslationSettings>>("/settings/translation"),
+
+  updateTranslation: (data: TranslationSettings) =>
+    api.put<APIResponse<TranslationSettings>>("/settings/translation", data),
+
+  testTranslation: () =>
+    api.post<APIResponse<{ result: string }>>("/settings/translation/test"),
 };
 
 // Bookmark APIs

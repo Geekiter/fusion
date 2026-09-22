@@ -125,6 +125,21 @@ export function useRefreshFeeds() {
   });
 }
 
+export function useRefreshFeed() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => feedAPI.refreshOne(id),
+    onSuccess: () => {
+      for (const delay of [2000, 10000]) {
+        window.setTimeout(() => {
+          qc.invalidateQueries({ queryKey: queryKeys.feeds.all });
+          qc.invalidateQueries({ queryKey: queryKeys.items.all });
+        }, delay);
+      }
+    },
+  });
+}
+
 export function useMoveFeedsToGroup() {
   const qc = useQueryClient();
   return useMutation({

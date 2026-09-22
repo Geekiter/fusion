@@ -107,3 +107,36 @@ func TestLoadRejectsInvalidFusionPort(t *testing.T) {
 		t.Fatalf("expected error to mention invalid FUSION_PORT, got %v", err)
 	}
 }
+
+func TestLoadTranslationConfig(t *testing.T) {
+	t.Setenv("FUSION_PASSWORD", "secret")
+	t.Setenv("FUSION_TRANSLATE_ENABLED", "true")
+	t.Setenv("FUSION_TRANSLATE_API_KEY", "test-key")
+	t.Setenv("FUSION_TRANSLATE_API_URL", "https://translate.example.test/v1")
+	t.Setenv("FUSION_TRANSLATE_MODEL", "test-model")
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load() failed: %v", err)
+	}
+	if !cfg.TranslateEnabled || cfg.TranslateAPIKey != "test-key" {
+		t.Fatalf("unexpected translation configuration: %+v", cfg)
+	}
+	if cfg.TranslateAPIURL != "https://translate.example.test/v1" || cfg.TranslateModel != "test-model" {
+		t.Fatalf("unexpected translation endpoint or model: %+v", cfg)
+	}
+}
+
+func TestLoadRejectsTranslationWithoutAPIKey(t *testing.T) {
+	t.Setenv("FUSION_PASSWORD", "secret")
+	t.Setenv("FUSION_TRANSLATE_ENABLED", "true")
+	t.Setenv("FUSION_TRANSLATE_API_KEY", "  ")
+
+	_, err := Load()
+	if err == nil {
+		t.Fatal("expected Load() to fail when translation API key is empty")
+	}
+	if !strings.Contains(err.Error(), "FUSION_TRANSLATE_API_KEY") {
+		t.Fatalf("expected error to mention FUSION_TRANSLATE_API_KEY, got %v", err)
+	}
+}

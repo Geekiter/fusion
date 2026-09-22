@@ -1,7 +1,8 @@
+import { useMemo } from "react";
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import { cn, formatDate, extractSummary } from "@/lib/utils";
+import { cn, formatDate, extractSummary, extractFirstImage } from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
@@ -33,6 +34,11 @@ export function ArticleItem({
 
   const isSelected = selectedArticleId === article.id;
   const safeArticleLink = toSafeExternalUrl(article.link);
+  const originalSummary = extractSummary(article.content, 150);
+  const thumbnailUrl = useMemo(
+    () => extractFirstImage(article.content, article.link),
+    [article.content, article.link],
+  );
 
   const handleToggleRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -70,6 +76,19 @@ export function ArticleItem({
         isSelected && "bg-accent",
       )}
     >
+      {/* Thumbnail */}
+      {thumbnailUrl && (
+        <div className="size-16 shrink-0 overflow-hidden rounded-md bg-muted">
+          <img
+            src={thumbnailUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            className="h-full w-full object-cover"
+          />
+        </div>
+      )}
+
       {/* Article Content */}
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <h3
@@ -78,10 +97,12 @@ export function ArticleItem({
             article.unread ? "text-foreground" : "text-muted-foreground",
           )}
         >
-          {article.title}
+          {article.translated_title
+            ? `${article.translated_title} | ${article.title}`
+            : article.title}
         </h3>
         <p className="line-clamp-2 text-sm text-muted-foreground">
-          {extractSummary(article.content, 150)}
+          {article.translated_summary || originalSummary}
         </p>
         <div className="flex items-center gap-2 text-xs">
           <FeedFavicon src={feedFaviconUrl} className="h-3.5 w-3.5 rounded-sm" />
@@ -139,17 +160,24 @@ export function ArticleItem({
           />
         </Button>
         {safeArticleLink ? (
-          <a
-            href={safeArticleLink}
-            target="_blank"
-            rel="noopener noreferrer"
-            onClick={(e) => e.stopPropagation()}
-            className={cn(buttonVariants({ variant: "ghost", size: "icon-sm" }), "bg-muted")}
+          <Button
+            nativeButton={false}
+            render={
+              <a
+                href={safeArticleLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+              />
+            }
+            variant="ghost"
+            size="icon-sm"
+            className="bg-muted"
             aria-label={t("article.action.openInBrowser")}
             title={t("article.action.openInBrowser")}
           >
             <ExternalLink className="text-muted-foreground" />
-          </a>
+          </Button>
         ) : (
           <Button
             variant="ghost"

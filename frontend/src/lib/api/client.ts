@@ -82,6 +82,13 @@ async function patch<T>(endpoint: string, data?: unknown): Promise<T> {
   });
 }
 
+async function put<T>(endpoint: string, data?: unknown): Promise<T> {
+  return request<T>(endpoint, {
+    method: "PUT",
+    body: data ? JSON.stringify(data) : undefined,
+  });
+}
+
 async function del<T>(endpoint: string): Promise<T> {
   return request<T>(endpoint, { method: "DELETE" });
 }
@@ -89,6 +96,7 @@ async function del<T>(endpoint: string): Promise<T> {
 export const api = {
   get,
   post,
+  put,
   patch,
   delete: del,
 };

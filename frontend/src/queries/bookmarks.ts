@@ -133,6 +133,10 @@ export function useStarredItems(
         pub_date: bookmark.pub_date,
         unread: bookmark.unread,
         created_at: bookmark.created_at,
+        translated_title: bookmark.translated_title,
+        translated_summary: bookmark.translated_summary,
+        translated_content: bookmark.translated_content,
+        ai_summary: bookmark.ai_summary,
       })),
     [bookmarks],
   );

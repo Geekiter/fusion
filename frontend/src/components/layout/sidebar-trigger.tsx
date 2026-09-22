@@ -2,9 +2,14 @@ import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 import { useUIStore } from "@/store/ui";
 
-export function SidebarTrigger() {
+interface SidebarTriggerProps {
+  className?: string;
+}
+
+export function SidebarTrigger({ className }: SidebarTriggerProps = {}) {
   const { t } = useI18n();
   const isMobile = useIsMobile();
   const setSidebarOpen = useUIStore((s) => s.setSidebarOpen);
@@ -15,7 +20,7 @@ export function SidebarTrigger() {
     <Button
       variant="ghost"
       size="icon"
-      className="shrink-0"
+      className={cn("shrink-0", className)}
       onClick={() => setSidebarOpen(true)}
       aria-label={t("common.navigation")}
     >

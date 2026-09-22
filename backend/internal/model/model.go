@@ -57,15 +57,20 @@ type FeedFetchState struct {
 
 // Item represents a feed item.
 type Item struct {
-	ID        int64  `json:"id"`
-	FeedID    int64  `json:"feed_id"`
-	GUID      string `json:"guid"`
-	Title     string `json:"title"`
-	Link      string `json:"link"`
-	Content   string `json:"content"`
-	PubDate   int64  `json:"pub_date"`
-	Unread    bool   `json:"unread"`
-	CreatedAt int64  `json:"created_at"`
+	ID                int64   `json:"id"`
+	FeedID            int64   `json:"feed_id"`
+	GUID              string  `json:"guid"`
+	Title             string  `json:"title"`
+	Link              string  `json:"link"`
+	Content           string  `json:"content"`
+	PubDate           int64   `json:"pub_date"`
+	Unread            bool    `json:"unread"`
+	CreatedAt         int64   `json:"created_at"`
+	TranslatedTitle   *string `json:"translated_title,omitempty"`
+	TranslatedSummary *string `json:"translated_summary,omitempty"`
+	TranslatedContent *string `json:"translated_content,omitempty"`
+	AISummary         *string `json:"ai_summary,omitempty"`
+	ExtractedContent  *string `json:"extracted_content,omitempty"`
 }
 
 // Bookmark represents a saved item snapshot.
@@ -82,6 +87,10 @@ type Bookmark struct {
 	// itself always survives such deletions (it is a content snapshot).
 	FeedID *int64 `json:"feed_id"`
 	// Unread mirrors the linked item's unread state (false for orphans).
-	Unread    bool  `json:"unread"`
-	CreatedAt int64 `json:"created_at"`
+	Unread            bool    `json:"unread"`
+	CreatedAt         int64   `json:"created_at"`
+	TranslatedTitle   *string `json:"translated_title,omitempty"`
+	TranslatedSummary *string `json:"translated_summary,omitempty"`
+	TranslatedContent *string `json:"translated_content,omitempty"`
+	AISummary         *string `json:"ai_summary,omitempty"`
 }
