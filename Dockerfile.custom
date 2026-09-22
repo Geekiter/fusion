@@ -6,6 +6,7 @@ WORKDIR /src
 COPY frontend/package.json frontend/pnpm-lock.yaml frontend/pnpm-workspace.yaml frontend/
 RUN cd frontend && pnpm install --frozen-lockfile --prefer-offline
 COPY frontend/ frontend/
+ENV CI=true
 RUN cd frontend && VITE_FUSION_VERSION=custom-translate pnpm run build
 
 # Stage 2: Build backend
