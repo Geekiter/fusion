@@ -3,7 +3,7 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Bug, Download, Info, Keyboard, Languages, Palette } from "lucide-react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
