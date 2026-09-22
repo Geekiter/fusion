@@ -20,7 +20,7 @@ import {
   SheetContent,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
@@ -342,26 +342,30 @@ export function ArticleDrawer() {
                   />
                   {starred ? t("article.action.unstar") : t("article.action.star")}
                 </Button>
-                <Button
-                  nativeButton={false}
-                  render={
-                    safeArticleLink ? (
-                      <a
-                        href={safeArticleLink}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      />
-                    ) : undefined
-                  }
-                  variant="outline"
-                  size="sm"
-                  onClick={safeArticleLink ? undefined : handleOpenOriginal}
-                  disabled={!safeArticleLink}
-                  className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
-                >
-                  <ExternalLink className="h-4 w-4" />
-                  {t("article.action.original")}
-                </Button>
+                {safeArticleLink ? (
+                  <a
+                    href={safeArticleLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      buttonVariants({ variant: "outline", size: "sm" }),
+                      "h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground",
+                    )}
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {t("article.action.original")}
+                  </a>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled
+                    className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {t("article.action.original")}
+                  </Button>
+                )}
                 <Button
                   variant="outline"
                   size="sm"
