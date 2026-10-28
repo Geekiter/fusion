@@ -8,16 +8,16 @@ import (
 )
 
 func (h *Handler) oidcEnabled(c *gin.Context) {
-	dataResponse(c, gin.H{"enabled": h.oidcAuth != nil})
+	dataResponse(c, gin.H{"enabled": h.loginAuth != nil})
 }
 
 func (h *Handler) oidcLogin(c *gin.Context) {
-	if h.oidcAuth == nil {
-		badRequestError(c, "OIDC is not configured")
+	if h.loginAuth == nil {
+		badRequestError(c, "external login is not configured")
 		return
 	}
 
-	authURL, err := h.oidcAuth.AuthURL()
+	authURL, err := h.loginAuth.AuthURL()
 	if err != nil {
 		internalError(c, err, "oidc auth url")
 		return
@@ -27,8 +27,8 @@ func (h *Handler) oidcLogin(c *gin.Context) {
 }
 
 func (h *Handler) oidcCallback(c *gin.Context) {
-	if h.oidcAuth == nil {
-		badRequestError(c, "OIDC is not configured")
+	if h.loginAuth == nil {
+		badRequestError(c, "external login is not configured")
 		return
 	}
 
@@ -39,9 +39,9 @@ func (h *Handler) oidcCallback(c *gin.Context) {
 		return
 	}
 
-	userID, err := h.oidcAuth.Callback(c.Request.Context(), state, code)
+	userID, err := h.loginAuth.Callback(c.Request.Context(), state, code)
 	if err != nil {
-		slog.Error("OIDC callback failed", "error", err)
+		slog.Error("external login callback failed", "error", err)
 		c.Redirect(http.StatusTemporaryRedirect, "/login?error=oidc_failed")
 		return
 	}

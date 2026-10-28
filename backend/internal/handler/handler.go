@@ -21,14 +21,14 @@ type Handler struct {
 	config       *config.Config
 	passwordHash string // bcrypt hash computed at startup
 	feverAPIKey  string // md5(username:password) used by Fever API
-	allowAnonAPI bool   // true when both password and OIDC auth are disabled
+	allowAnonAPI bool   // true when password, OIDC, and OAuth2 auth are disabled
 	puller       interface {
 		RefreshFeed(ctx context.Context, feedID int64) error
 		RefreshAll(ctx context.Context) (int, error)
 	}
-	sessions   map[string]int64        // sessionID -> unix expiry seconds
-	mu         sync.RWMutex            // protects sessions state
-	oidcAuth   *auth.OIDCAuthenticator // nil when OIDC is disabled
+	sessions   map[string]int64   // sessionID -> unix expiry seconds
+	mu         sync.RWMutex       // protects sessions state
+	loginAuth  loginAuthenticator // nil when external login is disabled
 	limiter    *loginLimiter
 	translator *translate.Translator
 	lastSweep  int64
@@ -37,10 +37,23 @@ type Handler struct {
 	refreshAllRunning bool
 }
 
+type loginAuthenticator interface {
+	AuthURL() (string, error)
+	Callback(context.Context, string, string) (string, error)
+	SetAllowedUser(string)
+}
+
 func New(store *store.Store, config *config.Config, puller interface {
 	RefreshFeed(ctx context.Context, feedID int64) error
 	RefreshAll(ctx context.Context) (int, error)
 }) (*Handler, error) {
+	oauthConfigured := strings.TrimSpace(config.OAuthAuthorizeURL) != "" ||
+		strings.TrimSpace(config.OAuthTokenURL) != "" ||
+		strings.TrimSpace(config.OAuthUserInfoURL) != "" ||
+		strings.TrimSpace(config.OAuthClientID) != "" ||
+		strings.TrimSpace(config.OAuthClientSecret) != "" ||
+		strings.TrimSpace(config.OAuthRedirectURI) != ""
+
 	// Hash password at startup for later verification
 	passwordHash, err := auth.HashPassword(config.Password)
 	if err != nil {
@@ -52,7 +65,7 @@ func New(store *store.Store, config *config.Config, puller interface {
 		config:       config,
 		passwordHash: passwordHash,
 		feverAPIKey:  deriveFeverAPIKey(config.FeverUsername, config.Password),
-		allowAnonAPI: strings.TrimSpace(config.Password) == "" && strings.TrimSpace(config.OIDCIssuer) == "",
+		allowAnonAPI: strings.TrimSpace(config.Password) == "" && strings.TrimSpace(config.OIDCIssuer) == "" && !oauthConfigured,
 		puller:       puller,
 		sessions:     make(map[string]int64),
 		limiter:      newLoginLimiter(config.LoginRateLimit, config.LoginWindow, config.LoginBlock),
@@ -73,10 +86,13 @@ func New(store *store.Store, config *config.Config, puller interface {
 	}
 
 	if h.allowAnonAPI {
-		slog.Warn("authentication is disabled because both password and OIDC are empty")
+		slog.Warn("authentication is disabled because password, OIDC, and OAuth2 are empty")
 	}
 
 	if config.OIDCIssuer != "" {
+		if oauthConfigured {
+			return nil, fmt.Errorf("configure either OIDC or OAuth2, not both")
+		}
 		if strings.TrimSpace(config.OIDCRedirectURI) == "" {
 			return nil, fmt.Errorf("FUSION_OIDC_REDIRECT_URI is required when OIDC is enabled")
 		}
@@ -94,8 +110,30 @@ func New(store *store.Store, config *config.Config, puller interface {
 		if config.OIDCAllowedUser != "" {
 			oidcAuth.SetAllowedUser(config.OIDCAllowedUser)
 		}
-		h.oidcAuth = oidcAuth
+		h.loginAuth = oidcAuth
 		slog.Info("OIDC authentication enabled", "issuer", config.OIDCIssuer)
+	} else if oauthConfigured {
+		if strings.TrimSpace(config.OAuthRedirectURI) == "" {
+			return nil, fmt.Errorf("FUSION_OAUTH_REDIRECT_URI is required when OAuth2 is enabled")
+		}
+
+		oauthAuth, err := auth.NewOAuth(
+			config.OAuthAuthorizeURL,
+			config.OAuthTokenURL,
+			config.OAuthUserInfoURL,
+			config.OAuthClientID,
+			config.OAuthClientSecret,
+			config.OAuthRedirectURI,
+			config.OAuthScopes,
+		)
+		if err != nil {
+			return nil, fmt.Errorf("initialize OAuth2: %w", err)
+		}
+		if config.OAuthAllowedUser != "" {
+			oauthAuth.SetAllowedUser(config.OAuthAllowedUser)
+		}
+		h.loginAuth = oauthAuth
+		slog.Info("OAuth2 authentication enabled", "authorize_url", config.OAuthAuthorizeURL)
 	}
 
 	return h, nil
@@ -121,7 +159,7 @@ func (h *Handler) SetupRouter() *gin.Engine {
 
 		// OIDC routes (public, no auth middleware)
 		api.GET("/oidc/enabled", h.oidcEnabled)
-		if h.oidcAuth != nil {
+		if h.loginAuth != nil {
 			api.GET("/oidc/login", h.oidcLogin)
 			api.GET("/oidc/callback", h.oidcCallback)
 			// Compatibility route for deployments that configured redirect_uri without /api.

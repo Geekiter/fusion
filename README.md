@@ -104,6 +104,10 @@ Then configure based on your goal:
   - Configure: `FUSION_OIDC_*`
   - Set `FUSION_OIDC_REDIRECT_URI` to `https://<host>/api/oidc/callback`
   - `https://<host>/oidc/callback` is accepted for compatibility
+- Use OAuth2 providers without OIDC discovery (such as Mattermost)
+  - Configure: `FUSION_OAUTH_*`
+  - Set the authorization, token, and user-info endpoints explicitly
+  - Use `https://<host>/api/oidc/callback` as the registered callback
 - Tune feed pull behavior
   - Configure: `FUSION_PULL_INTERVAL`, `FUSION_PULL_TIMEOUT`, `FUSION_PULL_CONCURRENCY`, `FUSION_PULL_MAX_BACKOFF`
   - Optional for private networks: `FUSION_ALLOW_PRIVATE_FEEDS`

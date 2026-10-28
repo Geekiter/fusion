@@ -37,6 +37,16 @@ type Config struct {
 	OIDCRedirectURI  string // Callback URL (required when OIDC is enabled)
 	OIDCAllowedUser  string // Optional: restrict to specific user identity (email or sub)
 
+	// OAuth2 Configuration (optional, for providers without OIDC discovery)
+	OAuthAuthorizeURL string   // OAuth2 authorization endpoint
+	OAuthTokenURL     string   // OAuth2 token endpoint
+	OAuthUserInfoURL  string   // OAuth2 user-info endpoint
+	OAuthClientID     string   // OAuth2 client ID
+	OAuthClientSecret string   // OAuth2 client secret
+	OAuthRedirectURI  string   // Callback URL (required when OAuth2 is enabled)
+	OAuthScopes       []string // Optional OAuth2 scopes
+	OAuthAllowedUser  string   // Optional: restrict to a provider identity
+
 	// Translation Configuration (optional)
 	TranslateEnabled     bool   // Enable server-side manual translation and summaries
 	TranslateAPIURL      string // OpenAI-compatible API base URL
@@ -168,12 +178,31 @@ func Load() (*Config, error) {
 		OIDCRedirectURI:  os.Getenv("FUSION_OIDC_REDIRECT_URI"),
 		OIDCAllowedUser:  os.Getenv("FUSION_OIDC_ALLOWED_USER"),
 
+		OAuthAuthorizeURL: os.Getenv("FUSION_OAUTH_AUTHORIZE_URL"),
+		OAuthTokenURL:     os.Getenv("FUSION_OAUTH_TOKEN_URL"),
+		OAuthUserInfoURL:  os.Getenv("FUSION_OAUTH_USERINFO_URL"),
+		OAuthClientID:     os.Getenv("FUSION_OAUTH_CLIENT_ID"),
+		OAuthClientSecret: os.Getenv("FUSION_OAUTH_CLIENT_SECRET"),
+		OAuthRedirectURI:  os.Getenv("FUSION_OAUTH_REDIRECT_URI"),
+		OAuthScopes:       splitCSV(os.Getenv("FUSION_OAUTH_SCOPES")),
+		OAuthAllowedUser:  os.Getenv("FUSION_OAUTH_ALLOWED_USER"),
+
 		TranslateEnabled:     translateEnabled,
 		TranslateAPIURL:      getEnvString("FUSION_TRANSLATE_API_URL", "https://openrouter.ai/api/v1"),
 		TranslateAPIKey:      translateAPIKey,
 		TranslateModel:       getEnvString("FUSION_TRANSLATE_MODEL", "openai/gpt-oss-20b:free"),
 		TranslateFallbackURL: getEnvString("FUSION_TRANSLATE_FALLBACK_URL", "https://api.mymemory.translated.net/get"),
 	}, nil
+}
+
+func splitCSV(value string) []string {
+	var values []string
+	for _, item := range strings.Split(value, ",") {
+		if item = strings.TrimSpace(item); item != "" {
+			values = append(values, item)
+		}
+	}
+	return values
 }
 
 func getEnvString(key, defaultVal string) string {
