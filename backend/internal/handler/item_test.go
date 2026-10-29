@@ -46,6 +46,93 @@ func TestMarkItemsBatchValidation(t *testing.T) {
 	}
 }
 
+func TestMarkAllItemsRead(t *testing.T) {
+	h, st := newFeverTestHandler(t)
+	group1, err := st.CreateGroup("Group 1")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	group2, err := st.CreateGroup("Group 2")
+	if err != nil {
+		t.Fatalf("CreateGroup: %v", err)
+	}
+	feed1, err := st.CreateFeed(group1.ID, "Feed 1", "https://example.com/feed1", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	feed2, err := st.CreateFeed(group1.ID, "Feed 2", "https://example.com/feed2", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	feed3, err := st.CreateFeed(group2.ID, "Feed 3", "https://example.com/feed3", "https://example.com", "")
+	if err != nil {
+		t.Fatalf("CreateFeed: %v", err)
+	}
+	item1, err := st.CreateItem(feed1.ID, "item-1", "Item 1", "https://example.com/1", "Content", 100)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+	item2, err := st.CreateItem(feed2.ID, "item-2", "Item 2", "https://example.com/2", "Content", 200)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+	item3, err := st.CreateItem(feed3.ID, "item-3", "Item 3", "https://example.com/3", "Content", 300)
+	if err != nil {
+		t.Fatalf("CreateItem: %v", err)
+	}
+
+	r := newTestRouter()
+	r.PATCH("/api/items/-/read-all", h.markAllItemsRead)
+
+	w := performRequest(
+		r,
+		http.MethodPatch,
+		"/api/items/-/read-all",
+		mustJSONBody(t, gin.H{"group_id": group1.ID}),
+		map[string]string{"Content-Type": "application/json"},
+	)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204 for group, got %d", w.Code)
+	}
+
+	updated1, err := st.GetItem(item1.ID)
+	if err != nil {
+		t.Fatalf("GetItem item1: %v", err)
+	}
+	updated2, err := st.GetItem(item2.ID)
+	if err != nil {
+		t.Fatalf("GetItem item2: %v", err)
+	}
+	updated3, err := st.GetItem(item3.ID)
+	if err != nil {
+		t.Fatalf("GetItem item3: %v", err)
+	}
+	if updated1.Unread || updated2.Unread {
+		t.Error("expected group 1 items to be read")
+	}
+	if !updated3.Unread {
+		t.Error("expected group 2 item to remain unread")
+	}
+
+	w = performRequest(
+		r,
+		http.MethodPatch,
+		"/api/items/-/read-all",
+		mustJSONBody(t, gin.H{"feed_id": feed3.ID}),
+		map[string]string{"Content-Type": "application/json"},
+	)
+	if w.Code != http.StatusNoContent {
+		t.Fatalf("expected status 204 for feed, got %d", w.Code)
+	}
+	updated3, err = st.GetItem(item3.ID)
+	if err != nil {
+		t.Fatalf("GetItem item3 after feed update: %v", err)
+	}
+	if updated3.Unread {
+		t.Error("expected feed 3 item to be read")
+	}
+}
+
 func TestListItemsCursorPagination(t *testing.T) {
 	h, st := newFeverTestHandler(t)
 

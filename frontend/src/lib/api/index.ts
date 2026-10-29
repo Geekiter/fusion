@@ -15,6 +15,7 @@ import type {
   ValidateFeedResponse,
   CreateBookmarkRequest,
   MarkItemsReadRequest,
+  MarkAllItemsReadRequest,
   ListItemsParams,
   ListBookmarksParams,
   BatchCreateFeedsRequest,
@@ -99,6 +100,9 @@ export const itemAPI = {
 
   markRead: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/read", data),
+
+  markAllRead: (data: MarkAllItemsReadRequest = {}) =>
+    api.patch<void>("/items/-/read-all", data),
 
   markUnread: (data: MarkItemsReadRequest) =>
     api.patch<void>("/items/-/unread", data),

@@ -489,6 +489,26 @@ paths:
         "500":
           $ref: "#/components/responses/InternalServerError"
 
+  /items/-/read-all:
+    patch:
+      tags: [Items]
+      summary: Mark all items in a scope as read
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MarkAllItemsReadRequest"
+      responses:
+        "204":
+          description: Read state updated
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "401":
+          $ref: "#/components/responses/Unauthorized"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
   /items/-/unread:
     patch:
       tags: [Items]
@@ -1056,6 +1076,22 @@ components:
           items:
             type: integer
             format: int64
+
+    MarkAllItemsReadRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        feed_id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Mark items from this feed as read.
+        group_id:
+          type: integer
+          format: int64
+          minimum: 1
+          description: Mark items from feeds in this group as read.
+      description: Leave both fields empty to mark items from all feeds as read. The fields are mutually exclusive.
 
     SearchFeed:
       type: object

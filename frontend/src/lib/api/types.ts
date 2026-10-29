@@ -129,6 +129,11 @@ export interface MarkItemsReadRequest {
   ids: number[];
 }
 
+export interface MarkAllItemsReadRequest {
+  feed_id?: number;
+  group_id?: number;
+}
+
 export interface ListItemsParams {
   feed_id?: number;
   group_id?: number;
