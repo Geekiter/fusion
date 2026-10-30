@@ -169,6 +169,11 @@ export function ArticleList() {
 
     try {
       await markItemsRead.mutateAsync(unreadIds);
+      requestAnimationFrame(() => {
+        scrollViewportRef.current
+          ?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]')
+          ?.scrollTo({ top: 0, behavior: "instant" });
+      });
     } catch (error) {
       console.error("Failed to mark all as read:", error);
     }

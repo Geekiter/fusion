@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { Folder, Inbox, Layers, Star } from "lucide-react";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import {
@@ -24,6 +25,7 @@ export function MobileCategoryDrawer({
   onOpenChange,
 }: MobileCategoryDrawerProps) {
   const { t } = useI18n();
+  const selectedCategoryRef = useRef<HTMLButtonElement>(null);
   const { data: groups = [], isLoading: groupsLoading } = useGroups();
   const {
     feeds,
@@ -44,6 +46,25 @@ export function MobileCategoryDrawer({
     setSelectedFeed,
     setSelectedGroup,
   } = useUrlState();
+
+  useEffect(() => {
+    if (!open) return;
+
+    const frame = requestAnimationFrame(() => {
+      selectedCategoryRef.current?.scrollIntoView({
+        block: "center",
+        behavior: "instant",
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [
+    open,
+    groupsLoading,
+    feedsLoading,
+    selectedFeedId,
+    selectedGroupId,
+    articleFilter,
+  ]);
 
   const topFilters: Array<{
     value: ArticleFilter;
@@ -93,6 +114,7 @@ export function MobileCategoryDrawer({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        initialFocus={selectedCategoryRef}
         className="max-h-[85dvh] gap-0 overflow-hidden rounded-t-2xl p-0 pb-[env(safe-area-inset-bottom)]"
       >
         <SheetHeader className="shrink-0 border-b px-4 py-3 pr-14">
@@ -112,6 +134,7 @@ export function MobileCategoryDrawer({
               return (
                 <button
                   key={value}
+                  ref={isSelected ? selectedCategoryRef : undefined}
                   type="button"
                   aria-current={isSelected ? "page" : undefined}
                   onClick={() => selectFilter(value)}
@@ -156,6 +179,7 @@ export function MobileCategoryDrawer({
                   <div key={group.id}>
                     <button
                       type="button"
+                      ref={isGroupSelected ? selectedCategoryRef : undefined}
                       aria-current={isGroupSelected ? "page" : undefined}
                       onClick={() => selectGroup(group.id)}
                       className={cn(
@@ -180,6 +204,7 @@ export function MobileCategoryDrawer({
                       return (
                         <button
                           key={feed.id}
+                          ref={isFeedSelected ? selectedCategoryRef : undefined}
                           type="button"
                           aria-current={isFeedSelected ? "page" : undefined}
                           onClick={() => selectFeed(feed.id)}
@@ -213,6 +238,7 @@ export function MobileCategoryDrawer({
                 return (
                   <button
                     key={feed.id}
+                    ref={isSelected ? selectedCategoryRef : undefined}
                     type="button"
                     aria-current={isSelected ? "page" : undefined}
                     onClick={() => selectFeed(feed.id)}
