@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { Folder, Inbox, Layers, Star } from "lucide-react";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import {
@@ -7,6 +7,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { usePullToDismiss } from "@/hooks/use-pull-to-dismiss";
 import { useUrlState, type ArticleFilter } from "@/hooks/use-url-state";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { useI18n } from "@/lib/i18n";
@@ -26,6 +27,11 @@ export function MobileCategoryDrawer({
 }: MobileCategoryDrawerProps) {
   const { t } = useI18n();
   const selectedCategoryRef = useRef<HTMLButtonElement>(null);
+  const dismiss = useCallback(() => onOpenChange(false), [onOpenChange]);
+  const { scrollRef, pullDistance, isArmed } = usePullToDismiss({
+    enabled: open,
+    onDismiss: dismiss,
+  });
   const { data: groups = [], isLoading: groupsLoading } = useGroups();
   const {
     feeds,
@@ -115,17 +121,38 @@ export function MobileCategoryDrawer({
       <SheetContent
         side="bottom"
         initialFocus={selectedCategoryRef}
+        style={
+          pullDistance > 0
+            ? {
+                transform: `translateY(${pullDistance}px)`,
+                transitionDuration: "0ms",
+              }
+            : undefined
+        }
         className="max-h-[85dvh] gap-0 overflow-hidden rounded-t-2xl p-0 pb-[env(safe-area-inset-bottom)]"
       >
         <SheetHeader className="shrink-0 border-b px-4 py-3 pr-14">
           <div
             aria-hidden="true"
-            className="mx-auto mb-1 h-1 w-10 rounded-full bg-muted-foreground/25"
+            className={cn(
+              "mx-auto mb-1 h-1 rounded-full transition-all",
+              isArmed
+                ? "w-14 bg-muted-foreground/70"
+                : "w-10 bg-muted-foreground/25",
+            )}
           />
-          <SheetTitle>{t("article.mobile.categories")}</SheetTitle>
+          <div className="flex items-center justify-between gap-2">
+            <SheetTitle>{t("article.mobile.categories")}</SheetTitle>
+            <span role="status" className="text-xs text-muted-foreground">
+              {isArmed ? t("article.mobile.pullAgainToClose") : null}
+            </span>
+          </div>
         </SheetHeader>
 
-        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 pb-4">
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-2 pb-4"
+        >
           <div className="space-y-1">
             {topFilters.map(({ value, label, count, icon: Icon }) => {
               const isSelected =

@@ -207,6 +207,7 @@ export const svMessages: PartialMessages = {
   "article.list.openFeedManagement": "Oppna flodeshantering",
   "article.mobile.actions": "Artikelatgarder",
   "article.mobile.categories": "Kategorier",
+  "article.mobile.pullAgainToClose": "Dra nedåt igen för att stänga",
   "article.mobile.feedSwitcher": "Flodesvaljare",
   "article.mobile.pullToRefresh": "Dra for att uppdatera",
   "article.mobile.releaseToRefresh": "Slapp for att uppdatera",

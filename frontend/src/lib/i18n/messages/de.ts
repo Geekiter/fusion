@@ -207,6 +207,7 @@ export const deMessages: PartialMessages = {
   "article.list.openFeedManagement": "Feed-Verwaltung offnen",
   "article.mobile.actions": "Artikelaktionen",
   "article.mobile.categories": "Kategorien",
+  "article.mobile.pullAgainToClose": "Zum Schließen erneut nach unten ziehen",
   "article.mobile.feedSwitcher": "Feed-Umschalter",
   "article.mobile.pullToRefresh": "Zum Aktualisieren ziehen",
   "article.mobile.releaseToRefresh": "Loslassen zum Aktualisieren",

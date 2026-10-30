@@ -207,6 +207,7 @@ export const esMessages: PartialMessages = {
   "article.list.openFeedManagement": "Abrir gestion de feeds",
   "article.mobile.actions": "Acciones de articulos",
   "article.mobile.categories": "Categorias",
+  "article.mobile.pullAgainToClose": "Desliza de nuevo hacia abajo para cerrar",
   "article.mobile.feedSwitcher": "Selector de feeds",
   "article.mobile.pullToRefresh": "Desliza para actualizar",
   "article.mobile.releaseToRefresh": "Suelta para actualizar",

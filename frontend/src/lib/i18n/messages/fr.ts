@@ -207,6 +207,7 @@ export const frMessages: PartialMessages = {
   "article.list.openFeedManagement": "Ouvrir la gestion des flux",
   "article.mobile.actions": "Actions d'article",
   "article.mobile.categories": "Categories",
+  "article.mobile.pullAgainToClose": "Tirez encore vers le bas pour fermer",
   "article.mobile.feedSwitcher": "Selecteur de flux",
   "article.mobile.pullToRefresh": "Tirer pour actualiser",
   "article.mobile.releaseToRefresh": "Relacher pour actualiser",

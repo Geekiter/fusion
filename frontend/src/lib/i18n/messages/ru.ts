@@ -207,6 +207,7 @@ export const ruMessages: PartialMessages = {
   "article.list.openFeedManagement": "Открыть управление лентами",
   "article.mobile.actions": "Действия со статьями",
   "article.mobile.categories": "Категории",
+  "article.mobile.pullAgainToClose": "Потяните вниз ещё раз, чтобы закрыть",
   "article.mobile.feedSwitcher": "Переключатель лент",
   "article.mobile.pullToRefresh": "Потяните для обновления",
   "article.mobile.releaseToRefresh": "Отпустите для обновления",

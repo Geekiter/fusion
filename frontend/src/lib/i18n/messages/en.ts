@@ -206,6 +206,7 @@ export const enMessages = {
   "article.list.openFeedManagement": "Open Feed Management",
   "article.mobile.actions": "Article actions",
   "article.mobile.categories": "Categories",
+  "article.mobile.pullAgainToClose": "Pull down again to close",
   "article.mobile.feedSwitcher": "Feed switcher",
   "article.mobile.pullToRefresh": "Pull to refresh",
   "article.mobile.releaseToRefresh": "Release to refresh",

@@ -207,6 +207,7 @@ export const ptMessages: PartialMessages = {
   "article.list.openFeedManagement": "Abrir gerenciamento de feeds",
   "article.mobile.actions": "Acoes do artigo",
   "article.mobile.categories": "Categorias",
+  "article.mobile.pullAgainToClose": "Puxe para baixo novamente para fechar",
   "article.mobile.feedSwitcher": "Alternador de feeds",
   "article.mobile.pullToRefresh": "Puxe para atualizar",
   "article.mobile.releaseToRefresh": "Solte para atualizar",
