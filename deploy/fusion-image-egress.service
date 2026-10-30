@@ -1,0 +1,25 @@
+[Unit]
+Description=Dedicated Fusion image proxy
+After=network-online.target docker.service
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+User=ubuntu
+Group=ubuntu
+StateDirectory=fusion-image-egress
+StateDirectoryMode=0700
+ExecStart=/usr/local/bin/clash -d /var/lib/fusion-image-egress -f /etc/fusion-image-egress/config.yaml
+Restart=on-failure
+RestartSec=3
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+UMask=0077
+MemoryMax=256M
+LogRateLimitIntervalSec=30s
+LogRateLimitBurst=50
+
+[Install]
+WantedBy=multi-user.target

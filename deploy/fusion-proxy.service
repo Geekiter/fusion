@@ -4,7 +4,7 @@ After=clash.service
 Requires=clash.service
 
 [Service]
-ExecStart=/lib/systemd/systemd-socket-proxyd 127.0.0.1:17891
+ExecStart=/lib/systemd/systemd-socket-proxyd 127.0.0.1:7890
 User=nobody
 Group=nogroup
 NoNewPrivileges=yes
