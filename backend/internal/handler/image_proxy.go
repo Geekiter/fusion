@@ -1,25 +1,38 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net"
 	"net/http"
 	"net/url"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/net/html"
 )
 
-const maxProxiedImageBytes = 20 << 20
+const (
+	maxProxiedImageBytes    = 20 << 20
+	maxImgurPageBytes       = 1 << 20
+	maxImageRequestAttempts = 3
+)
+
+const proxiedSVGPolicy = "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:"
 
 var allowedArticleImageTypes = map[string]bool{
-	"image/avif": true,
-	"image/gif":  true,
-	"image/jpeg": true,
-	"image/png":  true,
-	"image/webp": true,
+	"image/avif":               true,
+	"image/gif":                true,
+	"image/jpeg":               true,
+	"image/png":                true,
+	"image/svg+xml":            true,
+	"image/x-icon":             true,
+	"image/vnd.microsoft.icon": true,
+	"image/webp":               true,
 }
 
 func validateArticleImageURL(raw string) (*url.URL, error) {
@@ -66,6 +79,72 @@ func articleImageReferer(host string, rawURL string) string {
 	return "https://" + host + "/"
 }
 
+// Feed authors sometimes embed an Imgur album page in an image element.
+func isImgurImagePage(target *url.URL) bool {
+	host := strings.ToLower(target.Hostname())
+	return (host == "imgur.com" || host == "www.imgur.com") &&
+		(strings.HasPrefix(target.Path, "/a/") || strings.HasPrefix(target.Path, "/gallery/"))
+}
+
+func imgurCoverImage(reader io.Reader) (*url.URL, error) {
+	tokenizer := html.NewTokenizer(io.LimitReader(reader, maxImgurPageBytes))
+	for {
+		switch tokenizer.Next() {
+		case html.ErrorToken:
+			return nil, fmt.Errorf("Imgur page does not contain a usable cover image")
+		case html.StartTagToken, html.SelfClosingTagToken:
+			token := tokenizer.Token()
+			if token.Data != "meta" {
+				continue
+			}
+			var property, content string
+			for _, attr := range token.Attr {
+				switch attr.Key {
+				case "property":
+					property = attr.Val
+				case "content":
+					content = attr.Val
+				}
+			}
+			if !strings.EqualFold(property, "og:image") && !strings.EqualFold(property, "og:image:secure_url") {
+				continue
+			}
+			target, err := validateArticleImageURL(content)
+			if err == nil && strings.EqualFold(target.Hostname(), "i.imgur.com") {
+				return target, nil
+			}
+		}
+	}
+}
+
+func requestArticleImage(ctx context.Context, client *http.Client, target *url.URL) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Referer", articleImageReferer(target.Hostname(), target.String()))
+	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; FusionFeedReader/1.0)")
+	req.Header.Set("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
+
+	for attempt := 0; ; attempt++ {
+		resp, err := client.Do(req.Clone(ctx))
+		retryable := errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) || errors.Is(err, syscall.ECONNRESET)
+		if err == nil || !retryable || attempt+1 >= maxImageRequestAttempts {
+			return resp, err
+		}
+		if resp != nil && resp.Body != nil {
+			resp.Body.Close()
+		}
+		timer := time.NewTimer(time.Duration(attempt+1) * 150 * time.Millisecond)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return nil, ctx.Err()
+		case <-timer.C:
+		}
+	}
+}
+
 func (h *Handler) proxyArticleImage(c *gin.Context) {
 	target, err := validateArticleImageURL(c.Query("url"))
 	if err != nil {
@@ -83,19 +162,26 @@ func (h *Handler) proxyArticleImage(c *gin.Context) {
 			return nil
 		},
 	}
-	req, err := http.NewRequestWithContext(c.Request.Context(), http.MethodGet, target.String(), nil)
-	if err != nil {
-		internalError(c, err, "create article image request")
-		return
-	}
-	req.Header.Set("Referer", articleImageReferer(target.Hostname(), target.String()))
-	req.Header.Set("User-Agent", "Mozilla/5.0 (compatible; FusionFeedReader/1.0)")
-	req.Header.Set("Accept", "image/avif,image/webp,image/apng,image/*,*/*;q=0.8")
-
-	resp, err := client.Do(req)
+	ctx, cancel := context.WithTimeout(c.Request.Context(), 30*time.Second)
+	defer cancel()
+	resp, err := requestArticleImage(ctx, client, target)
 	if err != nil {
 		internalError(c, err, "fetch article image")
 		return
+	}
+	if isImgurImagePage(target) && resp.StatusCode == http.StatusOK &&
+		strings.HasPrefix(strings.ToLower(resp.Header.Get("Content-Type")), "text/html") {
+		cover, coverErr := imgurCoverImage(resp.Body)
+		resp.Body.Close()
+		if coverErr != nil {
+			c.JSON(http.StatusBadGateway, gin.H{"error": "Imgur album does not contain a usable cover image"})
+			return
+		}
+		resp, err = requestArticleImage(ctx, client, cover)
+		if err != nil {
+			internalError(c, err, "fetch Imgur cover image")
+			return
+		}
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
@@ -121,6 +207,10 @@ func (h *Handler) proxyArticleImage(c *gin.Context) {
 		return
 	}
 
+	if contentType == "image/svg+xml" {
+		// Keep SVGs inert even when their proxy URL is opened as a document.
+		c.Header("Content-Security-Policy", proxiedSVGPolicy)
+	}
 	c.Header("Cache-Control", "private, max-age=604800")
 	c.Header("X-Content-Type-Options", "nosniff")
 	c.Data(http.StatusOK, contentType, body)
