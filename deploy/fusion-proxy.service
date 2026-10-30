@@ -1,0 +1,15 @@
+[Unit]
+Description=Relay Fusion proxy traffic to the host loopback proxy
+After=clash.service
+Requires=clash.service
+
+[Service]
+ExecStart=/lib/systemd/systemd-socket-proxyd 127.0.0.1:7890
+User=nobody
+Group=nogroup
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+Restart=on-failure
+RestartSec=2

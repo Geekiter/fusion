@@ -25,6 +25,7 @@ export function usePullToDismiss({ enabled, onDismiss }: UsePullToDismissOptions
         x: number;
         y: number;
         distance: number;
+        didVibrate: boolean;
       } | null = null;
       let armedUntil = 0;
       let armTimer: ReturnType<typeof setTimeout> | undefined;
@@ -56,6 +57,7 @@ export function usePullToDismiss({ enabled, onDismiss }: UsePullToDismissOptions
           x: touch.clientX,
           y: touch.clientY,
           distance: 0,
+          didVibrate: false,
         };
       };
       const onTouchMove = (event: TouchEvent) => {
@@ -82,6 +84,14 @@ export function usePullToDismiss({ enabled, onDismiss }: UsePullToDismissOptions
         }
         if (event.cancelable) event.preventDefault();
         gesture.distance = dy;
+        if (dy >= PULL_THRESHOLD && !gesture.didVibrate) {
+          gesture.didVibrate = true;
+          try {
+            navigator.vibrate?.(12);
+          } catch {
+            // Haptic feedback is optional when the browser or device blocks it.
+          }
+        }
         setPullDistance(Math.min(MAX_OFFSET, dy * RESISTANCE));
       };
       const onTouchEnd = (event: TouchEvent) => {
