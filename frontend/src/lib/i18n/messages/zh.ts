@@ -257,6 +257,8 @@ export const zhMessages: PartialMessages = {
   "article.list.endOfList": "没有更多文章了",
   "article.list.loading": "加载中...",
   "article.list.loadedSummary": "已加载 {loaded} 篇 · 未读 {unread} 篇",
+  "article.list.loadedProgress": "当前已加载文章阅读进度",
+  "article.list.loadedComplete": "当前已加载内容已读完",
   "article.list.today": "今天",
   "article.list.yesterday": "昨天",
   "article.list.markAllRead": "已读当前",

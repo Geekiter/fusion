@@ -257,6 +257,8 @@ export const esMessages: PartialMessages = {
   "article.list.endOfList": "No hay más artículos",
   "article.list.loading": "Cargando...",
   "article.list.loadedSummary": "{loaded} cargados · {unread} sin leer",
+  "article.list.loadedProgress": "Progreso de lectura de los artículos cargados",
+  "article.list.loadedComplete": "Artículos cargados completados",
   "article.list.today": "Hoy",
   "article.list.yesterday": "Ayer",
   "article.list.markAllRead": "Marcar vista como leída",

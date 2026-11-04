@@ -382,6 +382,10 @@ export function ArticleList() {
   );
 
   const unreadCount = articles.filter((a) => a.unread).length;
+  const loadedReadPercent =
+    articles.length > 0
+      ? Math.round(((articles.length - unreadCount) / articles.length) * 100)
+      : 0;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
   const translatableItems = articles.filter((article) => {
     if (article.id <= 0) return false;
@@ -812,12 +816,27 @@ export function ArticleList() {
             className="flex items-center justify-between gap-3 px-4 py-2 text-[11px] text-muted-foreground md:px-0"
             aria-live="polite"
           >
-            <span className="tabular-nums">
-              {t("article.list.loadedSummary", {
-                loaded: articles.length,
-                unread: unreadCount,
-              })}
-            </span>
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="shrink-0 tabular-nums">
+                {t("article.list.loadedSummary", {
+                  loaded: articles.length,
+                  unread: unreadCount,
+                })}
+              </span>
+              <div
+                className="hidden h-1.5 w-16 overflow-hidden rounded-full bg-muted sm:block"
+                role="progressbar"
+                aria-label={t("article.list.loadedProgress")}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={loadedReadPercent}
+              >
+                <div
+                  className="h-full rounded-full bg-primary/55 transition-[width] duration-500 motion-reduce:transition-none"
+                  style={{ width: `${loadedReadPercent}%` }}
+                />
+              </div>
+            </div>
             <div className="flex shrink-0 items-center gap-2">
               {unreadCount > 0 && (
                 <Button
@@ -829,6 +848,12 @@ export function ArticleList() {
                   <Play className="size-3.5 fill-current" />
                   {t("article.session.start")}
                 </Button>
+              )}
+              {unreadCount === 0 && (
+                <span className="flex items-center gap-1 rounded-full bg-primary/8 px-2 py-1 text-primary/80 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-300 motion-reduce:animate-none">
+                  <Check className="size-3" aria-hidden="true" />
+                  {t("article.list.loadedComplete")}
+                </span>
               )}
               {hasMore && (
                 <span className="hidden rounded-full bg-muted/70 px-2 py-1 sm:inline">

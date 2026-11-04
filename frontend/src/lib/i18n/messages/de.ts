@@ -257,6 +257,8 @@ export const deMessages: PartialMessages = {
   "article.list.endOfList": "Keine weiteren Artikel",
   "article.list.loading": "Ladt...",
   "article.list.loadedSummary": "{loaded} geladen · {unread} ungelesen",
+  "article.list.loadedProgress": "Lesefortschritt der geladenen Artikel",
+  "article.list.loadedComplete": "Geladene Artikel abgeschlossen",
   "article.list.today": "Heute",
   "article.list.yesterday": "Gestern",
   "article.list.markAllRead": "Aktuelle als gelesen markieren",
