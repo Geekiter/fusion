@@ -4,9 +4,15 @@ import { useUIStore } from "@/store";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import type { Feed } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
-import { Settings } from "lucide-react";
+import { AlertCircle, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useI18n } from "@/lib/i18n";
+import { getFeedErrorPreview } from "@/lib/feed-error";
 import { FeedReadContextMenu } from "./feed-read-context-menu";
 
 interface FeedItemProps {
@@ -48,6 +54,27 @@ export function FeedItem({ feed }: FeedItemProps) {
           </span>
         </button>
         <div className="ml-2 flex h-6 shrink-0 items-center justify-center">
+          {feed.fetch_state.last_error && (
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <span
+                    className="mr-1 flex size-5 items-center justify-center rounded-full text-destructive/80 transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    aria-label={t("feeds.status.error")}
+                    title={getFeedErrorPreview(feed.fetch_state.last_error)}
+                  />
+                }
+              >
+                <AlertCircle className="size-3.5" />
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                className="max-w-xs whitespace-normal break-words"
+              >
+                {feed.fetch_state.last_error.trim()}
+              </TooltipContent>
+            </Tooltip>
+          )}
           <span className="text-[11px] text-muted-foreground md:group-hover:hidden md:group-focus-within:hidden">
             {feed.unread_count > 0 ? feed.unread_count : ""}
           </span>
