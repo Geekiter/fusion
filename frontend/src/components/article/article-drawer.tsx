@@ -342,19 +342,38 @@ export function ArticleDrawer() {
       }
     };
 
+    const getCurrentProgress = () => {
+      const scrollableHeight = viewport.scrollHeight - viewport.clientHeight;
+      return scrollableHeight > 0
+        ? Math.min(
+            100,
+            Math.max(
+              0,
+              Math.round((viewport.scrollTop / scrollableHeight) * 100),
+            ),
+          )
+        : 0;
+    };
+
+    const persistCurrentPosition = () => {
+      if (articleId > 0 && readingPositionRestoredRef.current) {
+        saveReadingPosition(
+          articleId,
+          viewport.scrollTop,
+          getCurrentProgress(),
+        );
+      }
+    };
+
     const updateProgress = () => {
       applyPendingReadingPosition();
-      const scrollableHeight = viewport.scrollHeight - viewport.clientHeight;
-      const nextProgress =
-        scrollableHeight > 0
-          ? Math.round((viewport.scrollTop / scrollableHeight) * 100)
-          : 0;
+      const nextProgress = getCurrentProgress();
       setReadingProgress(Math.min(100, Math.max(0, nextProgress)));
 
       if (readingPositionRestoredRef.current && articleId > 0) {
         if (saveTimer !== null) window.clearTimeout(saveTimer);
         saveTimer = window.setTimeout(() => {
-          saveReadingPosition(articleId, viewport.scrollTop);
+          persistCurrentPosition();
         }, 180);
       }
     };
@@ -369,9 +388,7 @@ export function ArticleDrawer() {
       viewport.removeEventListener("scroll", updateProgress);
       resizeObserver.disconnect();
       if (saveTimer !== null) window.clearTimeout(saveTimer);
-      if (readingPositionRestoredRef.current && articleId > 0) {
-        saveReadingPosition(articleId, viewport.scrollTop);
-      }
+      persistCurrentPosition();
     };
   }, [
     article?.ai_summary,

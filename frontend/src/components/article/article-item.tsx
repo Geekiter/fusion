@@ -13,6 +13,10 @@ import type { Item } from "@/lib/api";
 import type { ArticleListDensity } from "@/store";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import {
+  getReadingProgress,
+  READING_POSITION_EVENT,
+} from "@/lib/reading-position";
 
 interface ArticleItemProps {
   article: Item;
@@ -47,6 +51,9 @@ export function ArticleItem({
   const originalSummary = extractSummary(article.content, 150);
   const readingMinutes = estimateReadingTime(article.content);
   const [thumbnailFailed, setThumbnailFailed] = useState(false);
+  const [readingProgress, setReadingProgress] = useState(() =>
+    getReadingProgress(article.id),
+  );
   const thumbnailUrl = useMemo(
     () => extractFirstImage(article.content, article.link),
     [article.content, article.link],
@@ -55,6 +62,31 @@ export function ArticleItem({
   useEffect(() => {
     setThumbnailFailed(false);
   }, [thumbnailUrl]);
+
+  useEffect(() => {
+    setReadingProgress(getReadingProgress(article.id));
+
+    const handleReadingPositionChange = (event: Event) => {
+      const detail = (event as CustomEvent<{
+        itemId?: number;
+        progress?: number;
+      }>).detail;
+      if (detail?.itemId !== article.id) return;
+
+      setReadingProgress(
+        Number.isFinite(detail.progress)
+          ? Math.min(100, Math.max(0, Math.round(detail.progress ?? 0)))
+          : 0,
+      );
+    };
+
+    window.addEventListener(READING_POSITION_EVENT, handleReadingPositionChange);
+    return () =>
+      window.removeEventListener(
+        READING_POSITION_EVENT,
+        handleReadingPositionChange,
+      );
+  }, [article.id]);
 
   useEffect(() => {
     if (!isSelected) return;
@@ -106,6 +138,18 @@ export function ArticleItem({
         isSelected && "bg-accent",
       )}
     >
+      {readingProgress > 0 && readingProgress < 100 && (
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-primary/10"
+          aria-hidden="true"
+        >
+          <div
+            className="h-full bg-primary/45 transition-[width] duration-300 motion-reduce:transition-none"
+            style={{ width: `${readingProgress}%` }}
+          />
+        </div>
+      )}
+
       {/* Thumbnail */}
       {thumbnailUrl && !thumbnailFailed && (
         <div
