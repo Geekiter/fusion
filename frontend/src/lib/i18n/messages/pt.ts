@@ -229,6 +229,7 @@ export const ptMessages: PartialMessages = {
   "article.filter.all": "Todos",
   "article.filter.starred": "Favoritos",
   "article.filter.unread": "Nao lidos",
+  "article.filter.today": "Hoje",
   "article.groupFallback": "Grupo",
   "article.list.all": "Todos os artigos",
   "article.list.densityToggle": "Alternar densidade da lista",

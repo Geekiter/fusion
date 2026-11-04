@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { Folder, Inbox, Layers, Star } from "lucide-react";
+import { CalendarDays, Folder, Inbox, Layers, Star } from "lucide-react";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import {
   Sheet,
@@ -83,6 +83,12 @@ export function MobileCategoryDrawer({
       label: t("article.filter.unread"),
       count: getTotalUnreadCount(),
       icon: Inbox,
+    },
+    {
+      value: "today",
+      label: t("article.filter.today"),
+      count: 0,
+      icon: CalendarDays,
     },
     {
       value: "starred",
@@ -179,14 +185,16 @@ export function MobileCategoryDrawer({
                     )}
                   />
                   <span className="min-w-0 flex-1 truncate">{label}</span>
-                  <span
-                    className={cn(
-                      "shrink-0 text-xs tabular-nums text-muted-foreground",
-                      isSelected && "font-semibold text-foreground",
-                    )}
-                  >
-                    {count}
-                  </span>
+                  {count > 0 && (
+                    <span
+                      className={cn(
+                        "shrink-0 text-xs tabular-nums text-muted-foreground",
+                        isSelected && "font-semibold text-foreground",
+                      )}
+                    >
+                      {count}
+                    </span>
+                  )}
                 </button>
               );
             })}

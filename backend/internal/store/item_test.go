@@ -67,6 +67,28 @@ func TestListItems(t *testing.T) {
 		}
 	})
 
+	t.Run("filter by publication date", func(t *testing.T) {
+		after := int64(200)
+		items, err := store.ListItems(ListItemsParams{AfterPubDate: &after})
+		if err != nil {
+			t.Fatalf("ListItems() failed: %v", err)
+		}
+		if len(items) != 2 {
+			t.Fatalf("expected 2 items published after timestamp, got %d", len(items))
+		}
+		if items[0].ID != item3.ID || items[1].ID != item2.ID {
+			t.Errorf("expected [item3, item2], got ids [%d, %d]", items[0].ID, items[1].ID)
+		}
+
+		count, err := store.CountItems(ListItemsParams{AfterPubDate: &after})
+		if err != nil {
+			t.Fatalf("CountItems() failed: %v", err)
+		}
+		if count != 2 {
+			t.Fatalf("expected count 2, got %d", count)
+		}
+	})
+
 	t.Run("pagination with limit and cursor", func(t *testing.T) {
 		// First page: no cursor, returns the 2 newest items (item3 @300, item2 @200).
 		page1, err := store.ListItems(ListItemsParams{Limit: 2})

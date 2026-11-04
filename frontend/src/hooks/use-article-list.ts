@@ -16,6 +16,10 @@ interface ArticleListFilters {
 
 export function useArticleList(filters: ArticleListFilters) {
   const isStarredMode = filters.articleFilter === "starred";
+  const isTodayMode = filters.articleFilter === "today";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayStart = Math.floor(today.getTime() / 1000);
 
   // Items are unused in starred mode (bookmarks ARE the articles there), so
   // skip the request entirely.
@@ -24,6 +28,7 @@ export function useArticleList(filters: ArticleListFilters) {
       feedId: filters.feedId,
       groupId: filters.groupId,
       unread: filters.articleFilter === "unread" ? true : undefined,
+      publishedAfter: isTodayMode ? todayStart : undefined,
     },
     !isStarredMode,
   );

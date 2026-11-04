@@ -11,7 +11,7 @@ import (
 
 // ListItemsParams specifies filtering and pagination for item queries.
 //
-// Pointer fields (FeedID, GroupID, Unread) are optional filters - nil means "no filter".
+// Pointer fields (FeedID, GroupID, Unread, AfterPubDate) are optional filters - nil means "no filter".
 // BeforePubDate/BeforeID form an optional cursor: when both are non-nil, only items
 // ordered before that (pub_date, id) position are returned (nil = first page).
 // OrderBy accepts "pub_date" (default) or "created_at".
@@ -20,6 +20,7 @@ type ListItemsParams struct {
 	FeedID        *int64
 	GroupID       *int64
 	Unread        *bool
+	AfterPubDate  *int64
 	Limit         int
 	BeforePubDate *int64
 	BeforeID      *int64
@@ -52,6 +53,10 @@ func (s *Store) ListItems(params ListItemsParams) ([]*model.Item, error) {
 	if params.Unread != nil {
 		query += ` AND items.unread = :unread`
 		args = append(args, sql.Named("unread", boolToInt(*params.Unread)))
+	}
+	if params.AfterPubDate != nil {
+		query += ` AND items.pub_date >= :after_pub_date`
+		args = append(args, sql.Named("after_pub_date", *params.AfterPubDate))
 	}
 
 	// Cursor pagination: skip items at or before the cursor position, matching
@@ -667,6 +672,10 @@ func (s *Store) CountItems(params ListItemsParams) (int, error) {
 	if params.Unread != nil {
 		query += ` AND items.unread = :unread`
 		args = append(args, sql.Named("unread", boolToInt(*params.Unread)))
+	}
+	if params.AfterPubDate != nil {
+		query += ` AND items.pub_date >= :after_pub_date`
+		args = append(args, sql.Named("after_pub_date", *params.AfterPubDate))
 	}
 
 	var count int

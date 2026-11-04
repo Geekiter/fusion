@@ -42,6 +42,9 @@ function buildListItemsParams(
   if (filters.feedId) params.feed_id = filters.feedId;
   if (filters.groupId) params.group_id = filters.groupId;
   if (filters.unread) params.unread = true;
+  if (filters.publishedAfter !== null) {
+    params.published_after = filters.publishedAfter;
+  }
   if (cursor) params.before = cursor;
 
   return params;

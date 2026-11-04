@@ -229,6 +229,7 @@ export const deMessages: PartialMessages = {
   "article.filter.all": "Alle",
   "article.filter.starred": "Favoriten",
   "article.filter.unread": "Ungelesen",
+  "article.filter.today": "Heute",
   "article.groupFallback": "Gruppe",
   "article.list.all": "Alle Artikel",
   "article.list.densityToggle": "Listendichte umschalten",

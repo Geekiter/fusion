@@ -228,6 +228,7 @@ export const enMessages = {
   "article.filter.all": "All",
   "article.filter.starred": "Starred",
   "article.filter.unread": "Unread",
+  "article.filter.today": "Today",
   "article.groupFallback": "Group",
   "article.list.all": "All Articles",
   "article.list.densityToggle": "Toggle list density",

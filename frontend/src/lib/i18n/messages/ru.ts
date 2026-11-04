@@ -229,6 +229,7 @@ export const ruMessages: PartialMessages = {
   "article.filter.all": "Все",
   "article.filter.starred": "Избранные",
   "article.filter.unread": "Непрочитанные",
+  "article.filter.today": "Сегодня",
   "article.groupFallback": "Группа",
   "article.list.all": "Все статьи",
   "article.list.densityToggle": "Переключить плотность списка",

@@ -229,6 +229,7 @@ export const svMessages: PartialMessages = {
   "article.filter.all": "Alla",
   "article.filter.starred": "Stjarnmarkta",
   "article.filter.unread": "Olasta",
+  "article.filter.today": "I dag",
   "article.groupFallback": "Grupp",
   "article.list.all": "Alla artiklar",
   "article.list.densityToggle": "Ändra listtäthet",

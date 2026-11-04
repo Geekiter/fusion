@@ -229,6 +229,7 @@ export const esMessages: PartialMessages = {
   "article.filter.all": "Todos",
   "article.filter.starred": "Destacados",
   "article.filter.unread": "No leidos",
+  "article.filter.today": "Hoy",
   "article.groupFallback": "Grupo",
   "article.list.all": "Todos los articulos",
   "article.list.densityToggle": "Cambiar densidad de la lista",

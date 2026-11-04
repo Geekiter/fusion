@@ -70,6 +70,15 @@ func (h *Handler) listItems(c *gin.Context) {
 		params.Unread = &val
 	}
 
+	if publishedAfter := c.Query("published_after"); publishedAfter != "" {
+		value, err := strconv.ParseInt(publishedAfter, 10, 64)
+		if err != nil || value < 0 {
+			badRequestError(c, "invalid published_after")
+			return
+		}
+		params.AfterPubDate = &value
+	}
+
 	if limit := c.Query("limit"); limit != "" {
 		val, err := strconv.Atoi(limit)
 		if err != nil || val <= 0 {

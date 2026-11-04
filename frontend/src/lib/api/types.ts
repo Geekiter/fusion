@@ -176,6 +176,7 @@ export interface ListItemsParams {
   feed_id?: number;
   group_id?: number;
   unread?: boolean;
+  published_after?: number;
   limit?: number;
   before?: string;
   order_by?: string;

@@ -91,6 +91,8 @@ export const itemAPI = {
     if (params?.group_id) query.set("group_id", params.group_id.toString());
     if (params?.unread !== undefined)
       query.set("unread", params.unread.toString());
+    if (params?.published_after !== undefined)
+      query.set("published_after", params.published_after.toString());
     if (params?.limit) query.set("limit", params.limit.toString());
     if (params?.before) query.set("before", params.before);
     if (params?.order_by) query.set("order_by", params.order_by);

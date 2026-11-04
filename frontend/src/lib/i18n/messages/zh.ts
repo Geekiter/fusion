@@ -229,6 +229,7 @@ export const zhMessages: PartialMessages = {
   "article.filter.all": "全部",
   "article.filter.starred": "已收藏",
   "article.filter.unread": "未读",
+  "article.filter.today": "今天",
   "article.groupFallback": "分组",
   "article.list.all": "全部文章",
   "article.list.densityToggle": "切换列表密度",
