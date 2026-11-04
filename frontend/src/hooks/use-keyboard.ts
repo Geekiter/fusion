@@ -27,6 +27,7 @@ interface ArticleNavigationOptions {
   onToggleStar?: () => void | Promise<void>;
   onOpenOriginal?: () => void;
   onShare?: () => void | Promise<void>;
+  onToggleFocus?: () => void;
 }
 
 export function useKeyboardShortcuts() {
@@ -240,6 +241,7 @@ export function useArticleNavigation(
     onToggleStar,
     onOpenOriginal,
     onShare,
+    onToggleFocus,
   } = options;
   const latestStateRef = useRef({
     articleIds,
@@ -257,6 +259,7 @@ export function useArticleNavigation(
     onToggleStar,
     onOpenOriginal,
     onShare,
+    onToggleFocus,
     setSelectedArticle,
   });
 
@@ -277,6 +280,7 @@ export function useArticleNavigation(
       onToggleStar,
       onOpenOriginal,
       onShare,
+      onToggleFocus,
       setSelectedArticle,
     };
   }, [
@@ -295,6 +299,7 @@ export function useArticleNavigation(
     onToggleStar,
     onOpenOriginal,
     onShare,
+    onToggleFocus,
     setSelectedArticle,
   ]);
 
@@ -386,6 +391,13 @@ export function useArticleNavigation(
       if (key === "s" && event.shiftKey && state.onShare) {
         event.preventDefault();
         void state.onShare();
+        return;
+      }
+
+      // Z: toggle focus reading mode
+      if (key === "z" && state.onToggleFocus) {
+        event.preventDefault();
+        state.onToggleFocus();
         return;
       }
 

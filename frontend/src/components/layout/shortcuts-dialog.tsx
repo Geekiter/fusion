@@ -43,6 +43,7 @@ export function ShortcutsDialog() {
         { keys: "m", action: t("shortcuts.action.toggleRead") },
         { keys: "s / f", action: t("shortcuts.action.toggleStar") },
         { keys: "Shift+S", action: t("shortcuts.action.shareArticle") },
+        { keys: "z", action: t("shortcuts.action.toggleFocus") },
         { keys: "o / v", action: t("shortcuts.action.openOriginal") },
       ],
     },

@@ -10,6 +10,8 @@ import {
   FileText,
   Languages,
   Loader2,
+  Maximize2,
+  Minimize2,
   ArrowUp,
   Share2,
   Sparkles,
@@ -125,6 +127,7 @@ export function ArticleDrawer() {
     Array<{ src: string; alt: string }>
   >([]);
   const [isSharing, setIsSharing] = useState(false);
+  const [isFocusMode, setIsFocusMode] = useState(false);
   const {
     selectedArticleId,
     setSelectedArticle,
@@ -283,6 +286,12 @@ export function ArticleDrawer() {
     setReadingProgress(0);
     setLightboxIndex(null);
   }, [article?.id]);
+
+  useEffect(() => {
+    if (selectedArticleId === null) {
+      setIsFocusMode(false);
+    }
+  }, [selectedArticleId]);
 
   useEffect(() => {
     const content = articleContentRef.current;
@@ -538,7 +547,8 @@ export function ArticleDrawer() {
         void handleToggleStar();
       },
       onOpenOriginal: handleOpenOriginal,
-    onShare: handleShareArticle,
+      onShare: handleShareArticle,
+      onToggleFocus: () => setIsFocusMode((current) => !current),
     });
 
   const isReadPending = markRead.isPending || markUnread.isPending;
@@ -572,10 +582,15 @@ export function ArticleDrawer() {
     <>
       <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
         <SheetContent
-        side="right"
-        className="data-[side=right]:w-full data-[side=right]:sm:max-w-[max(840px,60vw)] p-0"
-        showCloseButton={false}
-      >
+          side="right"
+          className={cn(
+            "data-[side=right]:w-full p-0",
+            isFocusMode
+              ? "data-[side=right]:sm:max-w-none"
+              : "data-[side=right]:sm:max-w-[max(840px,60vw)]",
+          )}
+          showCloseButton={false}
+        >
         {article && (
           <div className="relative flex h-full flex-col">
             {/* Header */}
@@ -601,7 +616,12 @@ export function ArticleDrawer() {
                 </span>
               )}
 
-              <div className="hidden flex-wrap items-center gap-2 md:flex">
+              <div
+                className={cn(
+                  "hidden flex-wrap items-center gap-2",
+                  !isFocusMode && "md:flex",
+                )}
+              >
                 <Button
                   variant="outline"
                   size="sm"
@@ -725,6 +745,30 @@ export function ArticleDrawer() {
                 </Button>
               </div>
 
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => setIsFocusMode((current) => !current)}
+                aria-pressed={isFocusMode}
+                aria-label={
+                  isFocusMode
+                    ? t("article.focus.exit")
+                    : t("article.focus.enter")
+                }
+                title={
+                  isFocusMode
+                    ? t("article.focus.exit")
+                    : t("article.focus.enter")
+                }
+                className="size-11 md:size-8"
+              >
+                {isFocusMode ? (
+                  <Minimize2 className="h-[18px] w-[18px] text-muted-foreground" />
+                ) : (
+                  <Maximize2 className="h-[18px] w-[18px] text-muted-foreground" />
+                )}
+              </Button>
+
               <SheetClose
                 render={
                   <Button
@@ -779,7 +823,12 @@ export function ArticleDrawer() {
                   onTouchMove={handleArticleTouchMove}
                   onTouchEnd={handleArticleTouchEnd}
                   onTouchCancel={handleArticleTouchEnd}
-                  className="min-w-0 touch-pan-y px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200 motion-reduce:animate-none md:px-12 md:py-8"
+                  className={cn(
+                    "min-w-0 touch-pan-y px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200 motion-reduce:animate-none",
+                    isFocusMode
+                      ? "mx-auto w-full max-w-4xl md:px-20 md:py-10 lg:px-24"
+                      : "md:px-12 md:py-8",
+                  )}
                   style={{
                     transform: `translate3d(${swipeOffset}px, 0, 0)`,
                     transition: isSwiping
@@ -916,7 +965,7 @@ export function ArticleDrawer() {
               </ScrollArea>
             </div>
 
-            <nav
+            {!isFocusMode && <nav
               aria-label={t("article.mobile.actions")}
               className="pointer-events-none absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-10 flex justify-center px-2 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 md:hidden"
             >
@@ -1074,10 +1123,15 @@ export function ArticleDrawer() {
                   </span>
                 </button>
               </div>
-            </nav>
+            </nav>}
 
             {/* Footer - Navigation */}
-            <div className="hidden items-center justify-between border-t px-6 py-3 md:flex">
+            <div
+              className={cn(
+                "hidden items-center justify-between border-t px-6 py-3",
+                !isFocusMode && "md:flex",
+              )}
+            >
               <Button
                 variant="outline"
                 size="sm"
