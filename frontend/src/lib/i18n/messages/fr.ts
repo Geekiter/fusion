@@ -210,7 +210,7 @@ export const frMessages: PartialMessages = {
   "article.list.loadMoreConfirm": "Faites défiler ou confirmez",
   "article.list.loadMoreNow": "Charger la page suivante",
   "article.list.loading": "Chargement...",
-  "article.list.markAllRead": "Tout marquer comme lu",
+  "article.list.markAllRead": "Marquer la vue comme lue",
   "article.list.markAllReadSuccess": "Tous les articles de cette vue sont marqués comme lus",
   "article.list.markAllReadFailed": "Impossible de marquer les articles comme lus",
   "article.list.noArticles": "Aucun article trouvé",

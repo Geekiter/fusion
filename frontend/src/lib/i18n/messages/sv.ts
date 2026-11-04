@@ -210,7 +210,7 @@ export const svMessages: PartialMessages = {
   "article.list.loadMoreConfirm": "Skrolla lite till eller bekräfta",
   "article.list.loadMoreNow": "Ladda nästa sida",
   "article.list.loading": "Laddar...",
-  "article.list.markAllRead": "Markera alla som lasta",
+  "article.list.markAllRead": "Markera aktuella som lästa",
   "article.list.markAllReadSuccess": "Alla artiklar i den här vyn markerades som lästa",
   "article.list.markAllReadFailed": "Det gick inte att markera artiklarna som lästa",
   "article.list.noArticles": "Inga artiklar hittades",

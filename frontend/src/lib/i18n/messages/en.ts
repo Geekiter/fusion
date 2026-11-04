@@ -209,7 +209,7 @@ export const enMessages = {
   "article.list.loadMoreConfirm": "Scroll a little further or confirm",
   "article.list.loadMoreNow": "Load next page",
   "article.list.loading": "Loading...",
-  "article.list.markAllRead": "Mark all as read",
+  "article.list.markAllRead": "Mark current as read",
   "article.list.markAllReadSuccess": "All articles in this view are marked as read",
   "article.list.markAllReadFailed": "Failed to mark articles as read",
   "article.list.noArticles": "No articles found",

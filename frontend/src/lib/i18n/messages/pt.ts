@@ -210,7 +210,7 @@ export const ptMessages: PartialMessages = {
   "article.list.loadMoreConfirm": "Role um pouco mais ou confirme",
   "article.list.loadMoreNow": "Carregar próxima página",
   "article.list.loading": "Carregando...",
-  "article.list.markAllRead": "Marcar todos como lidos",
+  "article.list.markAllRead": "Marcar atuais como lidos",
   "article.list.markAllReadSuccess": "Todos os artigos desta visualização foram marcados como lidos",
   "article.list.markAllReadFailed": "Falha ao marcar os artigos como lidos",
   "article.list.noArticles": "Nenhum artigo encontrado",
