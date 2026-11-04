@@ -538,6 +538,25 @@ export function ArticleList() {
           </Tabs>
         )}
 
+        {articles.length > 0 && (
+          <div
+            className="flex items-center justify-between gap-3 px-4 py-2 text-[11px] text-muted-foreground md:px-0"
+            aria-live="polite"
+          >
+            <span className="tabular-nums">
+              {t("article.list.loadedSummary", {
+                loaded: articles.length,
+                unread: unreadCount,
+              })}
+            </span>
+            {hasMore && (
+              <span className="shrink-0 rounded-full bg-muted/70 px-2 py-1">
+                {t("article.list.loadMoreManual")}
+              </span>
+            )}
+          </div>
+        )}
+
         {/* Mobile: pull-to-refresh indicator, shown above the list while
             dragging down from the top of the scroll area. */}
         {isMobile && (pullDistance > 0 || isRefreshing) && (
