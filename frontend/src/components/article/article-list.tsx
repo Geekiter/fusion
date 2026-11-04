@@ -296,7 +296,23 @@ export function ArticleList() {
       requestAnimationFrame(() => {
         getArticleScrollViewport()?.scrollTo({ top: 0, behavior: "instant" });
       });
-      toast.success(t("article.list.markAllReadSuccess"));
+      toast.success(t("article.list.markAllReadSuccess"), {
+        duration: 7000,
+        action: {
+          label: t("common.undo"),
+          onClick: () => {
+            void markItemsUnread
+              .mutateAsync(unreadIds)
+              .then(() => {
+                toast.success(t("article.list.markAllReadUndone"));
+              })
+              .catch((error) => {
+                console.error("Failed to undo marking items as read:", error);
+                toast.error(t("article.list.markAllReadUndoFailed"));
+              });
+          },
+        },
+      });
     } catch (error) {
       console.error("Failed to mark all as read:", error);
       toast.error(t("article.list.markAllReadFailed"));
