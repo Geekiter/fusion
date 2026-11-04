@@ -46,6 +46,10 @@ import { getFaviconUrl } from "@/lib/api/favicon";
 import { useI18n } from "@/lib/i18n";
 import type { Item } from "@/lib/api";
 import { cn, extractSummary, needsTranslation } from "@/lib/utils";
+import {
+  getListScrollPosition,
+  saveListScrollPosition,
+} from "@/lib/list-position";
 
 export function ArticleList() {
   const { t } = useI18n();
@@ -89,11 +93,19 @@ export function ArticleList() {
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const loadMoreGateRef = useRef<"idle" | "pending" | "cooldown">("idle");
+  const pendingListRestoreRef = useRef<{
+    key: string;
+    top: number;
+    deadline: number;
+  } | null>(null);
+  const listRestoreFrameRef = useRef<number | null>(null);
   const lastScrollTopRef = useRef(0);
   const [isCategoryOpen, setCategoryOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [hideMobileActionBar, setHideMobileActionBar] = useState(false);
   const [isLoadMorePending, setIsLoadMorePending] = useState(false);
+
+  const listViewKey = `${selectedFeedId ? `feed:${selectedFeedId}` : selectedGroupId ? `group:${selectedGroupId}` : "home"}:${articleFilter}`;
 
   const getArticleScrollViewport = useCallback(
     () =>
@@ -130,13 +142,74 @@ export function ArticleList() {
     const viewport = getArticleScrollViewport();
     if (!viewport) return;
 
+    const savedTop = getListScrollPosition(listViewKey);
+    pendingListRestoreRef.current =
+      savedTop > 0
+        ? { key: listViewKey, top: savedTop, deadline: Date.now() + 2000 }
+        : null;
+
     viewport.scrollTo({ top: 0, behavior: "instant" });
     loadMoreGateRef.current = "idle";
     lastScrollTopRef.current = 0;
     setHideMobileActionBar(false);
     setShowScrollTop(false);
     setIsLoadMorePending(false);
-  }, [articleFilter, getArticleScrollViewport, selectedFeedId, selectedGroupId]);
+
+    if (savedTop <= 0) return;
+
+    const restore = () => {
+      const pending = pendingListRestoreRef.current;
+      if (!pending || pending.key !== listViewKey) return;
+
+      const scrollableHeight = Math.max(
+        0,
+        viewport.scrollHeight - viewport.clientHeight,
+      );
+      viewport.scrollTo({
+        top: Math.min(pending.top, scrollableHeight),
+        behavior: "instant",
+      });
+
+      if (pending.top <= scrollableHeight || Date.now() > pending.deadline) {
+        pendingListRestoreRef.current = null;
+        listRestoreFrameRef.current = null;
+        return;
+      }
+
+      listRestoreFrameRef.current = window.requestAnimationFrame(restore);
+    };
+
+    listRestoreFrameRef.current = window.requestAnimationFrame(restore);
+    return () => {
+      if (listRestoreFrameRef.current !== null) {
+        window.cancelAnimationFrame(listRestoreFrameRef.current);
+        listRestoreFrameRef.current = null;
+      }
+    };
+  }, [getArticleScrollViewport, listViewKey]);
+
+  useEffect(() => {
+    const viewport = getArticleScrollViewport();
+    if (!viewport) return;
+
+    let saveTimer: number | null = null;
+    const saveCurrentPosition = () => {
+      if (pendingListRestoreRef.current?.key === listViewKey) return;
+      saveListScrollPosition(listViewKey, viewport.scrollTop);
+    };
+    const handleScroll = () => {
+      if (pendingListRestoreRef.current?.key === listViewKey) return;
+      if (saveTimer !== null) window.clearTimeout(saveTimer);
+      saveTimer = window.setTimeout(saveCurrentPosition, 180);
+    };
+
+    viewport.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      viewport.removeEventListener("scroll", handleScroll);
+      if (saveTimer !== null) window.clearTimeout(saveTimer);
+      saveCurrentPosition();
+    };
+  }, [getArticleScrollViewport, listViewKey]);
 
   useEffect(() => {
     const sentinel = loadMoreSentinelRef.current;
