@@ -233,7 +233,7 @@ export const ptMessages: PartialMessages = {
   "article.list.endOfList": "Não há mais artigos",
   "article.list.loading": "Carregando...",
   "article.list.markAllRead": "Marcar atuais como lidos",
-  "article.list.markAllReadSuccess": "Todos os artigos desta visualização foram marcados como lidos",
+  "article.list.markAllReadSuccess": "{count} artigos carregados foram marcados como lidos",
   "article.list.markAllReadUndone": "Artigos restaurados como não lidos",
   "article.list.markAllReadUndoFailed": "Não foi possível desfazer a marcação como lido",
   "article.list.markAllReadFailed": "Falha ao marcar os artigos como lidos",

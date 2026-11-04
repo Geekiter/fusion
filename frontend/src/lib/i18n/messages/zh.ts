@@ -233,7 +233,7 @@ export const zhMessages: PartialMessages = {
   "article.list.endOfList": "没有更多文章了",
   "article.list.loading": "加载中...",
   "article.list.markAllRead": "已读当前",
-  "article.list.markAllReadSuccess": "当前视图中的文章已全部标为已读",
+  "article.list.markAllReadSuccess": "已将当前已加载的 {count} 篇文章标为已读",
   "article.list.markAllReadUndone": "已恢复为未读",
   "article.list.markAllReadUndoFailed": "撤销已读失败",
   "article.list.markAllReadFailed": "文章全部标为已读失败",

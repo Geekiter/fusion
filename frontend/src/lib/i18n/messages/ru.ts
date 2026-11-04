@@ -233,7 +233,7 @@ export const ruMessages: PartialMessages = {
   "article.list.endOfList": "Больше статей нет",
   "article.list.loading": "Загрузка...",
   "article.list.markAllRead": "Отметить текущие как прочитанные",
-  "article.list.markAllReadSuccess": "Все статьи в этом представлении отмечены как прочитанные",
+  "article.list.markAllReadSuccess": "Прочитанными отмечено загруженных статей: {count}",
   "article.list.markAllReadUndone": "Статьи восстановлены как непрочитанные",
   "article.list.markAllReadUndoFailed": "Не удалось отменить отметку как прочитанное",
   "article.list.markAllReadFailed": "Не удалось отметить статьи как прочитанные",

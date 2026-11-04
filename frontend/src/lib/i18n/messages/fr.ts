@@ -233,7 +233,7 @@ export const frMessages: PartialMessages = {
   "article.list.endOfList": "Il n’y a plus d’articles",
   "article.list.loading": "Chargement...",
   "article.list.markAllRead": "Marquer la vue comme lue",
-  "article.list.markAllReadSuccess": "Tous les articles de cette vue sont marqués comme lus",
+  "article.list.markAllReadSuccess": "{count} articles chargés ont été marqués comme lus",
   "article.list.markAllReadUndone": "Articles restaurés comme non lus",
   "article.list.markAllReadUndoFailed": "Impossible d'annuler le marquage comme lu",
   "article.list.markAllReadFailed": "Impossible de marquer les articles comme lus",

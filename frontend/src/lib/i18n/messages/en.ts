@@ -232,7 +232,7 @@ export const enMessages = {
   "article.list.endOfList": "You’re all caught up",
   "article.list.loading": "Loading...",
   "article.list.markAllRead": "Mark current as read",
-  "article.list.markAllReadSuccess": "All articles in this view are marked as read",
+  "article.list.markAllReadSuccess": "Marked {count} loaded articles as read",
   "article.list.markAllReadUndone": "Articles restored as unread",
   "article.list.markAllReadUndoFailed": "Failed to undo marking as read",
   "article.list.markAllReadFailed": "Failed to mark articles as read",

@@ -233,7 +233,7 @@ export const esMessages: PartialMessages = {
   "article.list.endOfList": "No hay más artículos",
   "article.list.loading": "Cargando...",
   "article.list.markAllRead": "Marcar vista como leída",
-  "article.list.markAllReadSuccess": "Todos los artículos de esta vista se marcaron como leídos",
+  "article.list.markAllReadSuccess": "Se marcaron como leídos {count} artículos cargados",
   "article.list.markAllReadUndone": "Artículos restaurados como no leídos",
   "article.list.markAllReadUndoFailed": "No se pudo deshacer la marcación como leído",
   "article.list.markAllReadFailed": "No se pudieron marcar los artículos como leídos",

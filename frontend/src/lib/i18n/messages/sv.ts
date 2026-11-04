@@ -233,7 +233,7 @@ export const svMessages: PartialMessages = {
   "article.list.endOfList": "Det finns inga fler artiklar",
   "article.list.loading": "Laddar...",
   "article.list.markAllRead": "Markera aktuella som lästa",
-  "article.list.markAllReadSuccess": "Alla artiklar i den här vyn markerades som lästa",
+  "article.list.markAllReadSuccess": "Markerade {count} inlästa artiklar som lästa",
   "article.list.markAllReadUndone": "Artiklar återställdes som olästa",
   "article.list.markAllReadUndoFailed": "Det gick inte att ångra markeringen som läst",
   "article.list.markAllReadFailed": "Det gick inte att markera artiklarna som lästa",

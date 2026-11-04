@@ -233,7 +233,7 @@ export const deMessages: PartialMessages = {
   "article.list.endOfList": "Keine weiteren Artikel",
   "article.list.loading": "Ladt...",
   "article.list.markAllRead": "Aktuelle als gelesen markieren",
-  "article.list.markAllReadSuccess": "Alle Artikel in dieser Ansicht wurden als gelesen markiert",
+  "article.list.markAllReadSuccess": "{count} geladene Artikel wurden als gelesen markiert",
   "article.list.markAllReadUndone": "Artikel wurden als ungelesen wiederhergestellt",
   "article.list.markAllReadUndoFailed": "Markierung als gelesen konnte nicht rückgängig gemacht werden",
   "article.list.markAllReadFailed": "Artikel konnten nicht als gelesen markiert werden",
