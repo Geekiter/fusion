@@ -11,6 +11,7 @@ import {
   Languages,
   Loader2,
   ArrowUp,
+  Share2,
   Sparkles,
   Star,
   X,
@@ -111,6 +112,7 @@ export function ArticleDrawer() {
   const [lightboxImages, setLightboxImages] = useState<
     Array<{ src: string; alt: string }>
   >([]);
+  const [isSharing, setIsSharing] = useState(false);
   const {
     selectedArticleId,
     setSelectedArticle,
@@ -381,6 +383,42 @@ export function ArticleDrawer() {
     window.open(safeArticleLink, "_blank", "noopener,noreferrer");
   };
 
+  const handleShareArticle = async () => {
+    if (!article || !safeArticleLink || isSharing) return;
+
+    const shareData = {
+      title: article.translated_title || article.title,
+      text: extractSummary(
+        article.extracted_content || article.content,
+        180,
+      ),
+      url: safeArticleLink,
+    };
+
+    setIsSharing(true);
+    try {
+      if (typeof navigator.share === "function") {
+        try {
+          await navigator.share(shareData);
+          return;
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
+        }
+      }
+
+      if (!navigator.clipboard) throw new Error("Clipboard unavailable");
+      await navigator.clipboard.writeText(safeArticleLink);
+      toast.success(t("article.share.copied"));
+    } catch (error) {
+      console.error("Failed to share article:", error);
+      toast.error(t("article.share.failed"));
+    } finally {
+      setIsSharing(false);
+    }
+  };
+
   const handleOpenFeed = () => {
     if (!article || article.feed_id <= 0) return;
     setSelectedFeed(article.feed_id);
@@ -579,6 +617,21 @@ export function ArticleDrawer() {
                     {t("article.action.original")}
                   </Button>
                 )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleShareArticle}
+                  disabled={!safeArticleLink || isSharing}
+                  aria-busy={isSharing}
+                  className="h-auto gap-1.5 px-2.5 py-1.5 text-[13px] font-medium text-muted-foreground"
+                >
+                  {isSharing ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Share2 className="h-4 w-4" />
+                  )}
+                  {t("article.share.action")}
+                </Button>
                 <Button
                   variant="outline"
                   size="sm"
@@ -793,7 +846,7 @@ export function ArticleDrawer() {
               aria-label={t("article.mobile.actions")}
               className="pointer-events-none absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-10 flex justify-center px-2 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 md:hidden"
             >
-              <div className="pointer-events-auto grid w-full max-w-sm grid-cols-6 overflow-hidden rounded-2xl border border-border/70 bg-background/90 p-1 shadow-xl shadow-black/10 ring-1 ring-black/5 backdrop-blur-xl dark:bg-background/80 dark:ring-white/5">
+              <div className="pointer-events-auto grid w-full max-w-md grid-cols-7 overflow-hidden rounded-2xl border border-border/70 bg-background/90 p-1 shadow-xl shadow-black/10 ring-1 ring-black/5 backdrop-blur-xl dark:bg-background/80 dark:ring-white/5">
                 <button
                   type="button"
                   onClick={handleFetchFulltext}
@@ -901,6 +954,24 @@ export function ArticleDrawer() {
                   <ExternalLink className="h-[18px] w-[18px]" />
                   <span className="max-w-full truncate">
                     {t("article.action.original")}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleShareArticle}
+                  disabled={!safeArticleLink || isSharing}
+                  aria-busy={isSharing}
+                  aria-label={t("article.share.action")}
+                  className={mobileActionClass}
+                >
+                  {isSharing ? (
+                    <Loader2 className="h-[18px] w-[18px] animate-spin" />
+                  ) : (
+                    <Share2 className="h-[18px] w-[18px]" />
+                  )}
+                  <span className="max-w-full truncate">
+                    {t("article.share.action")}
                   </span>
                 </button>
 
