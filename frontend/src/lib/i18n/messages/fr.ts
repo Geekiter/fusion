@@ -252,6 +252,7 @@ export const frMessages: PartialMessages = {
   "article.selection.starSuccess": "{count} articles enregistrés",
   "article.selection.starFailed": "Impossible d’enregistrer les articles sélectionnés",
   "article.session.start": "Commencer la lecture",
+  "article.session.continue": "Continuer la lecture",
   "article.groupFallback": "Groupe",
   "article.list.all": "Tous les articles",
   "article.list.densityToggle": "Changer la densité de la liste",

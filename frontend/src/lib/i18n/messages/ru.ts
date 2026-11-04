@@ -252,6 +252,7 @@ export const ruMessages: PartialMessages = {
   "article.selection.starSuccess": "Сохранено статей: {count}",
   "article.selection.starFailed": "Не удалось сохранить выбранные статьи",
   "article.session.start": "Начать чтение",
+  "article.session.continue": "Продолжить чтение",
   "article.groupFallback": "Группа",
   "article.list.all": "Все статьи",
   "article.list.densityToggle": "Переключить плотность списка",

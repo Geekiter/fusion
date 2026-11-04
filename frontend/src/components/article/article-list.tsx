@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowDown,
   ArrowUp,
+  BookOpen,
   Check,
   CheckCheck,
   ChevronsDown,
@@ -55,6 +56,7 @@ import {
   getListScrollPosition,
   saveListScrollPosition,
 } from "@/lib/list-position";
+import { getReadingProgress } from "@/lib/reading-position";
 
 function getArticleDateKey(timestamp: number): string {
   const date = new Date(timestamp * 1000);
@@ -382,6 +384,13 @@ export function ArticleList() {
   );
 
   const unreadCount = articles.filter((a) => a.unread).length;
+  const resumableArticle = articles.find((article) => {
+    const progress = getReadingProgress(article.id);
+    return progress > 0 && progress < 100;
+  });
+  const resumableProgress = resumableArticle
+    ? getReadingProgress(resumableArticle.id)
+    : 0;
   const loadedReadPercent =
     articles.length > 0
       ? Math.round(((articles.length - unreadCount) / articles.length) * 100)
@@ -469,6 +478,12 @@ export function ArticleList() {
       setSelectedArticle(firstUnreadId);
     }
   }, [articles, setSelectedArticle]);
+
+  const handleContinueReading = useCallback(() => {
+    if (resumableArticle) {
+      setSelectedArticle(resumableArticle.id);
+    }
+  }, [resumableArticle, setSelectedArticle]);
 
   const handleMarkAllAsRead = async () => {
     const unreadIds = articles
@@ -838,6 +853,23 @@ export function ArticleList() {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-2">
+              {resumableArticle && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleContinueReading}
+                  className="h-7 gap-1 rounded-full px-2.5 text-[11px] text-primary hover:bg-primary/10"
+                  title={resumableArticle.title}
+                >
+                  <BookOpen className="size-3.5" />
+                  <span className="hidden sm:inline">
+                    {t("article.session.continue")}
+                  </span>
+                  <span className="tabular-nums text-primary/70">
+                    {resumableProgress}%
+                  </span>
+                </Button>
+              )}
               {unreadCount > 0 && (
                 <Button
                   variant="ghost"

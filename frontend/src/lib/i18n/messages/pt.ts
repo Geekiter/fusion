@@ -252,6 +252,7 @@ export const ptMessages: PartialMessages = {
   "article.selection.starSuccess": "{count} artigos salvos",
   "article.selection.starFailed": "Não foi possível salvar os artigos selecionados",
   "article.session.start": "Começar a ler",
+  "article.session.continue": "Continuar lendo",
   "article.groupFallback": "Grupo",
   "article.list.all": "Todos os artigos",
   "article.list.densityToggle": "Alternar densidade da lista",

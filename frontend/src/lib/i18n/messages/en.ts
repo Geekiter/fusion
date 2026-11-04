@@ -251,6 +251,7 @@ export const enMessages = {
   "article.selection.starSuccess": "Saved {count} articles",
   "article.selection.starFailed": "Could not save selected articles",
   "article.session.start": "Start reading",
+  "article.session.continue": "Continue reading",
   "article.groupFallback": "Group",
   "article.list.all": "All Articles",
   "article.list.densityToggle": "Toggle list density",

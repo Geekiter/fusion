@@ -252,6 +252,7 @@ export const svMessages: PartialMessages = {
   "article.selection.starSuccess": "Sparade {count} artiklar",
   "article.selection.starFailed": "Kunde inte spara valda artiklar",
   "article.session.start": "Börja läsa",
+  "article.session.continue": "Fortsätt läsa",
   "article.groupFallback": "Grupp",
   "article.list.all": "Alla artiklar",
   "article.list.densityToggle": "Ändra listtäthet",

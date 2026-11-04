@@ -252,6 +252,7 @@ export const zhMessages: PartialMessages = {
   "article.selection.starSuccess": "已收藏 {count} 篇文章",
   "article.selection.starFailed": "收藏选中文章失败",
   "article.session.start": "开始阅读",
+  "article.session.continue": "继续阅读",
   "article.groupFallback": "分组",
   "article.list.all": "全部文章",
   "article.list.densityToggle": "切换列表密度",

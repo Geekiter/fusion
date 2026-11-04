@@ -252,6 +252,7 @@ export const deMessages: PartialMessages = {
   "article.selection.starSuccess": "{count} Artikel gespeichert",
   "article.selection.starFailed": "Ausgewählte Artikel konnten nicht gespeichert werden",
   "article.session.start": "Lesen starten",
+  "article.session.continue": "Weiterlesen",
   "article.groupFallback": "Gruppe",
   "article.list.all": "Alle Artikel",
   "article.list.densityToggle": "Listendichte umschalten",

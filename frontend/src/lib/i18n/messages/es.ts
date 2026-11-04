@@ -252,6 +252,7 @@ export const esMessages: PartialMessages = {
   "article.selection.starSuccess": "{count} artículos guardados",
   "article.selection.starFailed": "No se pudieron guardar los artículos seleccionados",
   "article.session.start": "Empezar a leer",
+  "article.session.continue": "Continuar leyendo",
   "article.groupFallback": "Grupo",
   "article.list.all": "Todos los articulos",
   "article.list.densityToggle": "Cambiar densidad de la lista",
