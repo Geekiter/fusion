@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -39,6 +39,7 @@ export function ArticleItem({
   const { t } = useI18n();
 
   const isSelected = selectedArticleId === article.id;
+  const articleItemRef = useRef<HTMLDivElement>(null);
   const safeArticleLink = toSafeExternalUrl(article.link);
   const originalSummary = extractSummary(article.content, 150);
   const readingMinutes = estimateReadingTime(article.content);
@@ -51,6 +52,18 @@ export function ArticleItem({
   useEffect(() => {
     setThumbnailFailed(false);
   }, [thumbnailUrl]);
+
+  useEffect(() => {
+    if (!isSelected) return;
+
+    const prefersReducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+    articleItemRef.current?.scrollIntoView({
+      block: "nearest",
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  }, [isSelected]);
 
   const handleToggleRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -74,6 +87,7 @@ export function ArticleItem({
 
   return (
     <div
+      ref={articleItemRef}
       role="button"
       tabIndex={0}
       onClick={() => onSelectArticle(article.id)}
