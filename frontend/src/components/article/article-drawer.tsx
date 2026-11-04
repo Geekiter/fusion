@@ -23,6 +23,11 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
 import type { Item } from "@/lib/api";
@@ -102,6 +107,10 @@ export function ArticleDrawer() {
   const [readingProgress, setReadingProgress] = useState(0);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [lightboxImages, setLightboxImages] = useState<
+    Array<{ src: string; alt: string }>
+  >([]);
   const {
     selectedArticleId,
     setSelectedArticle,
@@ -162,7 +171,9 @@ export function ArticleDrawer() {
     const target = event.target;
     if (
       target instanceof HTMLElement &&
-      target.closest("a, button, input, textarea, select, [data-swipe-ignore]")
+      target.closest(
+        "a, button, input, textarea, select, img, [data-swipe-ignore]",
+      )
     ) {
       swipeStartRef.current = null;
       return;
@@ -216,6 +227,7 @@ export function ArticleDrawer() {
 
     viewport.scrollTo({ top: 0, behavior: "instant" });
     setReadingProgress(0);
+    setLightboxIndex(null);
   }, [article?.id]);
 
   useEffect(() => {
@@ -261,12 +273,30 @@ export function ArticleDrawer() {
 
     const images = Array.from(root.querySelectorAll<HTMLImageElement>("img"));
     const loadedClass = "fusion-article-image-loaded";
+    const imageItems = images.map((image) => ({
+      src: image.currentSrc || image.src,
+      alt: image.alt,
+    }));
+    const clickHandlers = new Map<
+      HTMLImageElement,
+      (event: MouseEvent) => void
+    >();
     const handleLoad = (event: Event) => {
       (event.currentTarget as HTMLImageElement).classList.add(loadedClass);
     };
 
-    for (const image of images) {
+    for (const [index, image] of images.entries()) {
+      const handleClick = (event: MouseEvent) => {
+        event.preventDefault();
+        event.stopPropagation();
+        setLightboxImages(imageItems);
+        setLightboxIndex(index);
+      };
+
+      clickHandlers.set(image, handleClick);
       image.classList.add("fusion-article-image");
+      image.classList.add("cursor-zoom-in");
+      image.addEventListener("click", handleClick);
       if (image.complete && image.naturalWidth > 0) {
         image.classList.add(loadedClass);
       } else {
@@ -276,6 +306,8 @@ export function ArticleDrawer() {
 
     return () => {
       for (const image of images) {
+        const handleClick = clickHandlers.get(image);
+        if (handleClick) image.removeEventListener("click", handleClick);
         image.removeEventListener("load", handleLoad);
       }
     };
@@ -285,6 +317,29 @@ export function ArticleDrawer() {
     article?.id,
     article?.translated_content,
   ]);
+
+  useEffect(() => {
+    if (lightboxIndex === null) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        setLightboxIndex((current) =>
+          current === null || current <= 0 ? current : current - 1,
+        );
+      } else if (event.key === "ArrowRight") {
+        event.preventDefault();
+        setLightboxIndex((current) =>
+          current === null || current >= lightboxImages.length - 1
+            ? current
+            : current + 1,
+        );
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [lightboxImages.length, lightboxIndex]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -414,12 +469,15 @@ export function ArticleDrawer() {
     !needsTranslation(
       extractSummary(article.extracted_content || article.content, 500),
     );
+  const lightboxImage =
+    lightboxIndex === null ? null : lightboxImages[lightboxIndex] ?? null;
   const mobileActionClass =
     "flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[10px] font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted focus-visible:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.97] active:bg-muted disabled:text-muted-foreground";
 
   return (
-    <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
-      <SheetContent
+    <>
+      <Sheet open={selectedArticleId !== null} onOpenChange={handleOpenChange}>
+        <SheetContent
         side="right"
         className="data-[side=right]:w-full data-[side=right]:sm:max-w-[max(840px,60vw)] p-0"
         showCloseButton={false}
@@ -898,7 +956,80 @@ export function ArticleDrawer() {
             </div>
           </div>
         )}
-      </SheetContent>
-    </Sheet>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog
+        open={lightboxImage !== null}
+        onOpenChange={(open) => {
+          if (!open) setLightboxIndex(null);
+        }}
+      >
+        <DialogContent
+          showCloseButton={false}
+          className="w-[min(96vw,1200px)] max-w-none border-0 bg-black/90 p-2 text-white shadow-2xl sm:p-4"
+        >
+          <DialogTitle className="sr-only">
+            {t("article.imagePreview.title")}
+          </DialogTitle>
+          {lightboxImage && lightboxIndex !== null && (
+            <div className="relative flex min-h-[50vh] items-center justify-center">
+              <img
+                src={lightboxImage.src}
+                alt={lightboxImage.alt || t("article.imagePreview.title")}
+                className="max-h-[82vh] max-w-full object-contain"
+              />
+
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setLightboxIndex(null)}
+                aria-label={t("article.imagePreview.close")}
+                className="absolute top-2 right-2 rounded-full bg-black/45 text-white hover:bg-black/65 hover:text-white"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+
+              {lightboxIndex > 0 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setLightboxIndex((current) =>
+                    current === null ? null : current - 1,
+                  )}
+                  aria-label={t("article.imagePreview.previous")}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-black/45 text-white hover:bg-black/65 hover:text-white"
+                >
+                  <ChevronLeft className="h-6 w-6" />
+                </Button>
+              )}
+
+              {lightboxIndex < lightboxImages.length - 1 && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setLightboxIndex((current) =>
+                    current === null ? null : current + 1,
+                  )}
+                  aria-label={t("article.imagePreview.next")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-black/45 text-white hover:bg-black/65 hover:text-white"
+                >
+                  <ChevronRight className="h-6 w-6" />
+                </Button>
+              )}
+
+              {lightboxImages.length > 1 && (
+                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 rounded-full bg-black/55 px-3 py-1 text-xs text-white/90">
+                  {lightboxIndex + 1} / {lightboxImages.length}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
