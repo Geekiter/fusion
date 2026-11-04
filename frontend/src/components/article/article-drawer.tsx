@@ -31,6 +31,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useUrlState } from "@/hooks/use-url-state";
+import { usePreferencesStore } from "@/store";
 import type { Item } from "@/lib/api";
 import {
   useItem,
@@ -133,6 +134,9 @@ export function ArticleDrawer() {
     articleFilter,
   } = useUrlState();
   const { getFeedById } = useFeedLookup();
+  const markArticleReadOnOpen = usePreferencesStore(
+    (state) => state.markArticleReadOnOpen,
+  );
 
   const { articles, hasMore, isItemStarred, getBookmarkByItemId } =
     useArticleList({
@@ -166,6 +170,39 @@ export function ArticleDrawer() {
   );
 
   const article: Item | null = fetchedArticle ?? storeArticle ?? null;
+
+  const markedArticleOnOpenRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (selectedArticleId === null) {
+      markedArticleOnOpenRef.current = null;
+      return;
+    }
+
+    if (
+      !markArticleReadOnOpen ||
+      !article ||
+      article.id <= 0 ||
+      !article.unread ||
+      markedArticleOnOpenRef.current === article.id
+    ) {
+      return;
+    }
+
+    markedArticleOnOpenRef.current = article.id;
+    void markRead.mutateAsync([article.id]).catch((error) => {
+      if (markedArticleOnOpenRef.current === article.id) {
+        markedArticleOnOpenRef.current = null;
+      }
+      console.error("Failed to mark opened article as read:", error);
+    });
+  }, [
+    article?.id,
+    article?.unread,
+    markArticleReadOnOpen,
+    markRead,
+    selectedArticleId,
+  ]);
+
   const canToggleRead = article !== null && article.id > 0;
   const feed = article ? getFeedById(article.feed_id) : null;
   const bookmark = article ? getBookmarkByItemId(article.id) : null;

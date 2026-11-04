@@ -57,6 +57,8 @@ export const zhMessages: PartialMessages = {
   "settings.about.reportIssue": "报告问题",
   "settings.articlePageSize.description": "每次加载的文章数量",
   "settings.articlePageSize.label": "每次加载文章数",
+  "settings.markReadOnOpen.description": "打开文章详情后自动将这篇文章标为已读",
+  "settings.markReadOnOpen.label": "打开文章时标记已读",
   "settings.installCancelled": "已取消安装",
   "settings.language.description": "选择你偏好的语言",
   "settings.language.label": "语言",

@@ -55,6 +55,8 @@ export const enMessages = {
   "settings.about.reportIssue": "Report Issue",
   "settings.articlePageSize.description": "Number of articles fetched each time",
   "settings.articlePageSize.label": "Articles per load",
+  "settings.markReadOnOpen.description": "Mark an article as read when you open it",
+  "settings.markReadOnOpen.label": "Mark opened articles as read",
   "settings.installCancelled": "Installation cancelled",
   "settings.language.description": "Select your preferred language",
   "settings.language.label": "Language",

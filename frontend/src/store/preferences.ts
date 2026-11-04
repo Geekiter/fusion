@@ -60,8 +60,10 @@ function normalizeArticlePageSize(size: number): ArticlePageSize {
 export interface PreferencesState {
   locale: AppLocale;
   articlePageSize: ArticlePageSize;
+  markArticleReadOnOpen: boolean;
   setLocale: (locale: string) => void;
   setArticlePageSize: (size: number) => void;
+  setMarkArticleReadOnOpen: (enabled: boolean) => void;
 }
 
 export const usePreferencesStore = create<PreferencesState>()(
@@ -69,9 +71,12 @@ export const usePreferencesStore = create<PreferencesState>()(
     (set) => ({
       locale: defaultLocale,
       articlePageSize: defaultArticlePageSize,
+      markArticleReadOnOpen: false,
       setLocale: (locale) => set({ locale: normalizeLocale(locale) }),
       setArticlePageSize: (size) =>
         set({ articlePageSize: normalizeArticlePageSize(size) }),
+      setMarkArticleReadOnOpen: (enabled) =>
+        set({ markArticleReadOnOpen: enabled }),
     }),
     {
       name: "fusion-preferences",
@@ -79,6 +84,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       partialize: (state) => ({
         locale: state.locale,
         articlePageSize: state.articlePageSize,
+        markArticleReadOnOpen: state.markArticleReadOnOpen,
       }),
       merge: (persistedState, currentState) => {
         const persisted = persistedState as Partial<PreferencesState> | undefined;
@@ -89,6 +95,8 @@ export const usePreferencesStore = create<PreferencesState>()(
           articlePageSize: normalizeArticlePageSize(
             persisted?.articlePageSize ?? currentState.articlePageSize,
           ),
+          markArticleReadOnOpen:
+            persisted?.markArticleReadOnOpen ?? currentState.markArticleReadOnOpen,
         };
       },
     },

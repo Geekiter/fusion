@@ -57,6 +57,8 @@ export const frMessages: PartialMessages = {
   "settings.about.reportIssue": "Signaler un problème",
   "settings.articlePageSize.description": "Nombre d'articles chargés à chaque fois",
   "settings.articlePageSize.label": "Articles par chargement",
+  "settings.markReadOnOpen.description": "Marquer automatiquement l’article comme lu à l’ouverture",
+  "settings.markReadOnOpen.label": "Marquer les articles ouverts comme lus",
   "settings.installCancelled": "Installation annulée",
   "settings.language.description": "Sélectionnez la langue d'affichage",
   "settings.language.label": "Langue",

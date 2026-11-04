@@ -57,6 +57,8 @@ export const esMessages: PartialMessages = {
   "settings.about.reportIssue": "Reportar problema",
   "settings.articlePageSize.description": "Numero de articulos obtenidos en cada carga",
   "settings.articlePageSize.label": "Articulos por carga",
+  "settings.markReadOnOpen.description": "Marcar el artículo como leído al abrirlo",
+  "settings.markReadOnOpen.label": "Marcar como leídos los artículos abiertos",
   "settings.installCancelled": "Instalacion cancelada",
   "settings.language.description": "Selecciona tu idioma preferido",
   "settings.language.label": "Idioma",

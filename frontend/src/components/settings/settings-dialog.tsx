@@ -20,6 +20,7 @@ import {
 import { usePWAInstall } from "@/hooks/use-pwa-install";
 import { localeLabels, useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 import { TranslationSettingsContent } from "./translation-settings";
 
 function GithubIcon({ className }: { className?: string }) {
@@ -61,8 +62,14 @@ function AppearanceContent() {
   const { theme, setTheme } = useTheme();
   const setSettingsOpen = useUIStore((s) => s.setSettingsOpen);
   const setShortcutsOpen = useUIStore((s) => s.setShortcutsOpen);
-  const { locale, articlePageSize, setLocale, setArticlePageSize } =
-    usePreferencesStore();
+  const {
+    locale,
+    articlePageSize,
+    markArticleReadOnOpen,
+    setLocale,
+    setArticlePageSize,
+    setMarkArticleReadOnOpen,
+  } = usePreferencesStore();
 
   return (
     <div className="space-y-5">
@@ -119,6 +126,23 @@ function AppearanceContent() {
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Reading behavior */}
+      <div className="flex items-center justify-between rounded-lg border p-3">
+        <div className="space-y-1 pr-4">
+          <p className="text-sm font-medium">
+            {t("settings.markReadOnOpen.label")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.markReadOnOpen.description")}
+          </p>
+        </div>
+        <Switch
+          checked={markArticleReadOnOpen}
+          onCheckedChange={setMarkArticleReadOnOpen}
+          aria-label={t("settings.markReadOnOpen.label")}
+        />
       </div>
 
       {/* Theme */}

@@ -57,6 +57,8 @@ export const deMessages: PartialMessages = {
   "settings.about.reportIssue": "Problem melden",
   "settings.articlePageSize.description": "Anzahl der pro Anfrage geladenen Artikel",
   "settings.articlePageSize.label": "Artikel pro Laden",
+  "settings.markReadOnOpen.description": "Artikel beim Öffnen automatisch als gelesen markieren",
+  "settings.markReadOnOpen.label": "Geöffnete Artikel als gelesen markieren",
   "settings.installCancelled": "Installation abgebrochen",
   "settings.language.description": "Bevorzugte Sprache auswahlen",
   "settings.language.label": "Sprache",

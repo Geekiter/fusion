@@ -57,6 +57,8 @@ export const svMessages: PartialMessages = {
   "settings.about.reportIssue": "Rapportera problem",
   "settings.articlePageSize.description": "Antal artiklar som hamtas varje gang",
   "settings.articlePageSize.label": "Artiklar per laddning",
+  "settings.markReadOnOpen.description": "Markera artikeln som läst när du öppnar den",
+  "settings.markReadOnOpen.label": "Markera öppnade artiklar som lästa",
   "settings.installCancelled": "Installationen avbrots",
   "settings.language.description": "Valj ditt foredragna sprak",
   "settings.language.label": "Sprak",
