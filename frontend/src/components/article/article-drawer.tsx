@@ -66,6 +66,7 @@ import { toSafeExternalUrl } from "@/lib/safe-url";
  * Styled distinctly from body text: muted background, border, smaller italic font.
  */
 function FullTitleToggle({ title }: { title: string }) {
+  const { t } = useI18n();
   const [expanded, setExpanded] = useState(false);
 
   return (
@@ -73,6 +74,7 @@ function FullTitleToggle({ title }: { title: string }) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
         className="flex w-full items-center gap-1.5 rounded-lg border border-border/50 bg-muted/40 px-3 py-2 text-left transition-colors hover:bg-muted/60"
       >
         <ChevronDown
@@ -87,14 +89,23 @@ function FullTitleToggle({ title }: { title: string }) {
             !expanded && "truncate",
           )}
         >
-          {expanded ? title : "查看完整标题"}
+          {expanded
+            ? t("article.collapseFullTitle")
+            : t("article.showFullTitle")}
         </span>
       </button>
-      {expanded && (
-        <p className="mt-2 px-3 text-[13px] italic leading-relaxed text-muted-foreground">
-          {title}
-        </p>
-      )}
+      <div
+        className={cn(
+          "grid transition-[grid-template-rows] duration-200 ease-out motion-reduce:transition-none",
+          expanded ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+        )}
+      >
+        <div className="min-h-0 overflow-hidden">
+          <p className="mt-2 px-3 text-[13px] italic leading-relaxed text-muted-foreground">
+            {title}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

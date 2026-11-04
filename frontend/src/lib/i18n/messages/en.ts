@@ -221,6 +221,8 @@ export const enMessages = {
   "article.list.openFeedManagement": "Open Feed Management",
   "article.list.scrollToTop": "Back to top",
   "article.mobile.actions": "Article actions",
+  "article.showFullTitle": "Show full title",
+  "article.collapseFullTitle": "Hide full title",
   "article.mobile.categories": "Categories",
   "article.mobile.pullAgainToClose": "Pull down again to close",
   "article.mobile.feedSwitcher": "Feed switcher",

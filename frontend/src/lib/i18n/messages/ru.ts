@@ -222,6 +222,8 @@ export const ruMessages: PartialMessages = {
   "article.list.openFeedManagement": "Открыть управление лентами",
   "article.list.scrollToTop": "Вверх",
   "article.mobile.actions": "Действия со статьями",
+  "article.showFullTitle": "Показать полный заголовок",
+  "article.collapseFullTitle": "Скрыть полный заголовок",
   "article.mobile.categories": "Категории",
   "article.mobile.pullAgainToClose": "Потяните вниз ещё раз, чтобы закрыть",
   "article.mobile.feedSwitcher": "Переключатель лент",

@@ -222,6 +222,8 @@ export const ptMessages: PartialMessages = {
   "article.list.openFeedManagement": "Abrir gerenciamento de feeds",
   "article.list.scrollToTop": "Voltar ao topo",
   "article.mobile.actions": "Acoes do artigo",
+  "article.showFullTitle": "Mostrar título completo",
+  "article.collapseFullTitle": "Ocultar título completo",
   "article.mobile.categories": "Categorias",
   "article.mobile.pullAgainToClose": "Puxe para baixo novamente para fechar",
   "article.mobile.feedSwitcher": "Alternador de feeds",

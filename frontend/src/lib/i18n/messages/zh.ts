@@ -222,6 +222,8 @@ export const zhMessages: PartialMessages = {
   "article.list.openFeedManagement": "打开订阅管理",
   "article.list.scrollToTop": "回到顶部",
   "article.mobile.actions": "文章操作",
+  "article.showFullTitle": "查看完整标题",
+  "article.collapseFullTitle": "收起完整标题",
   "article.mobile.categories": "分类",
   "article.mobile.pullAgainToClose": "再下拉一次收起",
   "article.mobile.feedSwitcher": "订阅切换",

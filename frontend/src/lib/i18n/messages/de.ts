@@ -222,6 +222,8 @@ export const deMessages: PartialMessages = {
   "article.list.openFeedManagement": "Feed-Verwaltung offnen",
   "article.list.scrollToTop": "Nach oben",
   "article.mobile.actions": "Artikelaktionen",
+  "article.showFullTitle": "Vollständigen Titel anzeigen",
+  "article.collapseFullTitle": "Vollständigen Titel ausblenden",
   "article.mobile.categories": "Kategorien",
   "article.mobile.pullAgainToClose": "Zum Schließen erneut nach unten ziehen",
   "article.mobile.feedSwitcher": "Feed-Umschalter",
