@@ -147,3 +147,23 @@
   --typeset-leading: 1.75;
   --typeset-flow: 1.25em;
 }
+
+.typeset-article img.fusion-article-image {
+  background-color: color-mix(in oklab, var(--muted) 70%, transparent);
+  filter: blur(3px);
+  opacity: 0.35;
+  transition:
+    opacity 220ms ease,
+    filter 220ms ease;
+}
+
+.typeset-article img.fusion-article-image-loaded {
+  filter: none;
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typeset-article img.fusion-article-image {
+    transition: none;
+  }
+}

@@ -95,6 +95,7 @@ function FullTitleToggle({ title }: { title: string }) {
 export function ArticleDrawer() {
   const { t } = useI18n();
   const articleContentRef = useRef<HTMLElement>(null);
+  const articleBodyRef = useRef<HTMLDivElement>(null);
   const [readingProgress, setReadingProgress] = useState(0);
   const {
     selectedArticleId,
@@ -185,6 +186,37 @@ export function ArticleDrawer() {
     };
   }, [
     article?.ai_summary,
+    article?.content,
+    article?.extracted_content,
+    article?.id,
+    article?.translated_content,
+  ]);
+
+  useEffect(() => {
+    const root = articleBodyRef.current;
+    if (!root) return;
+
+    const images = Array.from(root.querySelectorAll<HTMLImageElement>("img"));
+    const loadedClass = "fusion-article-image-loaded";
+    const handleLoad = (event: Event) => {
+      (event.currentTarget as HTMLImageElement).classList.add(loadedClass);
+    };
+
+    for (const image of images) {
+      image.classList.add("fusion-article-image");
+      if (image.complete && image.naturalWidth > 0) {
+        image.classList.add(loadedClass);
+      } else {
+        image.addEventListener("load", handleLoad);
+      }
+    }
+
+    return () => {
+      for (const image of images) {
+        image.removeEventListener("load", handleLoad);
+      }
+    };
+  }, [
     article?.content,
     article?.extracted_content,
     article?.id,
@@ -574,6 +606,7 @@ export function ArticleDrawer() {
                   )}
                   <FullTitleToggle title={article.title} />
                   <div
+                    ref={articleBodyRef}
                     className="typeset typeset-article min-w-0 max-w-none"
                     dangerouslySetInnerHTML={{
                       __html: processArticleContent(
