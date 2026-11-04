@@ -29,11 +29,17 @@ import { useArticleList } from "@/hooks/use-article-list";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import {
+  useMarkAllItemsRead,
   useMarkItemsRead,
   useMarkItemsUnread,
   useTranslateItemPreviews,
 } from "@/queries/items";
-import { useFeedLookup, useRefreshFeed, useRefreshFeeds } from "@/queries/feeds";
+import {
+  useFeedLookup,
+  useRefreshFeed,
+  useRefreshFeeds,
+  useUnreadCounts,
+} from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
 import { getFaviconUrl } from "@/lib/api/favicon";
@@ -69,8 +75,11 @@ export function ArticleList() {
 
   const { data: groups = [] } = useGroups();
   const { feeds, getFeedById, isLoading: isFeedsLoading } = useFeedLookup();
+  const { getUnreadCount, getGroupUnreadCount, getTotalUnreadCount } =
+    useUnreadCounts();
   const markItemsRead = useMarkItemsRead();
   const markItemsUnread = useMarkItemsUnread();
+  const markAllItemsRead = useMarkAllItemsRead();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
   const translatePreviews = useTranslateItemPreviews();
@@ -229,6 +238,13 @@ export function ArticleList() {
   );
 
   const unreadCount = articles.filter((a) => a.unread).length;
+  const scopedUnreadCount = selectedFeedId
+    ? getUnreadCount(selectedFeedId)
+    : selectedGroupId
+      ? getGroupUnreadCount(selectedGroupId)
+      : getTotalUnreadCount();
+  const markAllReadCount =
+    articleFilter === "starred" ? unreadCount : scopedUnreadCount;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
   const translatableItems = articles.filter((article) => {
     if (article.id <= 0) return false;
@@ -276,19 +292,28 @@ export function ArticleList() {
   );
 
   const handleMarkAllAsRead = async () => {
-    const unreadIds = articles
-      .filter((a) => a.unread && a.id > 0)
-      .map((a) => a.id);
-
-    if (unreadIds.length === 0) return;
+    if (markAllReadCount === 0) return;
 
     try {
-      await markItemsRead.mutateAsync(unreadIds);
+      if (articleFilter === "starred") {
+        const unreadIds = articles
+          .filter((a) => a.unread && a.id > 0)
+          .map((a) => a.id);
+        if (unreadIds.length === 0) return;
+        await markItemsRead.mutateAsync(unreadIds);
+      } else {
+        await markAllItemsRead.mutateAsync({
+          feed_id: selectedFeedId ?? undefined,
+          group_id: selectedGroupId ?? undefined,
+        });
+      }
       requestAnimationFrame(() => {
         getArticleScrollViewport()?.scrollTo({ top: 0, behavior: "instant" });
       });
+      toast.success(t("article.list.markAllReadSuccess"));
     } catch (error) {
       console.error("Failed to mark all as read:", error);
+      toast.error(t("article.list.markAllReadFailed"));
     }
   };
 
@@ -405,10 +430,18 @@ export function ArticleList() {
             variant="outline"
             size="sm"
             onClick={handleMarkAllAsRead}
-            disabled={unreadCount === 0 || markItemsRead.isPending}
+              disabled={
+                markAllReadCount === 0 ||
+                markItemsRead.isPending ||
+                markAllItemsRead.isPending
+              }
             className="gap-1.5 text-xs"
           >
-            <CheckCheck className="h-4 w-4" />
+              {markItemsRead.isPending || markAllItemsRead.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCheck className="h-4 w-4" />
+              )}
             {t("article.list.markAllRead")}
           </Button>
         </div>
@@ -693,7 +726,10 @@ export function ArticleList() {
               refreshFeeds.isPending
             }
             onUpdate={handlePullRefresh}
-            unreadCount={unreadCount}
+            unreadCount={markAllReadCount}
+            isMarkingAllRead={
+              markItemsRead.isPending || markAllItemsRead.isPending
+            }
             onMarkAllRead={handleMarkAllAsRead}
             isHidden={hideMobileActionBar}
           />

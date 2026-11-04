@@ -211,6 +211,8 @@ export const svMessages: PartialMessages = {
   "article.list.loadMoreNow": "Ladda nästa sida",
   "article.list.loading": "Laddar...",
   "article.list.markAllRead": "Markera alla som lasta",
+  "article.list.markAllReadSuccess": "Alla artiklar i den här vyn markerades som lästa",
+  "article.list.markAllReadFailed": "Det gick inte att markera artiklarna som lästa",
   "article.list.noArticles": "Inga artiklar hittades",
   "article.list.noFeeds": "Inga floden an. Ga till flodeshantering for att lagga till ditt forsta flode.",
   "article.list.openFeedManagement": "Oppna flodeshantering",

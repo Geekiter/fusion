@@ -211,6 +211,8 @@ export const frMessages: PartialMessages = {
   "article.list.loadMoreNow": "Charger la page suivante",
   "article.list.loading": "Chargement...",
   "article.list.markAllRead": "Tout marquer comme lu",
+  "article.list.markAllReadSuccess": "Tous les articles de cette vue sont marqués comme lus",
+  "article.list.markAllReadFailed": "Impossible de marquer les articles comme lus",
   "article.list.noArticles": "Aucun article trouvé",
   "article.list.noFeeds": "Aucun flux. Allez dans la gestion des flux pour ajouter votre premier flux.",
   "article.list.openFeedManagement": "Ouvrir la gestion des flux",

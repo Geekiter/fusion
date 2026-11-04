@@ -211,6 +211,8 @@ export const esMessages: PartialMessages = {
   "article.list.loadMoreNow": "Cargar la página siguiente",
   "article.list.loading": "Cargando...",
   "article.list.markAllRead": "Marcar todo como leido",
+  "article.list.markAllReadSuccess": "Todos los artículos de esta vista se marcaron como leídos",
+  "article.list.markAllReadFailed": "No se pudieron marcar los artículos como leídos",
   "article.list.noArticles": "No se encontraron articulos",
   "article.list.noFeeds": "Aun no hay feeds. Ve a Gestion de feeds para agregar el primero.",
   "article.list.openFeedManagement": "Abrir gestion de feeds",

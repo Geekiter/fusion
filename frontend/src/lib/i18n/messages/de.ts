@@ -211,6 +211,8 @@ export const deMessages: PartialMessages = {
   "article.list.loadMoreNow": "Nächste Seite laden",
   "article.list.loading": "Ladt...",
   "article.list.markAllRead": "Alle als gelesen markieren",
+  "article.list.markAllReadSuccess": "Alle Artikel in dieser Ansicht wurden als gelesen markiert",
+  "article.list.markAllReadFailed": "Artikel konnten nicht als gelesen markiert werden",
   "article.list.noArticles": "Keine Artikel gefunden",
   "article.list.noFeeds": "Noch keine Feeds. Gehen Sie zur Feed-Verwaltung und fugen Sie den ersten Feed hinzu.",
   "article.list.openFeedManagement": "Feed-Verwaltung offnen",

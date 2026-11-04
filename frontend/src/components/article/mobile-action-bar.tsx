@@ -17,6 +17,7 @@ interface MobileActionBarProps {
   isUpdating: boolean;
   onUpdate: () => void;
   unreadCount: number;
+  isMarkingAllRead: boolean;
   onMarkAllRead: () => void;
   isHidden: boolean;
 }
@@ -34,6 +35,7 @@ export function MobileActionBar({
   isUpdating,
   onUpdate,
   unreadCount,
+  isMarkingAllRead,
   onMarkAllRead,
   isHidden,
 }: MobileActionBarProps) {
@@ -98,10 +100,15 @@ export function MobileActionBar({
         <button
           type="button"
           onClick={onMarkAllRead}
-          disabled={unreadCount === 0}
+          disabled={unreadCount === 0 || isMarkingAllRead}
+          aria-busy={isMarkingAllRead}
           className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:text-muted-foreground"
         >
-          <CheckCheck className="h-5 w-5" />
+          {isMarkingAllRead ? (
+            <Loader2 className="h-5 w-5 animate-spin" />
+          ) : (
+            <CheckCheck className="h-5 w-5" />
+          )}
           <span className="max-w-full truncate">
             {t("article.list.markAllRead")}
           </span>
