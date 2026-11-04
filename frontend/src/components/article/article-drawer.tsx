@@ -148,6 +148,17 @@ export function ArticleDrawer() {
     const viewport = content?.closest<HTMLElement>(
       '[data-slot="scroll-area-viewport"]',
     );
+    if (!viewport) return;
+
+    viewport.scrollTo({ top: 0, behavior: "instant" });
+    setReadingProgress(0);
+  }, [article?.id]);
+
+  useEffect(() => {
+    const content = articleContentRef.current;
+    const viewport = content?.closest<HTMLElement>(
+      '[data-slot="scroll-area-viewport"]',
+    );
     if (!viewport || !content) {
       setReadingProgress(0);
       return;
