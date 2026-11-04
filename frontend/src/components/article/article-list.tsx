@@ -1,7 +1,8 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowDown,
+  ArrowUp,
   CheckCheck,
   Languages,
   Loader2,
@@ -77,6 +78,36 @@ export function ArticleList() {
   const isMobile = useIsMobile();
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const [isCategoryOpen, setCategoryOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+
+  const getArticleScrollViewport = useCallback(
+    () =>
+      scrollViewportRef.current?.closest<HTMLElement>(
+        '[data-slot="scroll-area-viewport"]',
+      ) ?? null,
+    [],
+  );
+
+  useEffect(() => {
+    const viewport = getArticleScrollViewport();
+    if (!viewport) return;
+
+    const handleScroll = () => {
+      setShowScrollTop(viewport.scrollTop > 480);
+    };
+
+    viewport.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => viewport.removeEventListener("scroll", handleScroll);
+  }, [getArticleScrollViewport, articles.length]);
+
+  useEffect(() => {
+    const viewport = getArticleScrollViewport();
+    if (!viewport) return;
+
+    viewport.scrollTo({ top: 0, behavior: "instant" });
+    setShowScrollTop(false);
+  }, [articleFilter, getArticleScrollViewport, selectedFeedId, selectedGroupId]);
 
   const articleIds = articles.map((a) => a.id);
   useArticleNavigation(articleIds, {
@@ -170,9 +201,7 @@ export function ArticleList() {
     try {
       await markItemsRead.mutateAsync(unreadIds);
       requestAnimationFrame(() => {
-        scrollViewportRef.current
-          ?.closest<HTMLElement>('[data-slot="scroll-area-viewport"]')
-          ?.scrollTo({ top: 0, behavior: "instant" });
+        getArticleScrollViewport()?.scrollTo({ top: 0, behavior: "instant" });
       });
     } catch (error) {
       console.error("Failed to mark all as read:", error);
@@ -239,9 +268,7 @@ export function ArticleList() {
     onRefresh: handlePullRefresh,
     disabled: !isMobile,
     getScrollTop: () => {
-      const viewport = scrollViewportRef.current?.closest(
-        '[data-slot="scroll-area-viewport"]',
-      );
+      const viewport = getArticleScrollViewport();
       return viewport?.scrollTop ?? 0;
     },
   });
@@ -511,6 +538,30 @@ export function ArticleList() {
           </div>
         </ScrollArea>
       </div>
+
+      {showScrollTop && (
+        <Button
+          type="button"
+          variant="secondary"
+          size="icon"
+          onClick={() =>
+            getArticleScrollViewport()?.scrollTo({
+              top: 0,
+              behavior: "smooth",
+            })
+          }
+          aria-label={t("article.list.scrollToTop")}
+          title={t("article.list.scrollToTop")}
+          className={cn(
+            "absolute right-4 z-30 size-10 rounded-full border border-border/70 bg-background/90 shadow-lg shadow-black/10 backdrop-blur-xl motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95",
+            isMobile
+              ? "bottom-[calc(env(safe-area-inset-bottom)+6rem)]"
+              : "bottom-4 md:right-6",
+          )}
+        >
+          <ArrowUp className="h-4 w-4" />
+        </Button>
+      )}
 
       {isMobile && (
         <>

@@ -205,6 +205,7 @@ export const svMessages: PartialMessages = {
   "article.list.noArticles": "Inga artiklar hittades",
   "article.list.noFeeds": "Inga floden an. Ga till flodeshantering for att lagga till ditt forsta flode.",
   "article.list.openFeedManagement": "Oppna flodeshantering",
+  "article.list.scrollToTop": "Till toppen",
   "article.mobile.actions": "Artikelatgarder",
   "article.mobile.categories": "Kategorier",
   "article.mobile.pullAgainToClose": "Dra nedåt igen för att stänga",

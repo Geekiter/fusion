@@ -205,6 +205,7 @@ export const ptMessages: PartialMessages = {
   "article.list.noArticles": "Nenhum artigo encontrado",
   "article.list.noFeeds": "Ainda nao ha feeds. Va para Gerenciamento de feeds para adicionar o primeiro.",
   "article.list.openFeedManagement": "Abrir gerenciamento de feeds",
+  "article.list.scrollToTop": "Voltar ao topo",
   "article.mobile.actions": "Acoes do artigo",
   "article.mobile.categories": "Categorias",
   "article.mobile.pullAgainToClose": "Puxe para baixo novamente para fechar",
