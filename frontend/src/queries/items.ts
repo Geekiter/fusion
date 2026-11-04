@@ -16,12 +16,6 @@ import {
   type NormalizedItemFilters,
 } from "./keys";
 import { usePreferencesStore } from "@/store";
-import { useAISettingsStore } from "@/store";
-import {
-  summarizeInFrontend,
-  translateContentInFrontend,
-  translatePreviewsInFrontend,
-} from "@/lib/frontend-ai";
 import type { BookmarksInfiniteData } from "./bookmarks";
 
 type ItemListResponse = Awaited<ReturnType<typeof itemAPI.list>>;
@@ -337,26 +331,10 @@ export function useTranslateItemPreviews() {
 
   return useMutation({
     mutationFn: async (items: Item[]) => {
-      if (useAISettingsStore.getState().mode === "server") {
-        const response = await itemAPI.translatePreviews({
-          ids: items.map((item) => item.id),
-        });
-        return response.data!;
-      }
-
-      const translatedItems = await translatePreviewsInFrontend(items);
-      const translated = translatedItems.filter((item, index) => {
-        const original = items[index];
-        return (
-          item.translated_title !== original.translated_title ||
-          item.translated_summary !== original.translated_summary
-        );
-      }).length;
-      return {
-        items: translatedItems,
-        translated,
-        failed: items.length - translated,
-      };
+      const response = await itemAPI.translatePreviews({
+        ids: items.map((item) => item.id),
+      });
+      return response.data!;
     },
     onSuccess: (response) => {
       applyTranslatedItems(qc, response.items);
@@ -369,9 +347,6 @@ export function useTranslateItemContent() {
 
   return useMutation({
     mutationFn: async (item: Item) => {
-      if (useAISettingsStore.getState().mode === "frontend") {
-        return translateContentInFrontend(item);
-      }
       const response = await itemAPI.translateContent(item.id);
       return response.data!;
     },
@@ -385,9 +360,6 @@ export function useSummarizeItem() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (item: Item) => {
-      if (useAISettingsStore.getState().mode === "frontend") {
-        return summarizeInFrontend(item);
-      }
       const response = await itemAPI.summarize(item.id);
       return response.data!;
     },

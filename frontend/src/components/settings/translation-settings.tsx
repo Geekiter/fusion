@@ -3,18 +3,9 @@ import { CheckCircle2, Loader2, Save, TestTube2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { testFrontendAI } from "@/lib/frontend-ai";
 import { settingsAPI, type TranslationSettings } from "@/lib/api";
-import { useAISettingsStore, type AIRequestMode } from "@/store";
 
 const emptySettings: TranslationSettings = {
   enabled: false,
@@ -53,7 +44,6 @@ export function TranslationSettingsContent() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
-  const ai = useAISettingsStore();
 
   useEffect(() => {
     let active = true;
@@ -109,13 +99,8 @@ export function TranslationSettingsContent() {
   const handleTest = async () => {
     setTesting(true);
     try {
-      if (ai.mode === "frontend") {
-        const result = await testFrontendAI();
-        toast.success(`前端请求成功：${result}`);
-      } else {
-        const response = await settingsAPI.testTranslation();
-        toast.success(`服务器连接成功：${response.data?.result || "已返回结果"}`);
-      }
+      const response = await settingsAPI.testTranslation();
+      toast.success(`服务器连接成功：${response.data?.result || "已返回结果"}`);
     } catch (error) {
       console.error("Translation test failed:", error);
       toast.error(error instanceof Error ? error.message : "连接测试失败");
@@ -134,34 +119,14 @@ export function TranslationSettingsContent() {
 
   return (
     <div className="space-y-6 pb-2">
-      <div className="space-y-3 rounded-lg border p-4">
-        <Field
-          label="AI 请求方式"
-          hint="服务器模式会保存翻译结果；前端模式由当前浏览器直接请求，可连接 Mac App 转发器"
-        >
-          <Select
-            value={ai.mode}
-            onValueChange={(value) => value && ai.setMode(value as AIRequestMode)}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="server">Fusion 服务器请求</SelectItem>
-              <SelectItem value="frontend">浏览器前端请求</SelectItem>
-            </SelectContent>
-          </Select>
-        </Field>
-        <p className="text-xs leading-5 text-muted-foreground">
-          {ai.mode === "frontend"
-            ? "前端配置和结果只在当前页面内存中，刷新后清空；API Key 不会发给 Fusion 服务器。"
-            : "API Key 与翻译结果保存在 Fusion 服务器；可配置多个模型依次兜底。"}
+      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-4">
+        <p className="text-sm font-medium">翻译请求由 Fusion 服务器处理</p>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+          浏览器不会直连 AI 接口或发送 API Key；翻译结果会保存到服务器，供列表和详情页复用。
         </p>
       </div>
 
-      {ai.mode === "server" ? (
-        <>
-          <div className="flex items-center justify-between rounded-lg border p-3">
+      <div className="flex items-center justify-between rounded-lg border p-3">
             <div>
               <p className="text-sm font-medium">启用服务器翻译与总结</p>
               <p className="text-xs text-muted-foreground">保存后无需重启容器</p>
@@ -272,102 +237,31 @@ export function TranslationSettingsContent() {
                 />
               </Field>
             ))}
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="space-y-4 rounded-lg border p-4">
-            <div>
-              <h3 className="text-sm font-semibold">前端接口</h3>
-              <p className="text-xs text-muted-foreground">
-                Mac App 默认地址为 http://127.0.0.1:32180/v1；也可填写允许 CORS 的远程 OpenAI 兼容接口
-              </p>
-            </div>
-            <Field label="OpenAI 兼容 API 地址">
-              <Input
-                value={ai.apiURL}
-                onChange={(event) => ai.setAPIURL(event.target.value)}
-                placeholder="http://127.0.0.1:32180/v1"
-              />
-            </Field>
-            <Field label="模型">
-              <Input
-                value={ai.model}
-                onChange={(event) => ai.setModel(event.target.value)}
-                placeholder="glm-5.2"
-              />
-            </Field>
-            <Field
-              label="API Key（可选）"
-              hint="走 Mac App 时留空；远程直连时输入，仅保留当前页面内存"
-            >
-              <Input
-                type="password"
-                value={ai.apiKey}
-                onChange={(event) => ai.setAPIKey(event.target.value)}
-                placeholder="Mac App 转发无需填写"
-                autoComplete="new-password"
-              />
-            </Field>
-          </div>
-
-          <div className="space-y-4 rounded-lg border p-4">
-            <div>
-              <h3 className="text-sm font-semibold">前端提示词</h3>
-              <p className="text-xs text-muted-foreground">
-                立即生效；列表标题与摘要会合并为 JSON 批量翻译
-              </p>
-            </div>
-            <Field label="标题与摘要批量翻译提示词">
-              <Textarea
-                value={ai.translationPrompt}
-                onChange={(event) => ai.setTranslationPrompt(event.target.value)}
-                className="min-h-32 text-xs leading-5"
-              />
-            </Field>
-            <Field label="正文翻译提示词">
-              <Textarea
-                value={ai.contentPrompt}
-                onChange={(event) => ai.setContentPrompt(event.target.value)}
-                className="min-h-28 text-xs leading-5"
-              />
-            </Field>
-            <Field label="文章总结提示词">
-              <Textarea
-                value={ai.summaryPrompt}
-                onChange={(event) => ai.setSummaryPrompt(event.target.value)}
-                className="min-h-28 text-xs leading-5"
-              />
-            </Field>
-          </div>
-        </>
-      )}
+      </div>
 
       <div className="flex justify-end gap-2">
         <Button
           variant="outline"
           onClick={handleTest}
-          disabled={testing || saving || (ai.mode === "server" && !settings.enabled)}
+          disabled={testing || saving || !settings.enabled}
         >
           {testing ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : (
             <TestTube2 className="h-4 w-4" />
           )}
-          测试当前请求方式
+          测试服务器翻译
         </Button>
-        {ai.mode === "server" && (
-          <Button onClick={handleSave} disabled={saving || testing}>
-            {saving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            保存并生效
-          </Button>
-        )}
+        <Button onClick={handleSave} disabled={saving || testing}>
+          {saving ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <Save className="h-4 w-4" />
+          )}
+          保存并生效
+        </Button>
       </div>
-      {ai.mode === "server" && settings.api_key_configured && (
+      {settings.api_key_configured && (
         <p className="flex items-center justify-end gap-1 text-xs text-muted-foreground">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> API Key 已配置
         </p>
