@@ -35,7 +35,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   }, [location.pathname, location.searchStr, setSidebarOpen]);
 
   return (
-    <div className="flex h-screen w-full overflow-hidden">
+    <div className="flex h-dvh w-full overflow-hidden">
       {/* Desktop sidebar */}
       {!isMobile && <Sidebar />}
 
@@ -54,7 +54,7 @@ export function AppLayout({ children }: AppLayoutProps) {
       )}
 
       {/* Main content */}
-      <main className="flex-1 overflow-hidden">{children}</main>
+      <main className="min-h-0 min-w-0 flex-1 overflow-hidden">{children}</main>
 
       {/* Modals and drawers */}
       <ArticleDrawer />

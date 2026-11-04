@@ -39,7 +39,7 @@ export function MobileActionBar({
   return (
     <nav
       aria-label={t("article.mobile.actions")}
-      className="pointer-events-none absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-3"
+      className="pointer-events-none absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-3 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300"
     >
       <div
         className="pointer-events-auto grid w-full max-w-xs grid-cols-4 overflow-hidden rounded-2xl border border-border/70 bg-background/90 p-1 shadow-xl shadow-black/10 ring-1 ring-black/5 backdrop-blur-xl dark:bg-background/80 dark:ring-white/5"
@@ -48,7 +48,8 @@ export function MobileActionBar({
           type="button"
           onClick={onTranslate}
           disabled={translatableCount === 0 || isTranslating}
-          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted active:bg-muted disabled:text-muted-foreground"
+          aria-busy={isTranslating}
+          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:text-muted-foreground"
         >
           {isTranslating ? (
             <Loader2 className="h-5 w-5 animate-spin" />
@@ -67,7 +68,7 @@ export function MobileActionBar({
           onClick={onOpenCategories}
           aria-haspopup="dialog"
           aria-expanded={isCategoryOpen}
-          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted active:bg-muted"
+          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
         >
           <ListTree className="h-5 w-5" />
           <span>{t("article.mobile.categories")}</span>
@@ -77,7 +78,8 @@ export function MobileActionBar({
           type="button"
           onClick={onUpdate}
           disabled={isUpdating}
-          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted active:bg-muted disabled:text-muted-foreground"
+          aria-busy={isUpdating}
+          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:text-muted-foreground"
         >
           <RefreshCw
             className={isUpdating ? "h-5 w-5 animate-spin" : "h-5 w-5"}
@@ -89,7 +91,7 @@ export function MobileActionBar({
           type="button"
           onClick={onMarkAllRead}
           disabled={unreadCount === 0}
-          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-colors hover:bg-muted active:bg-muted disabled:text-muted-foreground"
+          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:text-muted-foreground"
         >
           <CheckCheck className="h-5 w-5" />
           <span className="max-w-full truncate">

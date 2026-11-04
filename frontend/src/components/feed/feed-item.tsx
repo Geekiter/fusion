@@ -33,14 +33,14 @@ export function FeedItem({ feed }: FeedItemProps) {
     >
       <div
         className={cn(
-          "group flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
+          "group flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-[background-color,transform] duration-150 active:scale-[0.99]",
           isSelected ? "bg-accent text-accent-foreground" : "hover:bg-accent/50",
         )}
       >
         <button
           type="button"
           onClick={() => setSelectedFeed(feed.id)}
-          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+          className="flex min-w-0 flex-1 items-center gap-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
         >
           <FeedFavicon src={faviconUrl} className="h-4 w-4" />
           <span className="block min-w-0 max-w-full flex-1 truncate">

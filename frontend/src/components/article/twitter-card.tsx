@@ -81,7 +81,7 @@ export function TwitterCard({
       )}
     >
       {/* Hover actions */}
-      <div className="absolute right-3 top-3 z-20 hidden items-center gap-0.5 rounded-lg bg-background/90 p-0.5 shadow-sm ring-1 ring-border/50 backdrop-blur-md group-hover:flex">
+      <div className="pointer-events-none absolute right-3 top-3 z-20 hidden items-center gap-0.5 rounded-lg bg-background/90 p-0.5 opacity-0 shadow-sm ring-1 ring-border/50 backdrop-blur-md transition-opacity duration-150 md:flex md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100">
         <Button
           variant="ghost"
           size="icon-sm"

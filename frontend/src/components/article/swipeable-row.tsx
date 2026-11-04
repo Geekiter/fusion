@@ -51,7 +51,7 @@ export function SwipeableRow({
             unread ? t("article.action.markRead") : t("article.action.markUnread")
           }
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-white",
+            "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-white transition-[filter,transform] active:scale-95 active:brightness-110 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80",
             unread ? "bg-blue-500" : "bg-muted-foreground",
           )}
         >
@@ -69,7 +69,7 @@ export function SwipeableRow({
           }}
           aria-label={isStarred ? t("article.action.unstar") : t("article.action.star")}
           className={cn(
-            "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-white",
+            "flex flex-1 flex-col items-center justify-center gap-0.5 text-[11px] text-white transition-[filter,transform] active:scale-95 active:brightness-110 focus-visible:z-10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-white/80",
             isStarred ? "bg-amber-400" : "bg-amber-500",
           )}
         >

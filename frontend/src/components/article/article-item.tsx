@@ -72,7 +72,7 @@ export function ArticleItem({
         }
       }}
       className={cn(
-        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-colors hover:bg-accent/50",
+        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-[background-color,box-shadow] duration-150 hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
         isSelected && "bg-accent",
       )}
     >
@@ -117,7 +117,7 @@ export function ArticleItem({
       </div>
 
       {/* Article Actions */}
-      <div className="absolute right-2 top-2 hidden items-center gap-1 group-hover:flex">
+      <div className="pointer-events-none absolute right-2 top-2 hidden items-center gap-1 opacity-0 transition-opacity duration-150 md:flex md:group-hover:pointer-events-auto md:group-hover:opacity-100 md:group-focus-within:pointer-events-auto md:group-focus-within:opacity-100">
         <Button
           variant="ghost"
           size="icon-sm"

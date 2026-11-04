@@ -166,15 +166,25 @@ export function MobileCategoryDrawer({
                   aria-current={isSelected ? "page" : undefined}
                   onClick={() => selectFilter(value)}
                   className={cn(
-                    "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
+                    "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition-[background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.99]",
                     isSelected
-                      ? "bg-accent text-accent-foreground"
+                      ? "bg-accent text-accent-foreground shadow-sm"
                       : "hover:bg-accent/50 active:bg-accent",
                   )}
                 >
-                  <Icon className="h-5 w-5 shrink-0 text-muted-foreground" />
+                  <Icon
+                    className={cn(
+                      "h-5 w-5 shrink-0 text-muted-foreground",
+                      isSelected && "text-primary",
+                    )}
+                  />
                   <span className="min-w-0 flex-1 truncate">{label}</span>
-                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                  <span
+                    className={cn(
+                      "shrink-0 text-xs tabular-nums text-muted-foreground",
+                      isSelected && "font-semibold text-foreground",
+                    )}
+                  >
                     {count}
                   </span>
                 </button>
@@ -210,13 +220,18 @@ export function MobileCategoryDrawer({
                       aria-current={isGroupSelected ? "page" : undefined}
                       onClick={() => selectGroup(group.id)}
                       className={cn(
-                        "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition-colors",
+                        "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm font-medium transition-[background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.99]",
                         isGroupSelected
-                          ? "bg-accent text-accent-foreground"
+                          ? "bg-accent text-accent-foreground shadow-sm"
                           : "hover:bg-accent/50 active:bg-accent",
                       )}
                     >
-                      <Folder className="h-5 w-5 shrink-0 text-muted-foreground" />
+                      <Folder
+                        className={cn(
+                          "h-5 w-5 shrink-0 text-muted-foreground",
+                          isGroupSelected && "text-primary",
+                        )}
+                      />
                       <span className="min-w-0 flex-1 truncate">
                         {group.name}
                       </span>
@@ -236,15 +251,18 @@ export function MobileCategoryDrawer({
                           aria-current={isFeedSelected ? "page" : undefined}
                           onClick={() => selectFeed(feed.id)}
                           className={cn(
-                            "flex min-h-11 w-full items-center gap-3 rounded-xl py-2 pr-3 pl-9 text-left text-sm transition-colors",
+                        "flex min-h-11 w-full items-center gap-3 rounded-xl py-2 pr-3 pl-9 text-left text-sm transition-[background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.99]",
                             isFeedSelected
-                              ? "bg-accent text-accent-foreground"
+                              ? "bg-accent text-accent-foreground shadow-sm"
                               : "hover:bg-accent/50 active:bg-accent",
                           )}
                         >
                           <FeedFavicon
                             src={getFaviconUrl(feed.link, feed.site_url)}
-                            className="h-5 w-5"
+                            className={cn(
+                              "h-5 w-5",
+                              isFeedSelected && "ring-1 ring-primary/40",
+                            )}
                           />
                           <span className="min-w-0 flex-1 truncate">
                             {feed.name}
@@ -270,15 +288,18 @@ export function MobileCategoryDrawer({
                     aria-current={isSelected ? "page" : undefined}
                     onClick={() => selectFeed(feed.id)}
                     className={cn(
-                      "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-colors",
+                      "flex min-h-11 w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm transition-[background-color,box-shadow,transform] duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 active:scale-[0.99]",
                       isSelected
-                        ? "bg-accent text-accent-foreground"
+                        ? "bg-accent text-accent-foreground shadow-sm"
                         : "hover:bg-accent/50 active:bg-accent",
                     )}
                   >
                     <FeedFavicon
                       src={getFaviconUrl(feed.link, feed.site_url)}
-                      className="h-5 w-5"
+                      className={cn(
+                        "h-5 w-5",
+                        isSelected && "ring-1 ring-primary/40",
+                      )}
                     />
                     <span className="min-w-0 flex-1 truncate">
                       {feed.name}

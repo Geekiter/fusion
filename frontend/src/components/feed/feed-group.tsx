@@ -36,7 +36,7 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
       >
         <div
           className={cn(
-            "flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-colors",
+            "flex w-full min-w-0 items-center gap-1.5 rounded-md px-2 py-1 text-sm transition-[background-color,transform] duration-150 active:scale-[0.99]",
             isSelected
               ? "bg-accent text-accent-foreground"
               : "hover:bg-accent/50",
@@ -48,7 +48,7 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
               e.stopPropagation();
               setIsOpen(!isOpen);
             }}
-            className="shrink-0 p-1 -m-1 rounded-md transition-colors hover:bg-foreground/10"
+            className="-m-1 shrink-0 rounded-md p-1 transition-[background-color,transform] hover:bg-foreground/10 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
           >
             <ChevronRight
               className={cn(
@@ -60,7 +60,7 @@ export function FeedGroup({ groupId, name, feeds }: FeedGroupProps) {
           <button
             type="button"
             onClick={() => setSelectedGroup(groupId)}
-            className="flex min-w-0 flex-1 items-center gap-1.5 text-left"
+            className="flex min-w-0 flex-1 items-center gap-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40"
           >
             <span className="block min-w-0 flex-1 truncate">{name}</span>
             {unreadCount > 0 && (

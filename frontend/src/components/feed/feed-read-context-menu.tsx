@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { CheckCheck } from "lucide-react";
+import { CheckCheck, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   ContextMenu,
@@ -47,7 +47,11 @@ export function FeedReadContextMenu({
           disabled={unreadCount === 0 || markAllItemsRead.isPending}
           onClick={() => void handleMarkAllAsRead()}
         >
-          <CheckCheck />
+          {markAllItemsRead.isPending ? (
+            <Loader2 className="animate-spin" />
+          ) : (
+            <CheckCheck />
+          )}
           {t("feed.action.markAllRead")}
         </ContextMenuItem>
       </ContextMenuContent>
