@@ -79,8 +79,10 @@ export function ArticleList() {
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
   const autoLoadArmedRef = useRef(true);
+  const lastScrollTopRef = useRef(0);
   const [isCategoryOpen, setCategoryOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
+  const [hideMobileActionBar, setHideMobileActionBar] = useState(false);
 
   const getArticleScrollViewport = useCallback(
     () =>
@@ -95,13 +97,23 @@ export function ArticleList() {
     if (!viewport) return;
 
     const handleScroll = () => {
-      setShowScrollTop(viewport.scrollTop > 480);
+      const scrollTop = Math.max(0, viewport.scrollTop);
+      const lastScrollTop = lastScrollTopRef.current;
+
+      if (!isMobile || scrollTop <= 24 || scrollTop < lastScrollTop - 2) {
+        setHideMobileActionBar(false);
+      } else if (scrollTop > lastScrollTop + 4) {
+        setHideMobileActionBar(true);
+      }
+
+      lastScrollTopRef.current = scrollTop;
+      setShowScrollTop(scrollTop > 480);
     };
 
     viewport.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     return () => viewport.removeEventListener("scroll", handleScroll);
-  }, [getArticleScrollViewport, articles.length]);
+  }, [articles.length, getArticleScrollViewport, isMobile]);
 
   useEffect(() => {
     const viewport = getArticleScrollViewport();
@@ -109,6 +121,8 @@ export function ArticleList() {
 
     viewport.scrollTo({ top: 0, behavior: "instant" });
     autoLoadArmedRef.current = true;
+    lastScrollTopRef.current = 0;
+    setHideMobileActionBar(false);
     setShowScrollTop(false);
   }, [articleFilter, getArticleScrollViewport, selectedFeedId, selectedGroupId]);
 
@@ -607,6 +621,7 @@ export function ArticleList() {
             onUpdate={handlePullRefresh}
             unreadCount={unreadCount}
             onMarkAllRead={handleMarkAllAsRead}
+            isHidden={hideMobileActionBar}
           />
           <MobileCategoryDrawer
             open={isCategoryOpen}

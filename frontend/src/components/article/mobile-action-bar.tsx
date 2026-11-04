@@ -6,6 +6,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import { cn } from "@/lib/utils";
 
 interface MobileActionBarProps {
   translatableCount: number;
@@ -17,6 +18,7 @@ interface MobileActionBarProps {
   onUpdate: () => void;
   unreadCount: number;
   onMarkAllRead: () => void;
+  isHidden: boolean;
 }
 
 /**
@@ -33,13 +35,19 @@ export function MobileActionBar({
   onUpdate,
   unreadCount,
   onMarkAllRead,
+  isHidden,
 }: MobileActionBarProps) {
   const { t } = useI18n();
 
   return (
     <nav
       aria-label={t("article.mobile.actions")}
-      className="pointer-events-none absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-3 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300"
+      className={cn(
+        "pointer-events-none absolute inset-x-0 bottom-[calc(env(safe-area-inset-bottom)+0.75rem)] z-40 flex justify-center px-3 transition-[opacity,transform] duration-200 motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-2 motion-safe:duration-300 motion-reduce:transition-none",
+        isHidden
+          ? "translate-y-[calc(100%+1rem)] opacity-0"
+          : "translate-y-0 opacity-100",
+      )}
     >
       <div
         className="pointer-events-auto grid w-full max-w-xs grid-cols-4 overflow-hidden rounded-2xl border border-border/70 bg-background/90 p-1 shadow-xl shadow-black/10 ring-1 ring-black/5 backdrop-blur-xl dark:bg-background/80 dark:ring-white/5"
