@@ -193,6 +193,7 @@ export const ruMessages: PartialMessages = {
   "article.summary.summarizing": "Summarizing...",
   "article.summary.title": "AI Summary",
   "article.translate.translation": "Translation",
+  "article.readingTime": "Около {minutes} мин чтения",
   "article.feedFallback": "Лента",
   "article.filter.all": "Все",
   "article.filter.starred": "Избранные",

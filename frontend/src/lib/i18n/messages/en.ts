@@ -192,6 +192,7 @@ export const enMessages = {
   "article.summary.summarizing": "Summarizing...",
   "article.summary.title": "AI Summary",
   "article.translate.translation": "Translation",
+  "article.readingTime": "~{minutes} min read",
   "article.feedFallback": "Feed",
   "article.filter.all": "All",
   "article.filter.starred": "Starred",

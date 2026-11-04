@@ -193,6 +193,7 @@ export const zhMessages: PartialMessages = {
   "article.summary.summarizing": "总结中...",
   "article.summary.title": "AI 总结",
   "article.translate.translation": "译文",
+  "article.readingTime": "约 {minutes} 分钟阅读",
   "article.feedFallback": "订阅",
   "article.filter.all": "全部",
   "article.filter.starred": "已收藏",

@@ -193,6 +193,7 @@ export const ptMessages: PartialMessages = {
   "article.summary.summarizing": "Summarizing...",
   "article.summary.title": "AI Summary",
   "article.translate.translation": "Translation",
+  "article.readingTime": "Cerca de {minutes} min de leitura",
   "article.feedFallback": "Feed",
   "article.filter.all": "Todos",
   "article.filter.starred": "Favoritos",

@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Clock3,
   ExternalLink,
   FileText,
   Languages,
@@ -40,7 +41,13 @@ import {
 import { useArticleList } from "@/hooks/use-article-list";
 import { useArticleNavigation } from "@/hooks/use-keyboard";
 import { useI18n } from "@/lib/i18n";
-import { cn, extractSummary, formatDate, needsTranslation } from "@/lib/utils";
+import {
+  cn,
+  estimateReadingTime,
+  extractSummary,
+  formatDate,
+  needsTranslation,
+} from "@/lib/utils";
 import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
@@ -130,6 +137,9 @@ export function ArticleDrawer() {
   const bookmark = article ? getBookmarkByItemId(article.id) : null;
   const starred = article ? isItemStarred(article.id) : false;
   const safeArticleLink = article ? toSafeExternalUrl(article.link) : null;
+  const readingMinutes = article
+    ? estimateReadingTime(article.extracted_content || article.content)
+    : 1;
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -438,6 +448,13 @@ export function ArticleDrawer() {
                     )}
                     <span className="text-muted-foreground">
                       {formatDate(article.pub_date)}
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1 text-muted-foreground"
+                      title={t("article.readingTime", { minutes: readingMinutes })}
+                    >
+                      <Clock3 className="h-3.5 w-3.5" aria-hidden="true" />
+                      {t("article.readingTime", { minutes: readingMinutes })}
                     </span>
                     {safeArticleLink ? (
                       <a

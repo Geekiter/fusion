@@ -2,7 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
-import { cn, formatDate, extractSummary, extractFirstImage } from "@/lib/utils";
+import {
+  cn,
+  estimateReadingTime,
+  formatDate,
+  extractSummary,
+  extractFirstImage,
+} from "@/lib/utils";
 import type { Item } from "@/lib/api";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
@@ -35,6 +41,7 @@ export function ArticleItem({
   const isSelected = selectedArticleId === article.id;
   const safeArticleLink = toSafeExternalUrl(article.link);
   const originalSummary = extractSummary(article.content, 150);
+  const readingMinutes = estimateReadingTime(article.content);
   const [thumbnailFailed, setThumbnailFailed] = useState(false);
   const thumbnailUrl = useMemo(
     () => extractFirstImage(article.content, article.link),
@@ -120,6 +127,13 @@ export function ArticleItem({
           <span className="text-muted-foreground">·</span>
           <span className="shrink-0 text-muted-foreground">
             {formatDate(article.pub_date)}
+          </span>
+          <span className="text-muted-foreground">·</span>
+          <span
+            className="shrink-0 text-muted-foreground"
+            title={t("article.readingTime", { minutes: readingMinutes })}
+          >
+            {readingMinutes}m
           </span>
         </div>
       </div>

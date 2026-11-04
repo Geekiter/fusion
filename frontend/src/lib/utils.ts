@@ -74,6 +74,30 @@ export function extractSummary(html: string, maxLength = 120): string {
   return text.slice(0, maxLength).trimEnd() + "…";
 }
 
+/**
+ * Estimate how long an article takes to read.
+ * CJK characters and Latin words are counted separately so mixed-language
+ * articles get a useful estimate without adding a reading-time dependency.
+ */
+export function estimateReadingTime(
+  html: string,
+  wordsPerMinute = 220,
+): number {
+  const text = extractSummary(html, Number.MAX_SAFE_INTEGER);
+  if (!text) return 1;
+
+  const cjkCharacters =
+    text.match(/[\u3040-\u30ff\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff]/g)
+      ?.length ?? 0;
+  const latinWords =
+    text.match(/[A-Za-z0-9]+(?:['’\u2011-][A-Za-z0-9]+)*/g)?.length ?? 0;
+
+  return Math.max(
+    1,
+    Math.ceil(cjkCharacters / 400 + latinWords / wordsPerMinute),
+  );
+}
+
 const TRACKER_PATTERNS = [
   /feedburner/i,
   /doubleclick/i,
