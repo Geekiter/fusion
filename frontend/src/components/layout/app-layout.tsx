@@ -14,6 +14,7 @@ import { useKeyboardShortcuts } from "@/hooks/use-keyboard";
 import { useI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUIStore } from "@/store/ui";
+import { useUnreadCounts } from "@/queries/feeds";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const isMobile = useIsMobile();
   const isSidebarOpen = useUIStore((s) => s.isSidebarOpen);
   const setSidebarOpen = useUIStore((s) => s.setSidebarOpen);
+  const { getTotalUnreadCount } = useUnreadCounts();
 
   // Register global keyboard shortcuts
   useKeyboardShortcuts();
@@ -33,6 +35,12 @@ export function AppLayout({ children }: AppLayoutProps) {
   useEffect(() => {
     setSidebarOpen(false);
   }, [location.pathname, location.searchStr, setSidebarOpen]);
+
+  useEffect(() => {
+    const unreadCount = getTotalUnreadCount();
+    const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
+    document.title = unreadCount > 0 ? `(${unreadLabel}) Fusion` : "Fusion";
+  }, [getTotalUnreadCount]);
 
   return (
     <div className="flex h-dvh w-full overflow-hidden">
