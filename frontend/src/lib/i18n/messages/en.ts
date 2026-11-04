@@ -230,6 +230,7 @@ export const enMessages = {
   "article.filter.unread": "Unread",
   "article.groupFallback": "Group",
   "article.list.all": "All Articles",
+  "article.list.densityToggle": "Toggle list density",
   "article.list.loadMore": "Load more",
   "article.list.loadMoreConfirm": "Next page is ready — tap to load",
   "article.list.loadMoreNow": "Load next page",

@@ -231,6 +231,7 @@ export const zhMessages: PartialMessages = {
   "article.filter.unread": "未读",
   "article.groupFallback": "分组",
   "article.list.all": "全部文章",
+  "article.list.densityToggle": "切换列表密度",
   "article.list.loadMore": "加载更多",
   "article.list.loadMoreConfirm": "下一页已准备好，点击后加载",
   "article.list.loadMoreNow": "加载下一页",

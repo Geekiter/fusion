@@ -231,6 +231,7 @@ export const esMessages: PartialMessages = {
   "article.filter.unread": "No leidos",
   "article.groupFallback": "Grupo",
   "article.list.all": "Todos los articulos",
+  "article.list.densityToggle": "Cambiar densidad de la lista",
   "article.list.loadMore": "Cargar mas",
   "article.list.loadMoreConfirm": "La siguiente página está lista — toca para cargar",
   "article.list.loadMoreNow": "Cargar la página siguiente",

@@ -231,6 +231,7 @@ export const svMessages: PartialMessages = {
   "article.filter.unread": "Olasta",
   "article.groupFallback": "Grupp",
   "article.list.all": "Alla artiklar",
+  "article.list.densityToggle": "Ändra listtäthet",
   "article.list.loadMore": "Ladda mer",
   "article.list.loadMoreConfirm": "Nästa sida är redo — tryck för att läsa in",
   "article.list.loadMoreNow": "Ladda nästa sida",

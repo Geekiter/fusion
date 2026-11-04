@@ -231,6 +231,7 @@ export const deMessages: PartialMessages = {
   "article.filter.unread": "Ungelesen",
   "article.groupFallback": "Gruppe",
   "article.list.all": "Alle Artikel",
+  "article.list.densityToggle": "Listendichte umschalten",
   "article.list.loadMore": "Mehr laden",
   "article.list.loadMoreConfirm": "Die nächste Seite ist bereit — zum Laden tippen",
   "article.list.loadMoreNow": "Nächste Seite laden",

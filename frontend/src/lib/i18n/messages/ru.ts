@@ -231,6 +231,7 @@ export const ruMessages: PartialMessages = {
   "article.filter.unread": "Непрочитанные",
   "article.groupFallback": "Группа",
   "article.list.all": "Все статьи",
+  "article.list.densityToggle": "Переключить плотность списка",
   "article.list.loadMore": "Загрузить еще",
   "article.list.loadMoreConfirm": "Следующая страница готова — нажмите, чтобы загрузить",
   "article.list.loadMoreNow": "Загрузить следующую страницу",

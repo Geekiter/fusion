@@ -7,6 +7,7 @@ import {
   CheckCheck,
   ChevronsDown,
   Languages,
+  List,
   Loader2,
   RefreshCw,
 } from "lucide-react";
@@ -91,6 +92,9 @@ export function ArticleList() {
   const locale = usePreferencesStore((state) => state.locale);
   const articleListDensity = usePreferencesStore(
     (state) => state.articleListDensity,
+  );
+  const setArticleListDensity = usePreferencesStore(
+    (state) => state.setArticleListDensity,
   );
   const navigate = useNavigate();
   const {
@@ -493,6 +497,26 @@ export function ArticleList() {
           <h2 className="truncate text-lg font-semibold">{title}</h2>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              setArticleListDensity(
+                articleListDensity === "compact" ? "comfortable" : "compact",
+              )
+            }
+            aria-pressed={articleListDensity === "compact"}
+            aria-label={t("article.list.densityToggle")}
+            title={t("article.list.densityToggle")}
+            className="gap-1.5 text-xs"
+          >
+            <List className="h-4 w-4" />
+            <span className="hidden lg:inline">
+              {articleListDensity === "compact"
+                ? t("settings.density.compact")
+                : t("settings.density.comfortable")}
+            </span>
+          </Button>
           {selectedFeed && (
             <Button
               variant="outline"
