@@ -94,6 +94,8 @@ export const ruMessages: PartialMessages = {
   "login.signIn": "Войти",
   "login.signingIn": "Вход...",
   "sidebar.manageFeeds": "Управление лентами",
+  "sidebar.collapse": "Свернуть боковую панель",
+  "sidebar.expand": "Развернуть боковую панель",
   "sidebar.search": "Поиск",
   "sidebar.settings": "Настройки",
   "group.add.description": "Создайте группу для организации ваших лент.",

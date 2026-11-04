@@ -94,6 +94,8 @@ export const svMessages: PartialMessages = {
   "login.signIn": "Logga in",
   "login.signingIn": "Loggar in...",
   "sidebar.manageFeeds": "Hantera floden",
+  "sidebar.collapse": "Fäll ihop sidofältet",
+  "sidebar.expand": "Fäll ut sidofältet",
   "sidebar.search": "Sok",
   "sidebar.settings": "Installningar",
   "group.add.description": "Skapa en ny grupp for att organisera dina floden.",

@@ -94,6 +94,8 @@ export const esMessages: PartialMessages = {
   "login.signIn": "Iniciar sesion",
   "login.signingIn": "Iniciando sesion...",
   "sidebar.manageFeeds": "Gestionar feeds",
+  "sidebar.collapse": "Contraer barra lateral",
+  "sidebar.expand": "Expandir barra lateral",
   "sidebar.search": "Buscar",
   "sidebar.settings": "Configuracion",
   "group.add.description": "Crea un nuevo grupo para organizar tus feeds.",

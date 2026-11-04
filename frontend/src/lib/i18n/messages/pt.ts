@@ -94,6 +94,8 @@ export const ptMessages: PartialMessages = {
   "login.signIn": "Entrar",
   "login.signingIn": "Entrando...",
   "sidebar.manageFeeds": "Gerenciar feeds",
+  "sidebar.collapse": "Recolher barra lateral",
+  "sidebar.expand": "Expandir barra lateral",
   "sidebar.search": "Pesquisar",
   "sidebar.settings": "Configuracoes",
   "group.add.description": "Crie um novo grupo para organizar seus feeds.",

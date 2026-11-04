@@ -94,6 +94,8 @@ export const zhMessages: PartialMessages = {
   "login.signIn": "登录",
   "login.signingIn": "登录中...",
   "sidebar.manageFeeds": "管理订阅",
+  "sidebar.collapse": "收起侧栏",
+  "sidebar.expand": "展开侧栏",
   "sidebar.search": "搜索",
   "sidebar.settings": "设置",
   "group.add.description": "创建新分组以整理你的订阅。",

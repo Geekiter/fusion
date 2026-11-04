@@ -92,6 +92,8 @@ export const enMessages = {
   "login.signIn": "Sign in",
   "login.signingIn": "Signing in...",
   "sidebar.manageFeeds": "Manage Feeds",
+  "sidebar.collapse": "Collapse sidebar",
+  "sidebar.expand": "Expand sidebar",
   "sidebar.search": "Search",
   "sidebar.settings": "Settings",
   "group.add.description": "Create a new group to organize your feeds.",

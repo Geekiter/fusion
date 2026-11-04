@@ -94,6 +94,8 @@ export const deMessages: PartialMessages = {
   "login.signIn": "Anmelden",
   "login.signingIn": "Wird angemeldet...",
   "sidebar.manageFeeds": "Feeds verwalten",
+  "sidebar.collapse": "Seitenleiste einklappen",
+  "sidebar.expand": "Seitenleiste ausklappen",
   "sidebar.search": "Suchen",
   "sidebar.settings": "Einstellungen",
   "group.add.description": "Neue Gruppe erstellen, um Feeds zu organisieren.",

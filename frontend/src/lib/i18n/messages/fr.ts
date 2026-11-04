@@ -94,6 +94,8 @@ export const frMessages: PartialMessages = {
   "login.signIn": "Se connecter",
   "login.signingIn": "Connexion...",
   "sidebar.manageFeeds": "Gérer les flux",
+  "sidebar.collapse": "Réduire la barre latérale",
+  "sidebar.expand": "Développer la barre latérale",
   "sidebar.search": "Rechercher",
   "sidebar.settings": "Paramètres",
   "group.add.description": "Créez un nouveau groupe pour organiser vos flux.",
