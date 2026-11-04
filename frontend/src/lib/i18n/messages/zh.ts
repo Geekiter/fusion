@@ -36,6 +36,7 @@ export const zhMessages: PartialMessages = {
   "shortcuts.action.goStarred": "跳转到收藏文章",
   "shortcuts.action.goUnread": "跳转到未读文章",
   "shortcuts.action.nextArticle": "选择下一篇文章",
+  "shortcuts.action.nextUnreadArticle": "选择下一篇未读文章",
   "shortcuts.action.openOriginal": "打开原文",
   "shortcuts.action.openSearch": "打开搜索",
   "shortcuts.action.openSettings": "打开设置",

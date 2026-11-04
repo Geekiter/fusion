@@ -36,6 +36,7 @@ export const deMessages: PartialMessages = {
   "shortcuts.action.goStarred": "Zu favorisierten Artikeln wechseln",
   "shortcuts.action.goUnread": "Zu ungelesenen Artikeln wechseln",
   "shortcuts.action.nextArticle": "Nachsten Artikel auswahlen",
+  "shortcuts.action.nextUnreadArticle": "Nachsten ungelesenen Artikel auswahlen",
   "shortcuts.action.openOriginal": "Originalartikel offnen",
   "shortcuts.action.openSearch": "Suche offnen",
   "shortcuts.action.openSettings": "Einstellungen offnen",

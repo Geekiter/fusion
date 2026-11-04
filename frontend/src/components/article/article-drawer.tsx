@@ -528,6 +528,9 @@ export function ArticleDrawer() {
   const { goToNext, goToPrevious, hasNext, hasPrevious } =
     useArticleNavigation(articleIds, {
       enabled: selectedArticleId !== null,
+      unreadArticleIds: articles
+        .filter((item) => item.unread && item.id > 0)
+        .map((item) => item.id),
       onToggleRead: () => {
         void handleToggleRead();
       },

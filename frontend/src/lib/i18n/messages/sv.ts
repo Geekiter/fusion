@@ -36,6 +36,7 @@ export const svMessages: PartialMessages = {
   "shortcuts.action.goStarred": "Ga till stjarnmarkta artiklar",
   "shortcuts.action.goUnread": "Ga till olasta artiklar",
   "shortcuts.action.nextArticle": "Valj nasta artikel",
+  "shortcuts.action.nextUnreadArticle": "Valj nasta olasta artikel",
   "shortcuts.action.openOriginal": "Oppna originalartikel",
   "shortcuts.action.openSearch": "Oppna sokning",
   "shortcuts.action.openSettings": "Oppna installningar",

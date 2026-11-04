@@ -39,6 +39,7 @@ export function ShortcutsDialog() {
           keys: "k / ArrowUp / p",
           action: t("shortcuts.action.previousArticle"),
         },
+        { keys: "h", action: t("shortcuts.action.nextUnreadArticle") },
         { keys: "m", action: t("shortcuts.action.toggleRead") },
         { keys: "s / f", action: t("shortcuts.action.toggleStar") },
         { keys: "Shift+S", action: t("shortcuts.action.shareArticle") },

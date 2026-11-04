@@ -36,6 +36,7 @@ export const ptMessages: PartialMessages = {
   "shortcuts.action.goStarred": "Ir para artigos com estrela",
   "shortcuts.action.goUnread": "Ir para artigos nao lidos",
   "shortcuts.action.nextArticle": "Selecionar proximo artigo",
+  "shortcuts.action.nextUnreadArticle": "Selecionar proximo artigo nao lido",
   "shortcuts.action.openOriginal": "Abrir artigo original",
   "shortcuts.action.openSearch": "Abrir pesquisa",
   "shortcuts.action.openSettings": "Abrir configuracoes",

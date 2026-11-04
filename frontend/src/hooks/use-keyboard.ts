@@ -22,6 +22,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
 
 interface ArticleNavigationOptions {
   enabled?: boolean;
+  unreadArticleIds?: number[];
   onToggleRead?: () => void | Promise<void>;
   onToggleStar?: () => void | Promise<void>;
   onOpenOriginal?: () => void;
@@ -234,6 +235,7 @@ export function useArticleNavigation(
   const isShortcutsOpen = useUIStore((s) => s.isShortcutsOpen);
   const {
     enabled = true,
+    unreadArticleIds = [],
     onToggleRead,
     onToggleStar,
     onOpenOriginal,
@@ -241,6 +243,7 @@ export function useArticleNavigation(
   } = options;
   const latestStateRef = useRef({
     articleIds,
+    unreadArticleIds,
     enabled,
     selectedArticleId,
     isSearchOpen,
@@ -260,6 +263,7 @@ export function useArticleNavigation(
   useEffect(() => {
     latestStateRef.current = {
       articleIds,
+      unreadArticleIds,
       enabled,
       selectedArticleId,
       isSearchOpen,
@@ -277,6 +281,7 @@ export function useArticleNavigation(
     };
   }, [
     articleIds,
+    unreadArticleIds,
     enabled,
     selectedArticleId,
     isSearchOpen,
@@ -346,6 +351,29 @@ export function useArticleNavigation(
         event.preventDefault();
         if (currentIndex > 0) {
           state.setSelectedArticle(state.articleIds[currentIndex - 1]);
+        }
+        return;
+      }
+
+      // H: Next unread article, wrapping within the loaded list
+      if (key === "h") {
+        event.preventDefault();
+        if (state.unreadArticleIds.length === 0) return;
+
+        const currentUnreadIndex = state.selectedArticleId
+          ? state.unreadArticleIds.indexOf(state.selectedArticleId)
+          : -1;
+        const nextUnreadId =
+          currentUnreadIndex >= 0
+            ? state.unreadArticleIds[
+                (currentUnreadIndex + 1) % state.unreadArticleIds.length
+              ]
+            : state.unreadArticleIds.find(
+                (articleId) => state.articleIds.indexOf(articleId) > currentIndex,
+              ) ?? state.unreadArticleIds[0];
+
+        if (nextUnreadId !== undefined) {
+          state.setSelectedArticle(nextUnreadId);
         }
         return;
       }

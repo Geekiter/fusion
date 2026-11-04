@@ -199,8 +199,12 @@ export function ArticleList() {
   }, [fetchNextPage, hasMore, isLoadingMore]);
 
   const articleIds = articles.map((a) => a.id);
+  const unreadArticleIds = articles
+    .filter((article) => article.unread && article.id > 0)
+    .map((article) => article.id);
   useArticleNavigation(articleIds, {
     enabled: selectedArticleId === null,
+    unreadArticleIds,
   });
 
   let title = t("article.list.all");

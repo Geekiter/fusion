@@ -36,6 +36,7 @@ export const ruMessages: PartialMessages = {
   "shortcuts.action.goStarred": "Перейти к избранным статьям",
   "shortcuts.action.goUnread": "Перейти к непрочитанным статьям",
   "shortcuts.action.nextArticle": "Выбрать следующую статью",
+  "shortcuts.action.nextUnreadArticle": "Выбрать следующую непрочитанную статью",
   "shortcuts.action.openOriginal": "Открыть оригинальную статью",
   "shortcuts.action.openSearch": "Открыть поиск",
   "shortcuts.action.openSettings": "Открыть настройки",

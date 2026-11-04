@@ -36,6 +36,7 @@ export const esMessages: PartialMessages = {
   "shortcuts.action.goStarred": "Ir a articulos destacados",
   "shortcuts.action.goUnread": "Ir a articulos no leidos",
   "shortcuts.action.nextArticle": "Seleccionar articulo siguiente",
+  "shortcuts.action.nextUnreadArticle": "Seleccionar el siguiente articulo no leido",
   "shortcuts.action.openOriginal": "Abrir articulo original",
   "shortcuts.action.openSearch": "Abrir busqueda",
   "shortcuts.action.openSettings": "Abrir ajustes",

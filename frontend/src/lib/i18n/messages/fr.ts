@@ -36,6 +36,7 @@ export const frMessages: PartialMessages = {
   "shortcuts.action.goStarred": "Aller aux articles favoris",
   "shortcuts.action.goUnread": "Aller aux articles non lus",
   "shortcuts.action.nextArticle": "Sélectionner l'article suivant",
+  "shortcuts.action.nextUnreadArticle": "Sélectionner l'article non lu suivant",
   "shortcuts.action.openOriginal": "Ouvrir l'article original",
   "shortcuts.action.openSearch": "Ouvrir la recherche",
   "shortcuts.action.openSettings": "Ouvrir les paramètres",

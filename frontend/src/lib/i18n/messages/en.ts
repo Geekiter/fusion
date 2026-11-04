@@ -34,6 +34,7 @@ export const enMessages = {
   "shortcuts.action.goStarred": "Go to starred articles",
   "shortcuts.action.goUnread": "Go to unread articles",
   "shortcuts.action.nextArticle": "Select next article",
+  "shortcuts.action.nextUnreadArticle": "Select next unread article",
   "shortcuts.action.openOriginal": "Open original article",
   "shortcuts.action.openSearch": "Open search",
   "shortcuts.action.openSettings": "Open settings",
