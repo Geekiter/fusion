@@ -1,5 +1,13 @@
 import { useEffect, useState } from "react";
-import { FileText, Keyboard, Loader2, Search, Settings } from "lucide-react";
+import {
+  Clock3,
+  FileText,
+  Keyboard,
+  Loader2,
+  Search,
+  Settings,
+  X,
+} from "lucide-react";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { searchAPI } from "@/lib/api";
 import type { SearchFeed, SearchItem } from "@/lib/api/types";
@@ -27,6 +35,21 @@ import { useI18n } from "@/lib/i18n";
 import { formatDate } from "@/lib/utils";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 
+const SEARCH_HISTORY_KEY = "fusion-search-history";
+const MAX_SEARCH_HISTORY = 6;
+
+function readSearchHistory(): string[] {
+  try {
+    const value = window.localStorage.getItem(SEARCH_HISTORY_KEY);
+    if (!value) return [];
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    return [];
+  }
+}
+
 export function SearchDialog() {
   const { t } = useI18n();
   const { isSearchOpen, setSearchOpen, setEditFeedOpen, setShortcutsOpen } =
@@ -38,6 +61,62 @@ export function SearchDialog() {
   const [loading, setLoading] = useState(false);
   const [feeds, setFeeds] = useState<SearchFeed[]>([]);
   const [items, setItems] = useState<SearchItem[]>([]);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
+
+  useEffect(() => {
+    setSearchHistory(readSearchHistory());
+  }, []);
+
+  const rememberSearch = (value: string) => {
+    const normalized = value.trim();
+    if (normalized.length < 2) return;
+
+    setSearchHistory((current) => {
+      const next = [
+        normalized,
+        ...current.filter(
+          (item) => item.toLocaleLowerCase() !== normalized.toLocaleLowerCase(),
+        ),
+      ].slice(0, MAX_SEARCH_HISTORY);
+      try {
+        window.localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(next));
+      } catch {
+        // Browsers may disable local storage; search itself should still work.
+      }
+      return next;
+    });
+  };
+
+  const selectSearchHistory = (value: string) => {
+    setQuery(value);
+    setDebouncedQuery(value);
+    setLoading(true);
+  };
+
+  const removeSearchHistory = (value: string) => {
+    setSearchHistory((current) => {
+      const next = current.filter((item) => item !== value);
+      try {
+        if (next.length === 0) {
+          window.localStorage.removeItem(SEARCH_HISTORY_KEY);
+        } else {
+          window.localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(next));
+        }
+      } catch {
+        // Ignore storage failures; the in-memory list is still updated.
+      }
+      return next;
+    });
+  };
+
+  const clearSearchHistory = () => {
+    setSearchHistory([]);
+    try {
+      window.localStorage.removeItem(SEARCH_HISTORY_KEY);
+    } catch {
+      // Ignore storage failures; the in-memory list is still cleared.
+    }
+  };
 
   // Debounce search query
   useEffect(() => {
@@ -60,11 +139,13 @@ export function SearchDialog() {
       .search(debouncedQuery)
       .then((res) => {
         if (cancelled) return;
+        rememberSearch(debouncedQuery);
         setFeeds(res.data?.feeds ?? []);
         setItems(res.data?.items ?? []);
       })
       .catch(() => {
         if (cancelled) return;
+        rememberSearch(debouncedQuery);
         setFeeds([]);
         setItems([]);
       })
@@ -198,24 +279,68 @@ export function SearchDialog() {
             )}
 
             {!debouncedQuery && !loading && (
-              <CommandGroup heading={t("search.group.quickActions")}>
-                <CommandItem className="gap-2">
-                  <Search className="h-4 w-4 text-muted-foreground" />
-                  <span>{t("search.quickActionHint")}</span>
-                </CommandItem>
-                <CommandItem
-                  className="justify-between gap-2"
-                  onSelect={handleOpenShortcuts}
-                >
-                  <div className="flex items-center gap-2">
-                    <Keyboard className="h-4 w-4 text-muted-foreground" />
-                    <span>{t("shortcuts.title")}</span>
-                  </div>
-                  <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
-                    ?
-                  </kbd>
-                </CommandItem>
-              </CommandGroup>
+              <>
+                <CommandGroup heading={t("search.group.quickActions")}>
+                  <CommandItem className="gap-2">
+                    <Search className="h-4 w-4 text-muted-foreground" />
+                    <span>{t("search.quickActionHint")}</span>
+                  </CommandItem>
+                  <CommandItem
+                    className="justify-between gap-2"
+                    onSelect={handleOpenShortcuts}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Keyboard className="h-4 w-4 text-muted-foreground" />
+                      <span>{t("shortcuts.title")}</span>
+                    </div>
+                    <kbd className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
+                      ?
+                    </kbd>
+                  </CommandItem>
+                </CommandGroup>
+                {searchHistory.length > 0 && (
+                  <CommandGroup
+                    heading={
+                      <div className="flex items-center justify-between pr-2">
+                        <span>{t("search.group.recent")}</span>
+                        <button
+                          type="button"
+                          className="text-[11px] font-normal text-muted-foreground transition-colors hover:text-foreground"
+                          onClick={clearSearchHistory}
+                        >
+                          {t("search.clearHistory")}
+                        </button>
+                      </div>
+                    }
+                  >
+                    {searchHistory.map((term) => (
+                      <CommandItem
+                        key={term}
+                        value={`recent-${term}`}
+                        className="group/recent justify-between gap-2"
+                        onSelect={() => selectSearchHistory(term)}
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <Clock3 className="h-4 w-4 text-muted-foreground" />
+                          <span className="truncate">{term}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-background hover:text-foreground group-hover/recent:opacity-100 focus:opacity-100"
+                          aria-label={`${t("search.removeHistory")}: ${term}`}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeSearchHistory(term);
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </>
             )}
           </CommandList>
         </Command>
