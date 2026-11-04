@@ -41,6 +41,7 @@ export const ruMessages: PartialMessages = {
   "shortcuts.action.openSettings": "Открыть настройки",
   "shortcuts.action.previousArticle": "Выбрать предыдущую статью",
   "shortcuts.action.showHelp": "Открыть справку по горячим клавишам",
+  "shortcuts.action.shareArticle": "Поделиться статьёй",
   "shortcuts.action.toggleRead": "Переключить прочитано/непрочитано",
   "shortcuts.action.toggleSearch": "Переключить окно поиска",
   "shortcuts.action.toggleStar": "Переключить избранное",

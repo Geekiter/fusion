@@ -41,6 +41,7 @@ export const zhMessages: PartialMessages = {
   "shortcuts.action.openSettings": "打开设置",
   "shortcuts.action.previousArticle": "选择上一篇文章",
   "shortcuts.action.showHelp": "打开快捷键帮助",
+  "shortcuts.action.shareArticle": "分享文章",
   "shortcuts.action.toggleRead": "切换已读/未读",
   "shortcuts.action.toggleSearch": "切换搜索弹窗",
   "shortcuts.action.toggleStar": "切换收藏",

@@ -25,6 +25,7 @@ interface ArticleNavigationOptions {
   onToggleRead?: () => void | Promise<void>;
   onToggleStar?: () => void | Promise<void>;
   onOpenOriginal?: () => void;
+  onShare?: () => void | Promise<void>;
 }
 
 export function useKeyboardShortcuts() {
@@ -236,6 +237,7 @@ export function useArticleNavigation(
     onToggleRead,
     onToggleStar,
     onOpenOriginal,
+    onShare,
   } = options;
   const latestStateRef = useRef({
     articleIds,
@@ -251,6 +253,7 @@ export function useArticleNavigation(
     onToggleRead,
     onToggleStar,
     onOpenOriginal,
+    onShare,
     setSelectedArticle,
   });
 
@@ -269,6 +272,7 @@ export function useArticleNavigation(
       onToggleRead,
       onToggleStar,
       onOpenOriginal,
+      onShare,
       setSelectedArticle,
     };
   }, [
@@ -285,6 +289,7 @@ export function useArticleNavigation(
     onToggleRead,
     onToggleStar,
     onOpenOriginal,
+    onShare,
     setSelectedArticle,
   ]);
 
@@ -349,6 +354,13 @@ export function useArticleNavigation(
         return;
       }
 
+      // Shift+S: share article
+      if (key === "s" && event.shiftKey && state.onShare) {
+        event.preventDefault();
+        void state.onShare();
+        return;
+      }
+
       // M: toggle read/unread
       if (key === "m" && state.onToggleRead) {
         event.preventDefault();
@@ -357,7 +369,7 @@ export function useArticleNavigation(
       }
 
       // S/F: toggle star
-      if ((key === "s" || key === "f") && state.onToggleStar) {
+      if (!event.shiftKey && (key === "s" || key === "f") && state.onToggleStar) {
         event.preventDefault();
         void state.onToggleStar();
         return;

@@ -41,6 +41,7 @@ export const frMessages: PartialMessages = {
   "shortcuts.action.openSettings": "Ouvrir les paramètres",
   "shortcuts.action.previousArticle": "Sélectionner l'article précédent",
   "shortcuts.action.showHelp": "Ouvrir l'aide des raccourcis clavier",
+  "shortcuts.action.shareArticle": "Partager l'article",
   "shortcuts.action.toggleRead": "Basculer entre lu et non lu",
   "shortcuts.action.toggleSearch": "Afficher ou masquer la fenêtre de recherche",
   "shortcuts.action.toggleStar": "Ajouter ou retirer des favoris",

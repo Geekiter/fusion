@@ -483,6 +483,7 @@ export function ArticleDrawer() {
         void handleToggleStar();
       },
       onOpenOriginal: handleOpenOriginal,
+    onShare: handleShareArticle,
     });
 
   const isReadPending = markRead.isPending || markUnread.isPending;

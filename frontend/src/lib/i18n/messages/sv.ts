@@ -41,6 +41,7 @@ export const svMessages: PartialMessages = {
   "shortcuts.action.openSettings": "Oppna installningar",
   "shortcuts.action.previousArticle": "Valj forra artikel",
   "shortcuts.action.showHelp": "Oppna hjalp for kortkommandon",
+  "shortcuts.action.shareArticle": "Dela artikel",
   "shortcuts.action.toggleRead": "Vaxla last/olast",
   "shortcuts.action.toggleSearch": "Vaxla sokdialog",
   "shortcuts.action.toggleStar": "Vaxla stjarnmarkering",

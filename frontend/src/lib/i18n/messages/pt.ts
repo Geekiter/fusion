@@ -41,6 +41,7 @@ export const ptMessages: PartialMessages = {
   "shortcuts.action.openSettings": "Abrir configuracoes",
   "shortcuts.action.previousArticle": "Selecionar artigo anterior",
   "shortcuts.action.showHelp": "Abrir ajuda de atalhos de teclado",
+  "shortcuts.action.shareArticle": "Compartilhar artigo",
   "shortcuts.action.toggleRead": "Alternar lido/nao lido",
   "shortcuts.action.toggleSearch": "Alternar dialogo de pesquisa",
   "shortcuts.action.toggleStar": "Alternar estrela",

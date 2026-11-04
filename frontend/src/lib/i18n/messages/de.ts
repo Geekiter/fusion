@@ -41,6 +41,7 @@ export const deMessages: PartialMessages = {
   "shortcuts.action.openSettings": "Einstellungen offnen",
   "shortcuts.action.previousArticle": "Vorherigen Artikel auswahlen",
   "shortcuts.action.showHelp": "Hilfe fur Tastaturkurzel offnen",
+  "shortcuts.action.shareArticle": "Artikel teilen",
   "shortcuts.action.toggleRead": "Gelesen/Ungelesen umschalten",
   "shortcuts.action.toggleSearch": "Suchdialog umschalten",
   "shortcuts.action.toggleStar": "Favorit umschalten",
