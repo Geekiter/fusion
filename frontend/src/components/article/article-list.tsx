@@ -77,6 +77,8 @@ export function ArticleList() {
   const refreshFeeds = useRefreshFeeds();
   const isMobile = useIsMobile();
   const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
+  const autoLoadArmedRef = useRef(true);
   const [isCategoryOpen, setCategoryOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
 
@@ -106,8 +108,32 @@ export function ArticleList() {
     if (!viewport) return;
 
     viewport.scrollTo({ top: 0, behavior: "instant" });
+    autoLoadArmedRef.current = true;
     setShowScrollTop(false);
   }, [articleFilter, getArticleScrollViewport, selectedFeedId, selectedGroupId]);
+
+  useEffect(() => {
+    const sentinel = loadMoreSentinelRef.current;
+    const viewport = getArticleScrollViewport();
+    if (!sentinel || !viewport || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) {
+          autoLoadArmedRef.current = true;
+          return;
+        }
+
+        if (!autoLoadArmedRef.current || isLoadingMore) return;
+        autoLoadArmedRef.current = false;
+        void fetchNextPage();
+      },
+      { root: viewport, rootMargin: "0px 0px 240px", threshold: 0 },
+    );
+
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, [fetchNextPage, getArticleScrollViewport, hasMore, isLoadingMore]);
 
   const articleIds = articles.map((a) => a.id);
   useArticleNavigation(articleIds, {
@@ -437,6 +463,7 @@ export function ArticleList() {
                     );
                   })}
                 </div>
+                <div ref={loadMoreSentinelRef} className="h-px" aria-hidden="true" />
                 {hasMore && (
                   <div className="flex justify-center py-4">
                     <Button
@@ -515,6 +542,7 @@ export function ArticleList() {
                     </SwipeableRow>
                   );
                 })}
+                <div ref={loadMoreSentinelRef} className="h-px" aria-hidden="true" />
                 {hasMore && (
                   <div className="flex justify-center py-4">
                     <Button
