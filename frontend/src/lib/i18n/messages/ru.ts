@@ -213,6 +213,7 @@ export const ruMessages: PartialMessages = {
   "article.list.loadMore": "Загрузить еще",
   "article.list.loadMoreConfirm": "Прокрутите ниже или подтвердите",
   "article.list.loadMoreNow": "Загрузить следующую страницу",
+  "article.list.endOfList": "Больше статей нет",
   "article.list.loading": "Загрузка...",
   "article.list.markAllRead": "Отметить текущие как прочитанные",
   "article.list.markAllReadSuccess": "Все статьи в этом представлении отмечены как прочитанные",

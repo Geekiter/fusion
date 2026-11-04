@@ -213,6 +213,7 @@ export const esMessages: PartialMessages = {
   "article.list.loadMore": "Cargar mas",
   "article.list.loadMoreConfirm": "Desplázate un poco más o confirma",
   "article.list.loadMoreNow": "Cargar la página siguiente",
+  "article.list.endOfList": "No hay más artículos",
   "article.list.loading": "Cargando...",
   "article.list.markAllRead": "Marcar vista como leída",
   "article.list.markAllReadSuccess": "Todos los artículos de esta vista se marcaron como leídos",

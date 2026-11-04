@@ -213,6 +213,7 @@ export const deMessages: PartialMessages = {
   "article.list.loadMore": "Mehr laden",
   "article.list.loadMoreConfirm": "Weiter nach unten scrollen oder bestätigen",
   "article.list.loadMoreNow": "Nächste Seite laden",
+  "article.list.endOfList": "Keine weiteren Artikel",
   "article.list.loading": "Ladt...",
   "article.list.markAllRead": "Aktuelle als gelesen markieren",
   "article.list.markAllReadSuccess": "Alle Artikel in dieser Ansicht wurden als gelesen markiert",

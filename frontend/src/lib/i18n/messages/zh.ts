@@ -213,6 +213,7 @@ export const zhMessages: PartialMessages = {
   "article.list.loadMore": "加载更多",
   "article.list.loadMoreConfirm": "继续滑动到底部或点击确认",
   "article.list.loadMoreNow": "加载下一页",
+  "article.list.endOfList": "没有更多文章了",
   "article.list.loading": "加载中...",
   "article.list.markAllRead": "已读当前",
   "article.list.markAllReadSuccess": "当前视图中的文章已全部标为已读",

@@ -3,6 +3,7 @@ import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowDown,
   ArrowUp,
+  Check,
   CheckCheck,
   ChevronsDown,
   Languages,
@@ -567,6 +568,16 @@ export function ArticleList() {
                     </Button>
                   </div>
                 )}
+                {!hasMore && articles.length > 0 && (
+                  <div
+                    className="flex items-center justify-center gap-2 border-t border-border/40 py-5 text-xs text-muted-foreground motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <Check className="h-3.5 w-3.5 text-primary/70" aria-hidden="true" />
+                    <span>{t("article.list.endOfList")}</span>
+                  </div>
+                )}
               </>
             ) : (
               <>
@@ -659,6 +670,16 @@ export function ArticleList() {
                         ? t("article.list.loading")
                         : t("article.list.loadMore")}
                     </Button>
+                  </div>
+                )}
+                {!hasMore && articles.length > 0 && (
+                  <div
+                    className="flex items-center justify-center gap-2 border-t border-border/40 py-5 text-xs text-muted-foreground motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300"
+                    role="status"
+                    aria-live="polite"
+                  >
+                    <Check className="h-3.5 w-3.5 text-primary/70" aria-hidden="true" />
+                    <span>{t("article.list.endOfList")}</span>
                   </div>
                 )}
               </>
