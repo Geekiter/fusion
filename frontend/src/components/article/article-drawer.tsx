@@ -140,6 +140,9 @@ export function ArticleDrawer() {
   const markArticleReadOnOpen = usePreferencesStore(
     (state) => state.markArticleReadOnOpen,
   );
+  const articleTextSize = usePreferencesStore(
+    (state) => state.articleTextSize,
+  );
 
   const { articles, hasMore, isItemStarred, getBookmarkByItemId } =
     useArticleList({
@@ -929,7 +932,12 @@ export function ArticleDrawer() {
                   <FullTitleToggle title={article.title} />
                   <div
                     ref={articleBodyRef}
-                    className="typeset typeset-article min-w-0 max-w-none"
+                    className={cn(
+                      "typeset typeset-article min-w-0 max-w-none transition-[font-size] duration-200 motion-reduce:transition-none",
+                      articleTextSize === 15 && "reader-text-small",
+                      articleTextSize === 17 && "reader-text-medium",
+                      articleTextSize === 19 && "reader-text-large",
+                    )}
                     dangerouslySetInnerHTML={{
                       __html: processArticleContent(
                         article.extracted_content || article.content,

@@ -15,6 +15,7 @@ import {
   articlePageSizeOptions,
   articleListDensityOptions,
   supportedLocales,
+  articleTextSizeOptions,
   usePreferencesStore,
   useUIStore,
 } from "@/store";
@@ -67,10 +68,12 @@ function AppearanceContent() {
     locale,
     articlePageSize,
     articleListDensity,
+    articleTextSize,
     markArticleReadOnOpen,
     setLocale,
     setArticlePageSize,
     setArticleListDensity,
+    setArticleTextSize,
     setMarkArticleReadOnOpen,
   } = usePreferencesStore();
 
@@ -125,6 +128,43 @@ function AppearanceContent() {
             {articlePageSizeOptions.map((size) => (
               <SelectItem key={size} value={size.toString()}>
                 {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Reader text size */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1 pr-4">
+          <p className="text-sm font-medium">
+            {t("settings.textSize.label")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.textSize.description")}
+          </p>
+        </div>
+        <Select
+          value={articleTextSize.toString()}
+          onValueChange={(value) => {
+            if (!value) return;
+            const parsed = Number.parseInt(value, 10);
+            if (!Number.isNaN(parsed)) setArticleTextSize(parsed);
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {articleTextSizeOptions.map((size) => (
+              <SelectItem key={size} value={size.toString()}>
+                {t(
+                  size === 15
+                    ? "settings.textSize.small"
+                    : size === 17
+                      ? "settings.textSize.medium"
+                      : "settings.textSize.large",
+                )}
               </SelectItem>
             ))}
           </SelectContent>

@@ -148,6 +148,18 @@
   --typeset-flow: 1.25em;
 }
 
+.typeset-article.reader-text-small {
+  --typeset-size: 15px;
+}
+
+.typeset-article.reader-text-medium {
+  --typeset-size: 17px;
+}
+
+.typeset-article.reader-text-large {
+  --typeset-size: 19px;
+}
+
 @keyframes fusion-load-more-damp {
   0% {
     opacity: 0;
