@@ -29,7 +29,6 @@ import { useArticleList } from "@/hooks/use-article-list";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import {
-  useMarkAllItemsRead,
   useMarkItemsRead,
   useMarkItemsUnread,
   useTranslateItemPreviews,
@@ -38,7 +37,6 @@ import {
   useFeedLookup,
   useRefreshFeed,
   useRefreshFeeds,
-  useUnreadCounts,
 } from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
@@ -75,11 +73,8 @@ export function ArticleList() {
 
   const { data: groups = [] } = useGroups();
   const { feeds, getFeedById, isLoading: isFeedsLoading } = useFeedLookup();
-  const { getUnreadCount, getGroupUnreadCount, getTotalUnreadCount } =
-    useUnreadCounts();
   const markItemsRead = useMarkItemsRead();
   const markItemsUnread = useMarkItemsUnread();
-  const markAllItemsRead = useMarkAllItemsRead();
   const createBookmark = useCreateBookmark();
   const deleteBookmark = useDeleteBookmark();
   const translatePreviews = useTranslateItemPreviews();
@@ -238,13 +233,6 @@ export function ArticleList() {
   );
 
   const unreadCount = articles.filter((a) => a.unread).length;
-  const scopedUnreadCount = selectedFeedId
-    ? getUnreadCount(selectedFeedId)
-    : selectedGroupId
-      ? getGroupUnreadCount(selectedGroupId)
-      : getTotalUnreadCount();
-  const markAllReadCount =
-    articleFilter === "starred" ? unreadCount : scopedUnreadCount;
   const hasNoFeeds = !isFeedsLoading && feeds.length === 0;
   const translatableItems = articles.filter((article) => {
     if (article.id <= 0) return false;
@@ -292,21 +280,14 @@ export function ArticleList() {
   );
 
   const handleMarkAllAsRead = async () => {
-    if (markAllReadCount === 0) return;
+    const unreadIds = articles
+      .filter((a) => a.unread && a.id > 0)
+      .map((a) => a.id);
+
+    if (unreadIds.length === 0) return;
 
     try {
-      if (articleFilter === "starred") {
-        const unreadIds = articles
-          .filter((a) => a.unread && a.id > 0)
-          .map((a) => a.id);
-        if (unreadIds.length === 0) return;
-        await markItemsRead.mutateAsync(unreadIds);
-      } else {
-        await markAllItemsRead.mutateAsync({
-          feed_id: selectedFeedId ?? undefined,
-          group_id: selectedGroupId ?? undefined,
-        });
-      }
+      await markItemsRead.mutateAsync(unreadIds);
       requestAnimationFrame(() => {
         getArticleScrollViewport()?.scrollTo({ top: 0, behavior: "instant" });
       });
@@ -431,13 +412,11 @@ export function ArticleList() {
             size="sm"
             onClick={handleMarkAllAsRead}
               disabled={
-                markAllReadCount === 0 ||
-                markItemsRead.isPending ||
-                markAllItemsRead.isPending
+                unreadCount === 0 || markItemsRead.isPending
               }
             className="gap-1.5 text-xs"
           >
-              {markItemsRead.isPending || markAllItemsRead.isPending ? (
+              {markItemsRead.isPending ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <CheckCheck className="h-4 w-4" />
@@ -726,10 +705,8 @@ export function ArticleList() {
               refreshFeeds.isPending
             }
             onUpdate={handlePullRefresh}
-            unreadCount={markAllReadCount}
-            isMarkingAllRead={
-              markItemsRead.isPending || markAllItemsRead.isPending
-            }
+            unreadCount={unreadCount}
+            isMarkingAllRead={markItemsRead.isPending}
             onMarkAllRead={handleMarkAllAsRead}
             isHidden={hideMobileActionBar}
           />
