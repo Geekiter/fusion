@@ -97,7 +97,11 @@ export function ArticleDrawer() {
   const { t } = useI18n();
   const articleContentRef = useRef<HTMLElement>(null);
   const articleBodyRef = useRef<HTMLDivElement>(null);
+  const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const swipeOffsetRef = useRef(0);
   const [readingProgress, setReadingProgress] = useState(0);
+  const [swipeOffset, setSwipeOffset] = useState(0);
+  const [isSwiping, setIsSwiping] = useState(false);
   const {
     selectedArticleId,
     setSelectedArticle,
@@ -151,6 +155,56 @@ export function ArticleDrawer() {
       '[data-slot="scroll-area-viewport"]',
     );
     viewport?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleArticleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
+    if (event.touches.length !== 1) return;
+    const target = event.target;
+    if (
+      target instanceof HTMLElement &&
+      target.closest("a, button, input, textarea, select, [data-swipe-ignore]")
+    ) {
+      swipeStartRef.current = null;
+      return;
+    }
+
+    const touch = event.touches[0];
+    swipeStartRef.current = { x: touch.clientX, y: touch.clientY };
+  };
+
+  const handleArticleTouchMove = (event: React.TouchEvent<HTMLElement>) => {
+    const start = swipeStartRef.current;
+    if (!start || event.touches.length !== 1) return;
+
+    const touch = event.touches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    if (Math.abs(dx) < 12 || Math.abs(dx) <= Math.abs(dy) * 1.2) {
+      if (Math.abs(dy) > 18) swipeStartRef.current = null;
+      return;
+    }
+
+    event.preventDefault();
+    setIsSwiping(true);
+    const canNavigate = dx < 0 ? hasNext() : hasPrevious();
+    const resistance = canNavigate ? 0.4 : 0.16;
+    const nextOffset = Math.max(-96, Math.min(96, dx * resistance));
+    swipeOffsetRef.current = nextOffset;
+    setSwipeOffset(nextOffset);
+  };
+
+  const handleArticleTouchEnd = () => {
+    const offset = swipeOffsetRef.current;
+    swipeStartRef.current = null;
+    swipeOffsetRef.current = 0;
+    setIsSwiping(false);
+    setSwipeOffset(0);
+
+    if (offset <= -56 && hasNext()) {
+      goToNext();
+    } else if (offset >= 56 && hasPrevious()) {
+      goToPrevious();
+    }
   };
 
   useEffect(() => {
@@ -536,7 +590,17 @@ export function ArticleDrawer() {
               <ScrollArea className="min-h-0 h-full">
                 <article
                   ref={articleContentRef}
-                  className="min-w-0 px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-12 md:py-8"
+                  onTouchStart={handleArticleTouchStart}
+                  onTouchMove={handleArticleTouchMove}
+                  onTouchEnd={handleArticleTouchEnd}
+                  onTouchCancel={handleArticleTouchEnd}
+                  className="min-w-0 touch-pan-y px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-12 md:py-8"
+                  style={{
+                    transform: `translate3d(${swipeOffset}px, 0, 0)`,
+                    transition: isSwiping
+                      ? "none"
+                      : "transform 220ms cubic-bezier(0.22, 1, 0.36, 1)",
+                  }}
                 >
                 <div className="space-y-3">
                   <h1 className="line-clamp-2 text-[28px] font-bold leading-[1.3]">
