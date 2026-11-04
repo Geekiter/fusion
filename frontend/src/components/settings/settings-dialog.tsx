@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/select";
 import {
   articlePageSizeOptions,
+  articleListDensityOptions,
   supportedLocales,
   usePreferencesStore,
   useUIStore,
@@ -65,9 +66,11 @@ function AppearanceContent() {
   const {
     locale,
     articlePageSize,
+    articleListDensity,
     markArticleReadOnOpen,
     setLocale,
     setArticlePageSize,
+    setArticleListDensity,
     setMarkArticleReadOnOpen,
   } = usePreferencesStore();
 
@@ -122,6 +125,35 @@ function AppearanceContent() {
             {articlePageSizeOptions.map((size) => (
               <SelectItem key={size} value={size.toString()}>
                 {size}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Reading behavior */}
+      <div className="flex items-center justify-between">
+        <div className="space-y-1 pr-4">
+          <p className="text-sm font-medium">
+            {t("settings.density.label")}
+          </p>
+          <p className="text-[13px] text-muted-foreground">
+            {t("settings.density.description")}
+          </p>
+        </div>
+        <Select
+          value={articleListDensity}
+          onValueChange={(value) => {
+            if (value) setArticleListDensity(value);
+          }}
+        >
+          <SelectTrigger className="w-auto gap-2 border-border">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {articleListDensityOptions.map((density) => (
+              <SelectItem key={density} value={density}>
+                {t(`settings.density.${density}` as const)}
               </SelectItem>
             ))}
           </SelectContent>

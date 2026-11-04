@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { cn, formatRelativeTime, extractSummary } from "@/lib/utils";
 import type { Item } from "@/lib/api";
+import type { ArticleListDensity } from "@/store";
 import { parseTweet } from "@/lib/twitter";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 
@@ -13,6 +14,7 @@ interface TwitterCardProps {
   onToggleRead: (article: Item) => Promise<void>;
   onToggleStar: (article: Item) => Promise<void>;
   isStarred: boolean;
+  density?: ArticleListDensity;
 }
 
 /**
@@ -33,6 +35,7 @@ export function TwitterCard({
   onToggleRead,
   onToggleStar,
   isStarred,
+  density = "comfortable",
 }: TwitterCardProps) {
   const { t } = useI18n();
 
@@ -138,10 +141,20 @@ export function TwitterCard({
         )}
       </div>
 
-      <div className="flex gap-3 px-4 py-3">
+      <div
+        className={cn(
+          "flex transition-[gap,padding] duration-200",
+          density === "compact" ? "gap-2.5 px-4 py-2" : "gap-3 px-4 py-3",
+        )}
+      >
         {/* Avatar placeholder with first letter */}
         <div className="shrink-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+          <div
+            className={cn(
+              "flex items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary transition-[width,height] duration-200",
+              density === "compact" ? "h-8 w-8" : "h-10 w-10",
+            )}
+          >
             {handle ? handle.charAt(1).toUpperCase() : "T"}
           </div>
         </div>

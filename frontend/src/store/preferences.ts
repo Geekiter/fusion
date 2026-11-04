@@ -15,9 +15,14 @@ export type AppLocale = (typeof supportedLocales)[number];
 
 export const articlePageSizeOptions = [10, 20, 30, 50, 100] as const;
 export type ArticlePageSize = (typeof articlePageSizeOptions)[number];
+export const articleListDensityOptions = ["comfortable", "compact"] as const;
+export type ArticleListDensity = (typeof articleListDensityOptions)[number];
 
 const localeSet = new Set<AppLocale>(supportedLocales);
 const articlePageSizeSet = new Set<number>(articlePageSizeOptions);
+const articleListDensitySet = new Set<ArticleListDensity>(
+  articleListDensityOptions,
+);
 
 function resolveSupportedLocale(locale: string): AppLocale | null {
   const normalized = locale.toLowerCase().replace("_", "-");
@@ -39,6 +44,7 @@ const defaultLocale: AppLocale =
     resolveSupportedLocale(navigator.language)) ||
   "en";
 const defaultArticlePageSize: ArticlePageSize = 10;
+const defaultArticleListDensity: ArticleListDensity = "comfortable";
 
 function normalizeLocale(locale: string): AppLocale {
   const supportedLocale = resolveSupportedLocale(locale);
@@ -57,12 +63,22 @@ function normalizeArticlePageSize(size: number): ArticlePageSize {
   return defaultArticlePageSize;
 }
 
+function normalizeArticleListDensity(density: string): ArticleListDensity {
+  if (articleListDensitySet.has(density as ArticleListDensity)) {
+    return density as ArticleListDensity;
+  }
+
+  return defaultArticleListDensity;
+}
+
 export interface PreferencesState {
   locale: AppLocale;
   articlePageSize: ArticlePageSize;
+  articleListDensity: ArticleListDensity;
   markArticleReadOnOpen: boolean;
   setLocale: (locale: string) => void;
   setArticlePageSize: (size: number) => void;
+  setArticleListDensity: (density: string) => void;
   setMarkArticleReadOnOpen: (enabled: boolean) => void;
 }
 
@@ -71,10 +87,13 @@ export const usePreferencesStore = create<PreferencesState>()(
     (set) => ({
       locale: defaultLocale,
       articlePageSize: defaultArticlePageSize,
+      articleListDensity: defaultArticleListDensity,
       markArticleReadOnOpen: false,
       setLocale: (locale) => set({ locale: normalizeLocale(locale) }),
       setArticlePageSize: (size) =>
         set({ articlePageSize: normalizeArticlePageSize(size) }),
+      setArticleListDensity: (density) =>
+        set({ articleListDensity: normalizeArticleListDensity(density) }),
       setMarkArticleReadOnOpen: (enabled) =>
         set({ markArticleReadOnOpen: enabled }),
     }),
@@ -84,6 +103,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       partialize: (state) => ({
         locale: state.locale,
         articlePageSize: state.articlePageSize,
+        articleListDensity: state.articleListDensity,
         markArticleReadOnOpen: state.markArticleReadOnOpen,
       }),
       merge: (persistedState, currentState) => {
@@ -94,6 +114,9 @@ export const usePreferencesStore = create<PreferencesState>()(
           locale: normalizeLocale(persisted?.locale ?? currentState.locale),
           articlePageSize: normalizeArticlePageSize(
             persisted?.articlePageSize ?? currentState.articlePageSize,
+          ),
+          articleListDensity: normalizeArticleListDensity(
+            persisted?.articleListDensity ?? currentState.articleListDensity,
           ),
           markArticleReadOnOpen:
             persisted?.markArticleReadOnOpen ?? currentState.markArticleReadOnOpen,

@@ -10,6 +10,7 @@ import {
   extractFirstImage,
 } from "@/lib/utils";
 import type { Item } from "@/lib/api";
+import type { ArticleListDensity } from "@/store";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
 
@@ -23,6 +24,7 @@ interface ArticleItemProps {
   isStarred: boolean;
   feedName: string;
   feedFaviconUrl: string | null;
+  density?: ArticleListDensity;
 }
 
 export function ArticleItem({
@@ -35,6 +37,7 @@ export function ArticleItem({
   isStarred,
   feedName,
   feedFaviconUrl,
+  density = "comfortable",
 }: ArticleItemProps) {
   const { t } = useI18n();
 
@@ -98,13 +101,19 @@ export function ArticleItem({
         }
       }}
       className={cn(
-        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-[background-color,box-shadow,transform] duration-150 hover:bg-accent/50 active:scale-[0.998] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
+        "group relative flex w-full cursor-pointer items-start border-b text-left transition-[background-color,box-shadow,transform,padding] duration-150 hover:bg-accent/50 active:scale-[0.998] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
+        density === "compact" ? "gap-3 px-4 py-2.5" : "gap-4 px-4 py-4",
         isSelected && "bg-accent",
       )}
     >
       {/* Thumbnail */}
       {thumbnailUrl && !thumbnailFailed && (
-        <div className="size-16 shrink-0 overflow-hidden rounded-md bg-muted">
+        <div
+          className={cn(
+            "shrink-0 overflow-hidden rounded-md bg-muted transition-[width,height] duration-200",
+            density === "compact" ? "size-12" : "size-16",
+          )}
+        >
           <img
             src={thumbnailUrl}
             alt=""
@@ -117,10 +126,17 @@ export function ArticleItem({
       )}
 
       {/* Article Content */}
-      <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+      <div
+        className={cn(
+          "flex min-w-0 flex-1 flex-col transition-[gap] duration-200",
+          density === "compact" ? "gap-1" : "gap-1.5",
+        )}
+      >
         <h3
           className={cn(
-            "line-clamp-2 text-[15px] leading-snug",
+            density === "compact"
+              ? "line-clamp-1 text-sm leading-snug"
+              : "line-clamp-2 text-[15px] leading-snug",
             article.unread
               ? "font-semibold text-foreground"
               : "font-medium text-muted-foreground",
@@ -130,7 +146,12 @@ export function ArticleItem({
             ? `${article.translated_title} | ${article.title}`
             : article.title}
         </h3>
-        <p className="line-clamp-2 text-sm text-muted-foreground">
+        <p
+          className={cn(
+            density === "compact" ? "line-clamp-1 text-[13px]" : "line-clamp-2 text-sm",
+            "text-muted-foreground",
+          )}
+        >
           {article.translated_summary || originalSummary}
         </p>
         <div className="flex items-center gap-2 text-xs">

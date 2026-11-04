@@ -41,6 +41,7 @@ import {
 } from "@/queries/feeds";
 import { useGroups } from "@/queries/groups";
 import { useCreateBookmark, useDeleteBookmark } from "@/queries/bookmarks";
+import { usePreferencesStore } from "@/store";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { useI18n } from "@/lib/i18n";
 import type { Item } from "@/lib/api";
@@ -48,6 +49,9 @@ import { cn, extractSummary, needsTranslation } from "@/lib/utils";
 
 export function ArticleList() {
   const { t } = useI18n();
+  const articleListDensity = usePreferencesStore(
+    (state) => state.articleListDensity,
+  );
   const navigate = useNavigate();
   const {
     articleFilter,
@@ -621,6 +625,7 @@ export function ArticleList() {
                           onToggleRead={handleToggleRead}
                           onToggleStar={handleToggleStar}
                           isStarred={isItemStarred(article.id)}
+                          density={articleListDensity}
                         />
                       </SwipeableRow>
                     );
@@ -654,6 +659,7 @@ export function ArticleList() {
                         feedFaviconUrl={
                           feed ? getFaviconUrl(feed.link, feed.site_url) : null
                         }
+                        density={articleListDensity}
                       />
                     </SwipeableRow>
                   );
