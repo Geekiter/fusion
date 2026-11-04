@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import {
   Clock3,
+  Bookmark,
+  BookmarkCheck,
   FileText,
   Keyboard,
   Loader2,
@@ -36,11 +38,25 @@ import { formatDate } from "@/lib/utils";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 
 const SEARCH_HISTORY_KEY = "fusion-search-history";
+const SAVED_SEARCHES_KEY = "fusion-saved-searches";
 const MAX_SEARCH_HISTORY = 6;
+const MAX_SAVED_SEARCHES = 8;
 
 function readSearchHistory(): string[] {
   try {
     const value = window.localStorage.getItem(SEARCH_HISTORY_KEY);
+    if (!value) return [];
+    const parsed: unknown = JSON.parse(value);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter((item): item is string => typeof item === "string");
+  } catch {
+    return [];
+  }
+}
+
+function readSavedSearches(): string[] {
+  try {
+    const value = window.localStorage.getItem(SAVED_SEARCHES_KEY);
     if (!value) return [];
     const parsed: unknown = JSON.parse(value);
     if (!Array.isArray(parsed)) return [];
@@ -62,9 +78,11 @@ export function SearchDialog() {
   const [feeds, setFeeds] = useState<SearchFeed[]>([]);
   const [items, setItems] = useState<SearchItem[]>([]);
   const [searchHistory, setSearchHistory] = useState<string[]>([]);
+  const [savedSearches, setSavedSearches] = useState<string[]>([]);
 
   useEffect(() => {
     setSearchHistory(readSearchHistory());
+    setSavedSearches(readSavedSearches());
   }, []);
 
   const rememberSearch = (value: string) => {
@@ -116,6 +134,54 @@ export function SearchDialog() {
     } catch {
       // Ignore storage failures; the in-memory list is still cleared.
     }
+  };
+
+  const isSavedSearch = (value: string) =>
+    savedSearches.some(
+      (item) => item.toLocaleLowerCase() === value.toLocaleLowerCase(),
+    );
+
+  const toggleSavedSearch = (value: string) => {
+    const normalized = value.trim();
+    if (!normalized) return;
+
+    setSavedSearches((current) => {
+      const existing = current.some(
+        (item) => item.toLocaleLowerCase() === normalized.toLocaleLowerCase(),
+      );
+      const next = existing
+        ? current.filter(
+            (item) =>
+              item.toLocaleLowerCase() !== normalized.toLocaleLowerCase(),
+          )
+        : [normalized, ...current].slice(0, MAX_SAVED_SEARCHES);
+      try {
+        if (next.length === 0) {
+          window.localStorage.removeItem(SAVED_SEARCHES_KEY);
+        } else {
+          window.localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
+        }
+      } catch {
+        // Ignore storage failures; the in-memory list is still updated.
+      }
+      return next;
+    });
+  };
+
+  const removeSavedSearch = (value: string) => {
+    setSavedSearches((current) => {
+      const next = current.filter((item) => item !== value);
+      try {
+        if (next.length === 0) {
+          window.localStorage.removeItem(SAVED_SEARCHES_KEY);
+        } else {
+          window.localStorage.setItem(SAVED_SEARCHES_KEY, JSON.stringify(next));
+        }
+      } catch {
+        // Ignore storage failures; the in-memory list is still updated.
+      }
+      return next;
+    });
   };
 
   // Debounce search query
@@ -209,6 +275,27 @@ export function SearchDialog() {
             value={query}
             onValueChange={setQuery}
           />
+          {debouncedQuery && !loading && (
+            <div className="flex items-center justify-between gap-2 border-b border-border/50 px-3 py-1.5 text-xs text-muted-foreground">
+              <span className="min-w-0 truncate">
+                {t("search.queryLabel")}: {debouncedQuery}
+              </span>
+              <button
+                type="button"
+                className="flex shrink-0 items-center gap-1 rounded-md px-1.5 py-1 transition-colors hover:bg-muted hover:text-foreground"
+                onClick={() => toggleSavedSearch(debouncedQuery)}
+              >
+                {isSavedSearch(debouncedQuery) ? (
+                  <BookmarkCheck className="size-3.5 text-primary" />
+                ) : (
+                  <Bookmark className="size-3.5" />
+                )}
+                {isSavedSearch(debouncedQuery)
+                  ? t("search.saved")
+                  : t("search.save")}
+              </button>
+            </div>
+          )}
           <CommandList>
             {loading && debouncedQuery && (
               <div className="flex items-center justify-center py-6">
@@ -298,6 +385,35 @@ export function SearchDialog() {
                     </kbd>
                   </CommandItem>
                 </CommandGroup>
+                {savedSearches.length > 0 && (
+                  <CommandGroup heading={t("search.group.saved")}>
+                    {savedSearches.map((term) => (
+                      <CommandItem
+                        key={term}
+                        value={`saved-${term}`}
+                        className="group/saved justify-between gap-2"
+                        onSelect={() => selectSearchHistory(term)}
+                      >
+                        <div className="flex min-w-0 items-center gap-2">
+                          <BookmarkCheck className="h-4 w-4 text-primary/70" />
+                          <span className="truncate">{term}</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="rounded p-1 text-muted-foreground opacity-0 transition-all hover:bg-background hover:text-foreground group-hover/saved:opacity-100 focus:opacity-100"
+                          aria-label={`${t("search.removeSaved")}: ${term}`}
+                          onPointerDown={(event) => event.stopPropagation()}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            removeSavedSearch(term);
+                          }}
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
                 {searchHistory.length > 0 && (
                   <CommandGroup
                     heading={
