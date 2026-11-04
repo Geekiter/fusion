@@ -185,6 +185,15 @@ export function ArticleDrawer() {
   );
 
   const article: Item | null = fetchedArticle ?? storeArticle ?? null;
+  const unreadArticleIds = articles
+    .filter((item) => item.unread && item.id > 0)
+    .map((item) => item.id);
+  const nextUnreadArticleId =
+    unreadArticleIds.find((itemId) => articleIds.indexOf(itemId) > articleIndex) ??
+    unreadArticleIds[0];
+  const hasNextUnread = unreadArticleIds.some(
+    (itemId) => itemId !== article?.id,
+  );
 
   const markedArticleOnOpenRef = useRef<number | null>(null);
   useEffect(() => {
@@ -233,6 +242,11 @@ export function ArticleDrawer() {
       '[data-slot="scroll-area-viewport"]',
     );
     viewport?.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const goToNextUnread = () => {
+    if (nextUnreadArticleId === undefined || !hasNextUnread) return;
+    setSelectedArticle(nextUnreadArticleId);
   };
 
   const handleArticleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
@@ -1012,6 +1026,51 @@ export function ArticleDrawer() {
                   />
                 </section>
 
+                <section className="mt-12 hidden rounded-2xl border border-border/70 bg-muted/25 p-4 md:block motion-safe:animate-in motion-safe:fade-in-0 motion-safe:slide-in-from-bottom-1 motion-safe:duration-300 motion-reduce:animate-none">
+                  <div className="mb-3 flex items-center gap-2 text-xs text-muted-foreground">
+                    <CircleCheck className="h-4 w-4 text-primary/70" />
+                    <span>
+                      {t("article.readingProgress", {
+                        percent: readingProgress,
+                      })}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToPrevious}
+                      disabled={!hasPrevious()}
+                      className="h-auto gap-1.5 px-2 py-2 text-xs"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                      {t("common.previous")}
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={goToNextUnread}
+                      disabled={!hasNextUnread}
+                      className="h-auto gap-1.5 px-2 py-2 text-xs"
+                    >
+                      <CircleCheck className="h-4 w-4" />
+                      <span className="truncate">
+                        {t("shortcuts.action.nextUnreadArticle")}
+                      </span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={goToNext}
+                      disabled={!hasNext()}
+                      className="h-auto gap-1.5 px-2 py-2 text-xs"
+                    >
+                      {t("common.next")}
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </section>
+
                 <div className="mt-10 flex items-center justify-between md:hidden">
                   <Button
                     variant="outline"
@@ -1022,6 +1081,16 @@ export function ArticleDrawer() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                     {t("common.previous")}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={goToNextUnread}
+                    disabled={!hasNextUnread}
+                    aria-label={t("shortcuts.action.nextUnreadArticle")}
+                    className="h-auto gap-1.5 px-2 py-2 text-[13px] font-medium"
+                  >
+                    <CircleCheck className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"
