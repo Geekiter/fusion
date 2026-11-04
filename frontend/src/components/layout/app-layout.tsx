@@ -15,6 +15,7 @@ import { useI18n } from "@/lib/i18n";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useUIStore } from "@/store/ui";
 import { useUnreadCounts } from "@/queries/feeds";
+import { updateFaviconBadge } from "@/lib/favicon";
 
 interface AppLayoutProps {
   children: React.ReactNode;
@@ -40,6 +41,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     const unreadCount = getTotalUnreadCount();
     const unreadLabel = unreadCount > 99 ? "99+" : String(unreadCount);
     document.title = unreadCount > 0 ? `(${unreadLabel}) Fusion` : "Fusion";
+    updateFaviconBadge(unreadCount);
   }, [getTotalUnreadCount]);
 
   return (
