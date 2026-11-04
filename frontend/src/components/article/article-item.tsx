@@ -79,8 +79,6 @@ export function ArticleItem({
       className={cn(
         "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-[background-color,box-shadow,transform] duration-150 hover:bg-accent/50 active:scale-[0.998] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
         isSelected && "bg-accent",
-        article.unread &&
-          "before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-full before:bg-primary/35",
       )}
     >
       {/* Thumbnail */}
