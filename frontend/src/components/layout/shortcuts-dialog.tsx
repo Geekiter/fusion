@@ -41,6 +41,7 @@ export function ShortcutsDialog() {
         },
         { keys: "h", action: t("shortcuts.action.nextUnreadArticle") },
         { keys: "m", action: t("shortcuts.action.toggleRead") },
+        { keys: "Shift+M", action: t("shortcuts.action.markReadAndNext") },
         { keys: "s / f", action: t("shortcuts.action.toggleStar") },
         { keys: "Shift+S", action: t("shortcuts.action.shareArticle") },
         { keys: "z", action: t("shortcuts.action.toggleFocus") },

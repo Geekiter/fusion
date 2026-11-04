@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Circle,
   CircleCheck,
+  CheckCheck,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
@@ -189,11 +190,11 @@ export function ArticleDrawer() {
     .filter((item) => item.unread && item.id > 0)
     .map((item) => item.id);
   const nextUnreadArticleId =
-    unreadArticleIds.find((itemId) => articleIds.indexOf(itemId) > articleIndex) ??
-    unreadArticleIds[0];
-  const hasNextUnread = unreadArticleIds.some(
-    (itemId) => itemId !== article?.id,
-  );
+    unreadArticleIds.find(
+      (itemId) =>
+        itemId !== article?.id && articleIds.indexOf(itemId) > articleIndex,
+    ) ?? unreadArticleIds.find((itemId) => itemId !== article?.id);
+  const hasNextUnread = nextUnreadArticleId !== undefined;
 
   const markedArticleOnOpenRef = useRef<number | null>(null);
   useEffect(() => {
@@ -242,11 +243,6 @@ export function ArticleDrawer() {
       '[data-slot="scroll-area-viewport"]',
     );
     viewport?.scrollTo({ top: 0, behavior: "smooth" });
-  };
-
-  const goToNextUnread = () => {
-    if (nextUnreadArticleId === undefined || !hasNextUnread) return;
-    setSelectedArticle(nextUnreadArticleId);
   };
 
   const handleArticleTouchStart = (event: React.TouchEvent<HTMLElement>) => {
@@ -505,6 +501,25 @@ export function ArticleDrawer() {
     }
   };
 
+  const handleMarkReadAndNext = async () => {
+    if (!article) return;
+
+    try {
+      if (article.unread && canToggleRead) {
+        await markRead.mutateAsync([article.id]);
+      }
+
+      if (nextUnreadArticleId !== undefined) {
+        setSelectedArticle(nextUnreadArticleId);
+      } else {
+        setSelectedArticle(null);
+        toast.info(t("article.list.endOfList"));
+      }
+    } catch (error) {
+      console.error("Failed to mark article as read and continue:", error);
+    }
+  };
+
   const handleToggleStar = async () => {
     if (!article) return;
     try {
@@ -624,6 +639,9 @@ export function ArticleDrawer() {
         .map((item) => item.id),
       onToggleRead: () => {
         void handleToggleRead();
+      },
+      onMarkReadAndNext: () => {
+        void handleMarkReadAndNext();
       },
       onToggleStar: () => {
         void handleToggleStar();
@@ -1049,13 +1067,15 @@ export function ArticleDrawer() {
                     <Button
                       variant="secondary"
                       size="sm"
-                      onClick={goToNextUnread}
-                      disabled={!hasNextUnread}
+                      onClick={handleMarkReadAndNext}
+                      disabled={(!article.unread && !hasNextUnread) || isReadPending}
                       className="h-auto gap-1.5 px-2 py-2 text-xs"
                     >
-                      <CircleCheck className="h-4 w-4" />
+                      <CheckCheck className="h-4 w-4" />
                       <span className="truncate">
-                        {t("shortcuts.action.nextUnreadArticle")}
+                        {article.unread
+                          ? t("article.action.markReadAndNext")
+                          : t("shortcuts.action.nextUnreadArticle")}
                       </span>
                     </Button>
                     <Button
@@ -1085,12 +1105,16 @@ export function ArticleDrawer() {
                   <Button
                     variant="secondary"
                     size="sm"
-                    onClick={goToNextUnread}
-                    disabled={!hasNextUnread}
-                    aria-label={t("shortcuts.action.nextUnreadArticle")}
+                    onClick={handleMarkReadAndNext}
+                    disabled={(!article.unread && !hasNextUnread) || isReadPending}
+                    aria-label={
+                      article.unread
+                        ? t("article.action.markReadAndNext")
+                        : t("shortcuts.action.nextUnreadArticle")
+                    }
                     className="h-auto gap-1.5 px-2 py-2 text-[13px] font-medium"
                   >
-                    <CircleCheck className="h-4 w-4" />
+                    <CheckCheck className="h-4 w-4" />
                   </Button>
                   <Button
                     variant="outline"

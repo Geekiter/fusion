@@ -24,6 +24,7 @@ interface ArticleNavigationOptions {
   enabled?: boolean;
   unreadArticleIds?: number[];
   onToggleRead?: () => void | Promise<void>;
+  onMarkReadAndNext?: () => void | Promise<void>;
   onToggleStar?: () => void | Promise<void>;
   onOpenOriginal?: () => void;
   onShare?: () => void | Promise<void>;
@@ -238,6 +239,7 @@ export function useArticleNavigation(
     enabled = true,
     unreadArticleIds = [],
     onToggleRead,
+    onMarkReadAndNext,
     onToggleStar,
     onOpenOriginal,
     onShare,
@@ -256,6 +258,7 @@ export function useArticleNavigation(
     isImportOpmlOpen,
     isShortcutsOpen,
     onToggleRead,
+    onMarkReadAndNext,
     onToggleStar,
     onOpenOriginal,
     onShare,
@@ -277,6 +280,7 @@ export function useArticleNavigation(
       isImportOpmlOpen,
       isShortcutsOpen,
       onToggleRead,
+      onMarkReadAndNext,
       onToggleStar,
       onOpenOriginal,
       onShare,
@@ -296,6 +300,7 @@ export function useArticleNavigation(
     isImportOpmlOpen,
     isShortcutsOpen,
     onToggleRead,
+    onMarkReadAndNext,
     onToggleStar,
     onOpenOriginal,
     onShare,
@@ -402,6 +407,12 @@ export function useArticleNavigation(
       }
 
       // M: toggle read/unread
+      if (key === "m" && event.shiftKey && state.onMarkReadAndNext) {
+        event.preventDefault();
+        void state.onMarkReadAndNext();
+        return;
+      }
+
       if (key === "m" && state.onToggleRead) {
         event.preventDefault();
         void state.onToggleRead();
