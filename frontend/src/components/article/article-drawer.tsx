@@ -62,6 +62,10 @@ import { processArticleContent } from "@/lib/content";
 import { getFaviconUrl } from "@/lib/api/favicon";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import {
+  getReadingPosition,
+  saveReadingPosition,
+} from "@/lib/reading-position";
 
 /**
  * Collapsible full-title section shown in the article body.
@@ -119,6 +123,11 @@ export function ArticleDrawer() {
   const articleBodyRef = useRef<HTMLDivElement>(null);
   const swipeStartRef = useRef<{ x: number; y: number } | null>(null);
   const swipeOffsetRef = useRef(0);
+  const pendingReadingPositionRef = useRef<{
+    top: number;
+    deadline: number;
+  } | null>(null);
+  const readingPositionRestoredRef = useRef(false);
   const [readingProgress, setReadingProgress] = useState(0);
   const [swipeOffset, setSwipeOffset] = useState(0);
   const [isSwiping, setIsSwiping] = useState(false);
@@ -285,6 +294,13 @@ export function ArticleDrawer() {
     );
     if (!viewport) return;
 
+    const savedTop = article?.id ? getReadingPosition(article.id) : 0;
+    pendingReadingPositionRef.current =
+      savedTop > 0
+        ? { top: savedTop, deadline: Date.now() + 1500 }
+        : null;
+    readingPositionRestoredRef.current = savedTop <= 0;
+
     viewport.scrollTo({ top: 0, behavior: "instant" });
     setReadingProgress(0);
     setLightboxIndex(null);
@@ -306,13 +322,41 @@ export function ArticleDrawer() {
       return;
     }
 
+    const articleId = article?.id ?? 0;
+    let saveTimer: number | null = null;
+
+    const applyPendingReadingPosition = () => {
+      const pending = pendingReadingPositionRef.current;
+      if (!pending || articleId <= 0) return;
+
+      const scrollableHeight = Math.max(
+        0,
+        viewport.scrollHeight - viewport.clientHeight,
+      );
+      const target = Math.min(pending.top, scrollableHeight);
+      viewport.scrollTo({ top: target, behavior: "instant" });
+
+      if (pending.top <= scrollableHeight || Date.now() > pending.deadline) {
+        pendingReadingPositionRef.current = null;
+        readingPositionRestoredRef.current = true;
+      }
+    };
+
     const updateProgress = () => {
+      applyPendingReadingPosition();
       const scrollableHeight = viewport.scrollHeight - viewport.clientHeight;
       const nextProgress =
         scrollableHeight > 0
           ? Math.round((viewport.scrollTop / scrollableHeight) * 100)
           : 0;
       setReadingProgress(Math.min(100, Math.max(0, nextProgress)));
+
+      if (readingPositionRestoredRef.current && articleId > 0) {
+        if (saveTimer !== null) window.clearTimeout(saveTimer);
+        saveTimer = window.setTimeout(() => {
+          saveReadingPosition(articleId, viewport.scrollTop);
+        }, 180);
+      }
     };
 
     viewport.addEventListener("scroll", updateProgress, { passive: true });
@@ -324,6 +368,10 @@ export function ArticleDrawer() {
     return () => {
       viewport.removeEventListener("scroll", updateProgress);
       resizeObserver.disconnect();
+      if (saveTimer !== null) window.clearTimeout(saveTimer);
+      if (readingPositionRestoredRef.current && articleId > 0) {
+        saveReadingPosition(articleId, viewport.scrollTop);
+      }
     };
   }, [
     article?.ai_summary,
