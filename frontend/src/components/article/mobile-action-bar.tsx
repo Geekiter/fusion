@@ -2,8 +2,11 @@ import {
   CheckCheck,
   Languages,
   ListTree,
+  ListChecks,
   Loader2,
   RefreshCw,
+  Star,
+  X,
 } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
@@ -19,6 +22,14 @@ interface MobileActionBarProps {
   unreadCount: number;
   isMarkingAllRead: boolean;
   onMarkAllRead: () => void;
+  isSelectionMode: boolean;
+  selectedCount: number;
+  onToggleSelectionMode: () => void;
+  onSelectAllLoaded: () => void;
+  onMarkSelectedRead: () => void;
+  onStarSelected: () => void;
+  selectedUnreadCount: number;
+  selectedUnstarredCount: number;
   isHidden: boolean;
 }
 
@@ -37,6 +48,14 @@ export function MobileActionBar({
   unreadCount,
   isMarkingAllRead,
   onMarkAllRead,
+  isSelectionMode,
+  selectedCount,
+  onToggleSelectionMode,
+  onSelectAllLoaded,
+  onMarkSelectedRead,
+  onStarSelected,
+  selectedUnreadCount,
+  selectedUnstarredCount,
   isHidden,
 }: MobileActionBarProps) {
   const { t } = useI18n();
@@ -52,8 +71,59 @@ export function MobileActionBar({
       )}
     >
       <div
-        className="pointer-events-auto grid w-full max-w-xs grid-cols-4 overflow-hidden rounded-2xl border border-border/70 bg-background/90 p-1 shadow-xl shadow-black/10 ring-1 ring-black/5 backdrop-blur-xl dark:bg-background/80 dark:ring-white/5"
+        className={cn(
+          "pointer-events-auto grid w-full overflow-hidden rounded-2xl border border-border/70 bg-background/90 p-1 shadow-xl shadow-black/10 ring-1 ring-black/5 backdrop-blur-xl dark:bg-background/80 dark:ring-white/5",
+          isSelectionMode
+            ? "max-w-sm grid-cols-4"
+            : "max-w-md grid-cols-5",
+        )}
       >
+        {isSelectionMode ? (
+          <>
+            <button
+              type="button"
+              onClick={onSelectAllLoaded}
+              className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <ListChecks className="h-5 w-5" />
+              <span className="max-w-full truncate">
+                {t("article.selection.selected", { count: selectedCount })}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={onMarkSelectedRead}
+              disabled={selectedUnreadCount === 0}
+              className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:text-muted-foreground"
+            >
+              <CheckCheck className="h-5 w-5" />
+              <span className="max-w-full truncate">
+                {t("article.selection.markRead")}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={onStarSelected}
+              disabled={selectedUnstarredCount === 0}
+              className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 disabled:text-muted-foreground"
+            >
+              <Star className="h-5 w-5" />
+              <span className="max-w-full truncate">
+                {t("article.selection.star")}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={onToggleSelectionMode}
+              aria-label={t("article.selection.exit")}
+              className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+            >
+              <X className="h-5 w-5" />
+              <span>{t("article.selection.exit")}</span>
+            </button>
+          </>
+        ) : (
+          <>
         <button
           type="button"
           onClick={onTranslate}
@@ -113,6 +183,16 @@ export function MobileActionBar({
             {t("article.list.markAllRead")}
           </span>
         </button>
+        <button
+          type="button"
+          onClick={onToggleSelectionMode}
+          className="flex min-h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 text-xs font-medium text-foreground transition-[background-color,box-shadow,transform] duration-150 hover:bg-muted active:scale-[0.97] active:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+        >
+          <ListChecks className="h-5 w-5" />
+          <span>{t("article.selection.enter")}</span>
+        </button>
+          </>
+        )}
       </div>
     </nav>
   );

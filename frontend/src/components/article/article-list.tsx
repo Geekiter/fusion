@@ -8,8 +8,11 @@ import {
   ChevronsDown,
   Languages,
   List,
+  ListChecks,
   Loader2,
   RefreshCw,
+  Star,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -144,8 +147,41 @@ export function ArticleList() {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [hideMobileActionBar, setHideMobileActionBar] = useState(false);
   const [isLoadMorePending, setIsLoadMorePending] = useState(false);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedArticleIds, setSelectedArticleIds] = useState<Set<number>>(
+    () => new Set(),
+  );
 
   const listViewKey = `${selectedFeedId ? `feed:${selectedFeedId}` : selectedGroupId ? `group:${selectedGroupId}` : "home"}:${articleFilter}`;
+
+  useEffect(() => {
+    setIsSelectionMode(false);
+    setSelectedArticleIds(new Set());
+  }, [listViewKey]);
+
+  const toggleSelectedArticle = useCallback((articleId: number) => {
+    setSelectedArticleIds((current) => {
+      const next = new Set(current);
+      if (next.has(articleId)) next.delete(articleId);
+      else next.add(articleId);
+      return next;
+    });
+  }, []);
+
+  const handleSelectArticle = useCallback(
+    (articleId: number | null) => {
+      if (articleId === null) {
+        setSelectedArticle(null);
+        return;
+      }
+      if (isSelectionMode) {
+        toggleSelectedArticle(articleId);
+        return;
+      }
+      setSelectedArticle(articleId);
+    },
+    [isSelectionMode, setSelectedArticle, toggleSelectedArticle],
+  );
 
   const getArticleScrollViewport = useCallback(
     () =>
@@ -427,6 +463,69 @@ export function ArticleList() {
     }
   };
 
+  const selectedArticles = articles.filter(
+    (article) => selectedArticleIds.has(article.id) && article.id > 0,
+  );
+  const selectedUnreadIds = selectedArticles
+    .filter((article) => article.unread)
+    .map((article) => article.id);
+  const selectedUnstarredCount = selectedArticles.filter(
+    (article) => !isItemStarred(article.id),
+  ).length;
+
+  const handleSelectAllLoaded = () => {
+    setSelectedArticleIds((current) => {
+      const selectableIds = articles
+        .filter((article) => article.id > 0)
+        .map((article) => article.id);
+      const allSelected =
+        selectableIds.length > 0 &&
+        selectableIds.every((articleId) => current.has(articleId));
+      return allSelected ? new Set() : new Set(selectableIds);
+    });
+  };
+
+  const handleMarkSelectedAsRead = async () => {
+    if (selectedUnreadIds.length === 0) return;
+
+    try {
+      await markItemsRead.mutateAsync(selectedUnreadIds);
+      toast.success(
+        t("article.selection.readSuccess", {
+          count: selectedUnreadIds.length,
+        }),
+      );
+      setSelectedArticleIds((current) => {
+        const next = new Set(current);
+        selectedUnreadIds.forEach((id) => next.delete(id));
+        return next;
+      });
+    } catch (error) {
+      console.error("Failed to mark selected articles as read:", error);
+      toast.error(t("article.list.markAllReadFailed"));
+    }
+  };
+
+  const handleStarSelected = async () => {
+    const articlesToStar = selectedArticles.filter(
+      (article) => !isItemStarred(article.id),
+    );
+    if (articlesToStar.length === 0) return;
+
+    try {
+      await Promise.all(
+        articlesToStar.map((article) => createBookmark.mutateAsync(article)),
+      );
+      toast.success(
+        t("article.selection.starSuccess", { count: articlesToStar.length }),
+      );
+      setSelectedArticleIds(new Set());
+    } catch (error) {
+      console.error("Failed to star selected articles:", error);
+      toast.error(t("article.selection.starFailed"));
+    }
+  };
+
   const handleTranslateLoaded = async () => {
     if (translatableItems.length === 0) return;
     try {
@@ -572,6 +671,67 @@ export function ArticleList() {
               )}
             {t("article.list.markAllRead")}
           </Button>
+          {isSelectionMode ? (
+            <>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleSelectAllLoaded}
+                disabled={articles.length === 0}
+                className="gap-1.5 text-xs"
+              >
+                <ListChecks className="h-4 w-4" />
+                {t("article.selection.selected", {
+                  count: selectedArticleIds.size,
+                })}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleMarkSelectedAsRead}
+                disabled={selectedUnreadIds.length === 0 || markItemsRead.isPending}
+                className="gap-1.5 text-xs"
+              >
+                <CheckCheck className="h-4 w-4" />
+                {t("article.selection.markRead")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleStarSelected}
+                disabled={selectedUnstarredCount === 0 || createBookmark.isPending}
+                className="gap-1.5 text-xs"
+              >
+                <Star className="h-4 w-4" />
+                {t("article.selection.star")}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={() => {
+                  setIsSelectionMode(false);
+                  setSelectedArticleIds(new Set());
+                }}
+                aria-label={t("article.selection.exit")}
+                title={t("article.selection.exit")}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsSelectionMode(true)}
+              disabled={articles.length === 0}
+              className="gap-1.5 text-xs"
+            >
+              <ListChecks className="h-4 w-4" />
+              <span className="hidden lg:inline">
+                {t("article.selection.enter")}
+              </span>
+            </Button>
+          )}
         </div>
       </ContentHeader>
 
@@ -692,15 +852,43 @@ export function ArticleList() {
                 <div className="grid grid-cols-2 gap-3 pb-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
                   {articles.map((article) => {
                     return (
-                      <MovieCard
-                        key={article.id}
-                        article={article}
-                        selectedArticleId={selectedArticleId}
-                        onSelectArticle={setSelectedArticle}
-                        onToggleRead={handleToggleRead}
-                        onToggleStar={handleToggleStar}
-                        isStarred={isItemStarred(article.id)}
-                      />
+                      <div key={article.id} className="relative">
+                        {isSelectionMode && (
+                          <button
+                            type="button"
+                            className={cn(
+                              "absolute left-2 top-2 z-20 flex size-7 items-center justify-center rounded-full border bg-background shadow-sm transition-[background-color,transform] duration-150 hover:bg-accent active:scale-95",
+                              selectedArticleIds.has(article.id) &&
+                                "border-primary bg-primary text-primary-foreground",
+                            )}
+                            onClick={() => toggleSelectedArticle(article.id)}
+                            aria-label={
+                              selectedArticleIds.has(article.id)
+                                ? t("article.selection.deselect")
+                                : t("article.selection.select")
+                            }
+                            aria-pressed={selectedArticleIds.has(article.id)}
+                          >
+                            {selectedArticleIds.has(article.id) && (
+                              <Check className="size-4" />
+                            )}
+                          </button>
+                        )}
+                        <MovieCard
+                          article={article}
+                          selectedArticleId={
+                            isSelectionMode
+                              ? selectedArticleIds.has(article.id)
+                                ? article.id
+                                : null
+                              : selectedArticleId
+                          }
+                          onSelectArticle={handleSelectArticle}
+                          onToggleRead={handleToggleRead}
+                          onToggleStar={handleToggleStar}
+                          isStarred={isItemStarred(article.id)}
+                        />
+                      </div>
                     );
                   })}
                 </div>
@@ -781,8 +969,14 @@ export function ArticleList() {
                       >
                         <TwitterCard
                           article={article}
-                          selectedArticleId={selectedArticleId}
-                          onSelectArticle={setSelectedArticle}
+                          selectedArticleId={
+                            isSelectionMode
+                              ? selectedArticleIds.has(article.id)
+                                ? article.id
+                                : null
+                              : selectedArticleId
+                          }
+                          onSelectArticle={handleSelectArticle}
                           onToggleRead={handleToggleRead}
                           onToggleStar={handleToggleStar}
                           isStarred={isItemStarred(article.id)}
@@ -804,8 +998,14 @@ export function ArticleList() {
                       >
                         <ArticleItem
                           article={article}
-                          selectedArticleId={selectedArticleId}
-                          onSelectArticle={setSelectedArticle}
+                          selectedArticleId={
+                            isSelectionMode
+                              ? selectedArticleIds.has(article.id)
+                                ? article.id
+                                : null
+                              : selectedArticleId
+                          }
+                          onSelectArticle={handleSelectArticle}
                           onToggleRead={handleToggleRead}
                           onToggleStar={handleToggleStar}
                           canToggleRead={article.id > 0}
@@ -836,7 +1036,32 @@ export function ArticleList() {
                           <span>{dateGroupLabel}</span>
                         </div>
                       )}
-                      {articleRow}
+                      {isSelectionMode ? (
+                        <div className="relative pl-9">
+                          <button
+                            type="button"
+                            className={cn(
+                              "absolute left-1 top-1/2 z-20 flex size-7 -translate-y-1/2 items-center justify-center rounded-full border bg-background shadow-sm transition-[background-color,transform] duration-150 hover:bg-accent active:scale-95",
+                              selectedArticleIds.has(article.id) &&
+                                "border-primary bg-primary text-primary-foreground",
+                            )}
+                            onClick={() => toggleSelectedArticle(article.id)}
+                            aria-label={
+                              selectedArticleIds.has(article.id)
+                                ? t("article.selection.deselect")
+                                : t("article.selection.select")
+                            }
+                            aria-pressed={selectedArticleIds.has(article.id)}
+                          >
+                            {selectedArticleIds.has(article.id) && (
+                              <Check className="size-4" />
+                            )}
+                          </button>
+                          {articleRow}
+                        </div>
+                      ) : (
+                        articleRow
+                      )}
                     </Fragment>
                   );
                 })}
@@ -931,6 +1156,17 @@ export function ArticleList() {
             unreadCount={unreadCount}
             isMarkingAllRead={markItemsRead.isPending}
             onMarkAllRead={handleMarkAllAsRead}
+            isSelectionMode={isSelectionMode}
+            selectedCount={selectedArticleIds.size}
+            onToggleSelectionMode={() => {
+              setIsSelectionMode((active) => !active);
+              if (isSelectionMode) setSelectedArticleIds(new Set());
+            }}
+            onSelectAllLoaded={handleSelectAllLoaded}
+            onMarkSelectedRead={handleMarkSelectedAsRead}
+            onStarSelected={handleStarSelected}
+            selectedUnreadCount={selectedUnreadIds.length}
+            selectedUnstarredCount={selectedUnstarredCount}
             isHidden={hideMobileActionBar}
           />
           <MobileCategoryDrawer
