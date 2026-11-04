@@ -733,12 +733,13 @@ export function ArticleDrawer() {
               </div>
               <ScrollArea className="min-h-0 h-full">
                 <article
+                  key={article.id}
                   ref={articleContentRef}
                   onTouchStart={handleArticleTouchStart}
                   onTouchMove={handleArticleTouchMove}
                   onTouchEnd={handleArticleTouchEnd}
                   onTouchCancel={handleArticleTouchEnd}
-                  className="min-w-0 touch-pan-y px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-12 md:py-8"
+                  className="min-w-0 touch-pan-y px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200 motion-reduce:animate-none md:px-12 md:py-8"
                   style={{
                     transform: `translate3d(${swipeOffset}px, 0, 0)`,
                     transition: isSwiping
