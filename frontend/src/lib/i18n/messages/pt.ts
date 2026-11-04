@@ -196,6 +196,7 @@ export const ptMessages: PartialMessages = {
   "article.translate.translation": "Translation",
   "article.readingTime": "Cerca de {minutes} min de leitura",
   "article.readingProgress": "Progresso de leitura: {percent}%",
+  "article.position": "Artigo {current} de {total}",
   "article.scrollToTop": "Voltar ao topo",
   "article.share.action": "Compartilhar",
   "article.share.copied": "Link do artigo copiado",

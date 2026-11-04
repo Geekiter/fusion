@@ -134,7 +134,7 @@ export function ArticleDrawer() {
   } = useUrlState();
   const { getFeedById } = useFeedLookup();
 
-  const { articles, isItemStarred, getBookmarkByItemId } =
+  const { articles, hasMore, isItemStarred, getBookmarkByItemId } =
     useArticleList({
       feedId: selectedFeedId,
       groupId: selectedGroupId,
@@ -150,6 +150,10 @@ export function ArticleDrawer() {
   const fetchFulltext = useFetchItemFulltext();
 
   const articleIds = articles.map((a) => a.id);
+  const articleIndex = selectedArticleId
+    ? articleIds.indexOf(selectedArticleId)
+    : -1;
+  const articlePosition = articleIndex >= 0 ? articleIndex + 1 : null;
 
   const storeArticle = selectedArticleId
     ? (articles.find((i) => i.id === selectedArticleId) ?? null)
@@ -539,6 +543,23 @@ export function ArticleDrawer() {
               <SheetTitle className="min-w-0 flex-1 truncate pr-3 text-sm font-semibold md:sr-only">
                 {article.translated_title || article.title}
               </SheetTitle>
+
+              {articlePosition !== null && (
+                <span
+                  className="mr-2 shrink-0 rounded-full border border-border/70 bg-muted/60 px-2 py-1 text-[11px] font-medium tabular-nums text-muted-foreground transition-colors motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-200"
+                  aria-label={t("article.position", {
+                    current: articlePosition,
+                    total: articles.length,
+                  })}
+                  title={t("article.position", {
+                    current: articlePosition,
+                    total: articles.length,
+                  })}
+                >
+                  {articlePosition} / {articles.length}
+                  {hasMore ? "+" : ""}
+                </span>
+              )}
 
               <div className="hidden flex-wrap items-center gap-2 md:flex">
                 <Button

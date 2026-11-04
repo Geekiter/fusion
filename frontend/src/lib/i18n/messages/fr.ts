@@ -196,6 +196,7 @@ export const frMessages: PartialMessages = {
   "article.translate.translation": "Translation",
   "article.readingTime": "Environ {minutes} min de lecture",
   "article.readingProgress": "Progression de lecture : {percent}%",
+  "article.position": "Article {current} sur {total}",
   "article.scrollToTop": "Retour en haut",
   "article.share.action": "Partager",
   "article.share.copied": "Lien de l’article copié",

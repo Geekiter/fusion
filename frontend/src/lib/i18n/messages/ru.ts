@@ -196,6 +196,7 @@ export const ruMessages: PartialMessages = {
   "article.translate.translation": "Translation",
   "article.readingTime": "Около {minutes} мин чтения",
   "article.readingProgress": "Прогресс чтения: {percent}%",
+  "article.position": "Статья {current} из {total}",
   "article.scrollToTop": "Наверх",
   "article.share.action": "Поделиться",
   "article.share.copied": "Ссылка на статью скопирована",

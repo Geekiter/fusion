@@ -195,6 +195,7 @@ export const enMessages = {
   "article.translate.translation": "Translation",
   "article.readingTime": "~{minutes} min read",
   "article.readingProgress": "Reading progress: {percent}%",
+  "article.position": "Article {current} of {total}",
   "article.scrollToTop": "Back to top",
   "article.share.action": "Share",
   "article.share.copied": "Article link copied",
