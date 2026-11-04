@@ -27,7 +27,12 @@ export function useArticleList(filters: ArticleListFilters) {
     {
       feedId: filters.feedId,
       groupId: filters.groupId,
-      unread: filters.articleFilter === "unread" ? true : undefined,
+      unread:
+        filters.articleFilter === "unread"
+          ? true
+          : filters.articleFilter === "read"
+            ? false
+            : undefined,
       publishedAfter: isTodayMode ? todayStart : undefined,
     },
     !isStarredMode,

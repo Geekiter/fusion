@@ -188,6 +188,12 @@ export function useKeyboardShortcuts() {
           resetPrefix();
           return;
         }
+        if (key === "r") {
+          event.preventDefault();
+          state.selectTopLevelFilter("read");
+          resetPrefix();
+          return;
+        }
         if (key === "f") {
           event.preventDefault();
           state.navigate({ to: "/feeds" });

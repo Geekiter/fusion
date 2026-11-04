@@ -1,4 +1,4 @@
-import { CalendarDays, Inbox, Layers, PanelLeftClose, PanelLeftOpen, Search, Settings, Rss, Star } from "lucide-react";
+import { CalendarDays, CheckCircle2, Inbox, Layers, PanelLeftClose, PanelLeftOpen, Search, Settings, Rss, Star } from "lucide-react";
 import { useNavigate, useLocation } from "@tanstack/react-router";
 import { FeedList } from "@/components/feed/feed-list";
 import { useI18n } from "@/lib/i18n";
@@ -21,7 +21,7 @@ function SidebarRail() {
   const { getTotalUnreadCount } = useUnreadCounts();
   const { total: starredCount } = useBookmarkLookup();
   const isOnHomePage = isArticleFilter(pathname.split("/").filter(Boolean)[0] ?? "");
-  const isTopLevelSelected = (filter: "all" | "unread" | "today" | "starred") =>
+  const isTopLevelSelected = (filter: "all" | "unread" | "today" | "read" | "starred") =>
     isOnHomePage &&
     selectedFeedId === null &&
     selectedGroupId === null &&
@@ -47,6 +47,13 @@ function SidebarRail() {
       count: 0,
       icon: CalendarDays,
       onClick: () => selectTopLevelFilter("today"),
+    },
+    {
+      value: "read" as const,
+      label: t("article.filter.read"),
+      count: 0,
+      icon: CheckCircle2,
+      onClick: () => selectTopLevelFilter("read"),
     },
     {
       value: "all" as const,

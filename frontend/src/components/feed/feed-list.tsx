@@ -1,5 +1,5 @@
 import { useLocation } from "@tanstack/react-router";
-import { CalendarDays, Inbox, Layers, Star } from "lucide-react";
+import { CalendarDays, CheckCircle2, Inbox, Layers, Star } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { isArticleFilter } from "@/lib/article-filter";
 import { useGroups } from "@/queries/groups";
@@ -33,7 +33,7 @@ export function FeedList() {
   const starredCount = starredTotal;
 
   const topFilters: Array<{
-    value: "all" | "unread" | "today" | "starred";
+    value: "all" | "unread" | "today" | "read" | "starred";
     label: string;
     count: number;
     icon: typeof Inbox;
@@ -49,6 +49,12 @@ export function FeedList() {
       label: t("article.filter.today"),
       count: 0,
       icon: CalendarDays,
+    },
+    {
+      value: "read",
+      label: t("article.filter.read"),
+      count: 0,
+      icon: CheckCircle2,
     },
     {
       value: "starred",

@@ -54,6 +54,7 @@ export function ShortcutsDialog() {
         { keys: "g u", action: t("shortcuts.action.goUnread") },
         { keys: "g a", action: t("shortcuts.action.goAll") },
         { keys: "g t", action: t("shortcuts.action.goToday") },
+        { keys: "g r", action: t("shortcuts.action.goRead") },
         { keys: "g s", action: t("shortcuts.action.goStarred") },
         { keys: "g f", action: t("shortcuts.action.goFeeds") },
       ],

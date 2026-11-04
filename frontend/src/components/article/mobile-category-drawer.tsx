@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
-import { CalendarDays, Folder, Inbox, Layers, Star } from "lucide-react";
+import { CalendarDays, CheckCircle2, Folder, Inbox, Layers, Star } from "lucide-react";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import {
   Sheet,
@@ -89,6 +89,12 @@ export function MobileCategoryDrawer({
       label: t("article.filter.today"),
       count: 0,
       icon: CalendarDays,
+    },
+    {
+      value: "read",
+      label: t("article.filter.read"),
+      count: 0,
+      icon: CheckCircle2,
     },
     {
       value: "starred",

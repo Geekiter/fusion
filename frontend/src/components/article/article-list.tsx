@@ -358,6 +358,8 @@ export function ArticleList() {
     title = group?.name ?? t("article.groupFallback");
   } else if (articleFilter === "today") {
     title = t("article.filter.today");
+  } else if (articleFilter === "read") {
+    title = t("article.filter.read");
   }
 
   // Movie feeds keep their own dedicated grid layout: only activated when the
@@ -765,6 +767,9 @@ export function ArticleList() {
               </TabsTrigger>
               <TabsTrigger value="today">
                 {t("article.filter.today")}
+              </TabsTrigger>
+              <TabsTrigger value="read">
+                {t("article.filter.read")}
               </TabsTrigger>
               <TabsTrigger value="starred">
                 {t("article.filter.starred")}
