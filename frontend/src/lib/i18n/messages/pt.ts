@@ -228,7 +228,7 @@ export const ptMessages: PartialMessages = {
   "article.groupFallback": "Grupo",
   "article.list.all": "Todos os artigos",
   "article.list.loadMore": "Carregar mais",
-  "article.list.loadMoreConfirm": "Role um pouco mais ou confirme",
+  "article.list.loadMoreConfirm": "A próxima página está pronta — toque para carregar",
   "article.list.loadMoreNow": "Carregar próxima página",
   "article.list.endOfList": "Não há mais artigos",
   "article.list.loading": "Carregando...",

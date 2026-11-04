@@ -228,13 +228,6 @@ export function ArticleList() {
       }
     };
 
-    const confirmLoadMore = () => {
-      if (loadMoreGateRef.current !== "pending" || isLoadingMore) return;
-      loadMoreGateRef.current = "cooldown";
-      setIsLoadMorePending(false);
-      void fetchNextPage();
-    };
-
     const nearBottomObserver = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) {
@@ -247,18 +240,10 @@ export function ArticleList() {
       },
       { root: viewport, rootMargin: "0px 0px 240px", threshold: 0 },
     );
-    const bottomConfirmObserver = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) confirmLoadMore();
-      },
-      { root: viewport, threshold: 0 },
-    );
 
     nearBottomObserver.observe(sentinel);
-    bottomConfirmObserver.observe(sentinel);
     return () => {
       nearBottomObserver.disconnect();
-      bottomConfirmObserver.disconnect();
     };
   }, [fetchNextPage, getArticleScrollViewport, hasMore, isLoadingMore]);
 
@@ -272,7 +257,8 @@ export function ArticleList() {
     }
     loadMoreGateRef.current = "cooldown";
     setIsLoadMorePending(false);
-    void fetchNextPage();
+    fetchNextPage();
+    loadMoreGateRef.current = "idle";
   }, [fetchNextPage, hasMore, isLoadingMore]);
 
   const articleIds = articles.map((a) => a.id);

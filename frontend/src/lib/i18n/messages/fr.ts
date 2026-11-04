@@ -228,7 +228,7 @@ export const frMessages: PartialMessages = {
   "article.groupFallback": "Groupe",
   "article.list.all": "Tous les articles",
   "article.list.loadMore": "Charger davantage",
-  "article.list.loadMoreConfirm": "Faites défiler ou confirmez",
+  "article.list.loadMoreConfirm": "La page suivante est prête — appuyez pour charger",
   "article.list.loadMoreNow": "Charger la page suivante",
   "article.list.endOfList": "Il n’y a plus d’articles",
   "article.list.loading": "Chargement...",

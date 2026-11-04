@@ -228,7 +228,7 @@ export const deMessages: PartialMessages = {
   "article.groupFallback": "Gruppe",
   "article.list.all": "Alle Artikel",
   "article.list.loadMore": "Mehr laden",
-  "article.list.loadMoreConfirm": "Weiter nach unten scrollen oder bestätigen",
+  "article.list.loadMoreConfirm": "Die nächste Seite ist bereit — zum Laden tippen",
   "article.list.loadMoreNow": "Nächste Seite laden",
   "article.list.endOfList": "Keine weiteren Artikel",
   "article.list.loading": "Ladt...",

@@ -228,7 +228,7 @@ export const ruMessages: PartialMessages = {
   "article.groupFallback": "Группа",
   "article.list.all": "Все статьи",
   "article.list.loadMore": "Загрузить еще",
-  "article.list.loadMoreConfirm": "Прокрутите ниже или подтвердите",
+  "article.list.loadMoreConfirm": "Следующая страница готова — нажмите, чтобы загрузить",
   "article.list.loadMoreNow": "Загрузить следующую страницу",
   "article.list.endOfList": "Больше статей нет",
   "article.list.loading": "Загрузка...",

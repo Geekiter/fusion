@@ -227,7 +227,7 @@ export const enMessages = {
   "article.groupFallback": "Group",
   "article.list.all": "All Articles",
   "article.list.loadMore": "Load more",
-  "article.list.loadMoreConfirm": "Scroll a little further or confirm",
+  "article.list.loadMoreConfirm": "Next page is ready — tap to load",
   "article.list.loadMoreNow": "Load next page",
   "article.list.endOfList": "You’re all caught up",
   "article.list.loading": "Loading...",
