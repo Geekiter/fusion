@@ -194,6 +194,7 @@ export const enMessages = {
   "article.translate.translation": "Translation",
   "article.readingTime": "~{minutes} min read",
   "article.readingProgress": "Reading progress: {percent}%",
+  "article.scrollToTop": "Back to top",
   "article.feedFallback": "Feed",
   "article.filter.all": "All",
   "article.filter.starred": "Starred",

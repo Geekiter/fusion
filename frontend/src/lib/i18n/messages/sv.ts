@@ -195,6 +195,7 @@ export const svMessages: PartialMessages = {
   "article.translate.translation": "Translation",
   "article.readingTime": "Cirka {minutes} min läsning",
   "article.readingProgress": "Läsförlopp: {percent}%",
+  "article.scrollToTop": "Till toppen",
   "article.feedFallback": "Flode",
   "article.filter.all": "Alla",
   "article.filter.starred": "Stjarnmarkta",

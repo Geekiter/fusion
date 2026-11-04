@@ -10,6 +10,7 @@ import {
   FileText,
   Languages,
   Loader2,
+  ArrowUp,
   Sparkles,
   Star,
   X,
@@ -143,6 +144,14 @@ export function ArticleDrawer() {
   const readingMinutes = article
     ? estimateReadingTime(article.extracted_content || article.content)
     : 1;
+
+  const handleScrollToTop = () => {
+    const content = articleContentRef.current;
+    const viewport = content?.closest<HTMLElement>(
+      '[data-slot="scroll-area-viewport"]',
+    );
+    viewport?.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   useEffect(() => {
     const content = articleContentRef.current;
@@ -494,20 +503,35 @@ export function ArticleDrawer() {
 
             {/* Content */}
             <div className="relative min-h-0 flex-1">
-              <div
-                className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 bg-border/40"
-                role="progressbar"
-                aria-label={t("article.readingProgress", {
-                  percent: readingProgress,
-                })}
-                aria-valuemin={0}
-                aria-valuemax={100}
-                aria-valuenow={readingProgress}
-              >
+              <div className="pointer-events-none absolute inset-x-0 top-0 z-10">
                 <div
-                  className="h-full bg-primary transition-[width] duration-150 ease-out"
-                  style={{ width: `${readingProgress}%` }}
-                />
+                  className="h-0.5 bg-border/40"
+                  role="progressbar"
+                  aria-label={t("article.readingProgress", {
+                    percent: readingProgress,
+                  })}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-valuenow={readingProgress}
+                >
+                  <div
+                    className="h-full bg-primary transition-[width] duration-150 ease-out"
+                    style={{ width: `${readingProgress}%` }}
+                  />
+                </div>
+                {readingProgress > 8 && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="icon-sm"
+                    onClick={handleScrollToTop}
+                    aria-label={t("article.scrollToTop")}
+                    title={t("article.scrollToTop")}
+                    className="pointer-events-auto absolute top-3 right-4 size-9 rounded-full bg-background/90 shadow-md backdrop-blur-sm motion-safe:animate-in motion-safe:fade-in-0 motion-safe:zoom-in-95 motion-safe:duration-200 motion-reduce:transition-none"
+                  >
+                    <ArrowUp className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
               <ScrollArea className="min-h-0 h-full">
                 <article

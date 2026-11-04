@@ -195,6 +195,7 @@ export const zhMessages: PartialMessages = {
   "article.translate.translation": "译文",
   "article.readingTime": "约 {minutes} 分钟阅读",
   "article.readingProgress": "阅读进度：{percent}%",
+  "article.scrollToTop": "回到顶部",
   "article.feedFallback": "订阅",
   "article.filter.all": "全部",
   "article.filter.starred": "已收藏",
