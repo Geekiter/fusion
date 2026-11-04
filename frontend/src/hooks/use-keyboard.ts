@@ -182,6 +182,12 @@ export function useKeyboardShortcuts() {
           resetPrefix();
           return;
         }
+        if (key === "t") {
+          event.preventDefault();
+          state.selectTopLevelFilter("today");
+          resetPrefix();
+          return;
+        }
         if (key === "f") {
           event.preventDefault();
           state.navigate({ to: "/feeds" });

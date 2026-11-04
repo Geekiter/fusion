@@ -10,6 +10,7 @@ import {
   List,
   ListChecks,
   Loader2,
+  Play,
   RefreshCw,
   Star,
   X,
@@ -425,6 +426,15 @@ export function ArticleList() {
     [createBookmark, deleteBookmark, getBookmarkByItemId, isItemStarred],
   );
 
+  const handleStartReading = useCallback(() => {
+    const firstUnreadId = articles.find(
+      (article) => article.unread && article.id > 0,
+    )?.id;
+    if (firstUnreadId !== undefined) {
+      setSelectedArticle(firstUnreadId);
+    }
+  }, [articles, setSelectedArticle]);
+
   const handleMarkAllAsRead = async () => {
     const unreadIds = articles
       .filter((a) => a.unread && a.id > 0)
@@ -774,11 +784,24 @@ export function ArticleList() {
                 unread: unreadCount,
               })}
             </span>
-            {hasMore && (
-              <span className="shrink-0 rounded-full bg-muted/70 px-2 py-1">
-                {t("article.list.loadMoreManual")}
-              </span>
-            )}
+            <div className="flex shrink-0 items-center gap-2">
+              {unreadCount > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleStartReading}
+                  className="h-7 gap-1 rounded-full px-2.5 text-[11px] text-primary hover:bg-primary/10"
+                >
+                  <Play className="size-3.5 fill-current" />
+                  {t("article.session.start")}
+                </Button>
+              )}
+              {hasMore && (
+                <span className="hidden rounded-full bg-muted/70 px-2 py-1 sm:inline">
+                  {t("article.list.loadMoreManual")}
+                </span>
+              )}
+            </div>
           </div>
         )}
 
