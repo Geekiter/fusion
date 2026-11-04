@@ -10,6 +10,7 @@ interface SwipeableRowProps {
   isStarred: boolean;
   canToggleRead: boolean;
   onToggleRead: () => void;
+  onSwipeRead?: () => void;
   onToggleStar: () => void;
 }
 
@@ -24,6 +25,7 @@ export function SwipeableRow({
   isStarred,
   canToggleRead,
   onToggleRead,
+  onSwipeRead,
   onToggleStar,
 }: SwipeableRowProps) {
   const { t } = useI18n();
@@ -44,7 +46,11 @@ export function SwipeableRow({
           type="button"
           disabled={!canToggleRead}
           onClick={() => {
-            onToggleRead();
+            if (unread && onSwipeRead) {
+              onSwipeRead();
+            } else {
+              onToggleRead();
+            }
             close();
           }}
           aria-label={
@@ -91,7 +97,9 @@ export function SwipeableRow({
         }}
         style={{
           transform: `translateX(${translateX}px)`,
-          transition: isDragging ? "none" : "transform 200ms ease-out",
+          transition: isDragging
+            ? "none"
+            : "transform 260ms cubic-bezier(0.22, 1, 0.36, 1)",
         }}
         className="relative bg-card"
       >

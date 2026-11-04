@@ -89,6 +89,9 @@ export function useSwipeRow({ disabled }: UseSwipeRowOptions = {}) {
     if (translateX <= -OPEN_THRESHOLD) {
       setTranslateX(-MAX_DRAG);
       setIsOpen(true);
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate(8);
+      }
     } else {
       close();
     }

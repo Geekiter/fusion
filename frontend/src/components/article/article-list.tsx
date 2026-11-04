@@ -409,6 +409,35 @@ export function ArticleList() {
     [markItemsRead, markItemsUnread],
   );
 
+  const handleSwipeRead = useCallback(
+    async (article: Item) => {
+      if (article.id <= 0 || !article.unread) return;
+
+      try {
+        await markItemsRead.mutateAsync([article.id]);
+        toast.success(t("article.list.markAllReadSuccess", { count: 1 }), {
+          duration: 5000,
+          action: {
+            label: t("common.undo"),
+            onClick: () => {
+              void markItemsUnread
+                .mutateAsync([article.id])
+                .then(() => toast.success(t("article.list.markAllReadUndone")))
+                .catch((error) => {
+                  console.error("Failed to undo swipe read:", error);
+                  toast.error(t("article.list.markAllReadUndoFailed"));
+                });
+            },
+          },
+        });
+      } catch (error) {
+        console.error("Failed to mark swiped article as read:", error);
+        toast.error(t("article.list.markAllReadFailed"));
+      }
+    },
+    [markItemsRead, markItemsUnread, t],
+  );
+
   const handleToggleStar = useCallback(
     async (article: Item) => {
       try {
@@ -993,6 +1022,7 @@ export function ArticleList() {
                         isStarred={isItemStarred(article.id)}
                         canToggleRead={article.id > 0}
                         onToggleRead={() => handleToggleRead(article)}
+                        onSwipeRead={() => void handleSwipeRead(article)}
                         onToggleStar={() => handleToggleStar(article)}
                       >
                         <TwitterCard
@@ -1022,6 +1052,7 @@ export function ArticleList() {
                         isStarred={isItemStarred(article.id)}
                         canToggleRead={article.id > 0}
                         onToggleRead={() => handleToggleRead(article)}
+                        onSwipeRead={() => void handleSwipeRead(article)}
                         onToggleStar={() => handleToggleStar(article)}
                       >
                         <ArticleItem
