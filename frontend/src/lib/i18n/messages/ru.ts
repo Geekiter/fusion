@@ -236,6 +236,8 @@ export const ruMessages: PartialMessages = {
   "article.list.endOfList": "Больше статей нет",
   "article.list.loading": "Загрузка...",
   "article.list.loadedSummary": "Загружено: {loaded} · непрочитано: {unread}",
+  "article.list.today": "Сегодня",
+  "article.list.yesterday": "Вчера",
   "article.list.markAllRead": "Отметить текущие как прочитанные",
   "article.list.markAllReadSuccess": "Прочитанными отмечено загруженных статей: {count}",
   "article.list.markAllReadUndone": "Статьи восстановлены как непрочитанные",

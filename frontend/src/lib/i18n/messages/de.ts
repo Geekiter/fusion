@@ -236,6 +236,8 @@ export const deMessages: PartialMessages = {
   "article.list.endOfList": "Keine weiteren Artikel",
   "article.list.loading": "Ladt...",
   "article.list.loadedSummary": "{loaded} geladen · {unread} ungelesen",
+  "article.list.today": "Heute",
+  "article.list.yesterday": "Gestern",
   "article.list.markAllRead": "Aktuelle als gelesen markieren",
   "article.list.markAllReadSuccess": "{count} geladene Artikel wurden als gelesen markiert",
   "article.list.markAllReadUndone": "Artikel wurden als ungelesen wiederhergestellt",

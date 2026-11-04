@@ -236,6 +236,8 @@ export const ptMessages: PartialMessages = {
   "article.list.endOfList": "Não há mais artigos",
   "article.list.loading": "Carregando...",
   "article.list.loadedSummary": "{loaded} carregados · {unread} não lidos",
+  "article.list.today": "Hoje",
+  "article.list.yesterday": "Ontem",
   "article.list.markAllRead": "Marcar atuais como lidos",
   "article.list.markAllReadSuccess": "{count} artigos carregados foram marcados como lidos",
   "article.list.markAllReadUndone": "Artigos restaurados como não lidos",

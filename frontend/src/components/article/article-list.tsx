@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import {
   ArrowDown,
@@ -51,8 +51,44 @@ import {
   saveListScrollPosition,
 } from "@/lib/list-position";
 
+function getArticleDateKey(timestamp: number): string {
+  const date = new Date(timestamp * 1000);
+  return [date.getFullYear(), date.getMonth(), date.getDate()].join("-");
+}
+
+function formatArticleDateGroup(
+  timestamp: number,
+  locale: string,
+  todayLabel: string,
+  yesterdayLabel: string,
+): string {
+  const date = new Date(timestamp * 1000);
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  if (getArticleDateKey(timestamp) === getArticleDateKey(today.getTime() / 1000)) {
+    return todayLabel;
+  }
+
+  if (
+    getArticleDateKey(timestamp) ===
+    getArticleDateKey(yesterday.getTime() / 1000)
+  ) {
+    return yesterdayLabel;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    weekday: "short",
+  }).format(date);
+}
+
 export function ArticleList() {
   const { t } = useI18n();
+  const locale = usePreferencesStore((state) => state.locale);
   const articleListDensity = usePreferencesStore(
     (state) => state.articleListDensity,
   );
@@ -688,11 +724,26 @@ export function ArticleList() {
               <>
                 {/* Plain articles and tweets are interleaved in one list;
                     each item picks its own card based on its source feed. */}
-                {articles.map((article) => {
+                {articles.map((article, index) => {
+                  const previousArticle = articles[index - 1];
+                  const isNewDateGroup =
+                    index === 0 ||
+                    !previousArticle ||
+                    getArticleDateKey(article.pub_date) !==
+                      getArticleDateKey(previousArticle.pub_date);
+                  const dateGroupLabel = isNewDateGroup
+                    ? formatArticleDateGroup(
+                        article.pub_date,
+                        locale,
+                        t("article.list.today"),
+                        t("article.list.yesterday"),
+                      )
+                    : null;
+                  let articleRow: React.ReactNode;
+
                   if (getArticleKind(article) === "twitter") {
-                    return (
+                    articleRow = (
                       <SwipeableRow
-                        key={article.id}
                         unread={article.unread}
                         isStarred={isItemStarred(article.id)}
                         canToggleRead={article.id > 0}
@@ -710,39 +761,54 @@ export function ArticleList() {
                         />
                       </SwipeableRow>
                     );
+                  } else {
+                    const feed = getFeedById(article.feed_id);
+                    const bookmark = getBookmarkByItemId(article.id);
+
+                    articleRow = (
+                      <SwipeableRow
+                        unread={article.unread}
+                        isStarred={isItemStarred(article.id)}
+                        canToggleRead={article.id > 0}
+                        onToggleRead={() => handleToggleRead(article)}
+                        onToggleStar={() => handleToggleStar(article)}
+                      >
+                        <ArticleItem
+                          article={article}
+                          selectedArticleId={selectedArticleId}
+                          onSelectArticle={setSelectedArticle}
+                          onToggleRead={handleToggleRead}
+                          onToggleStar={handleToggleStar}
+                          canToggleRead={article.id > 0}
+                          isStarred={isItemStarred(article.id)}
+                          feedName={
+                            feed?.name ??
+                            bookmark?.feed_name ??
+                            t("common.unknown")
+                          }
+                          feedFaviconUrl={
+                            feed ? getFaviconUrl(feed.link, feed.site_url) : null
+                          }
+                          density={articleListDensity}
+                        />
+                      </SwipeableRow>
+                    );
                   }
 
-                  const feed = getFeedById(article.feed_id);
-                  const bookmark = getBookmarkByItemId(article.id);
-
                   return (
-                    <SwipeableRow
-                      key={article.id}
-                      unread={article.unread}
-                      isStarred={isItemStarred(article.id)}
-                      canToggleRead={article.id > 0}
-                      onToggleRead={() => handleToggleRead(article)}
-                      onToggleStar={() => handleToggleStar(article)}
-                    >
-                      <ArticleItem
-                        article={article}
-                        selectedArticleId={selectedArticleId}
-                        onSelectArticle={setSelectedArticle}
-                        onToggleRead={handleToggleRead}
-                        onToggleStar={handleToggleStar}
-                        canToggleRead={article.id > 0}
-                        isStarred={isItemStarred(article.id)}
-                        feedName={
-                          feed?.name ??
-                          bookmark?.feed_name ??
-                          t("common.unknown")
-                        }
-                        feedFaviconUrl={
-                          feed ? getFaviconUrl(feed.link, feed.site_url) : null
-                        }
-                        density={articleListDensity}
-                      />
-                    </SwipeableRow>
+                    <Fragment key={article.id}>
+                      {dateGroupLabel && (
+                        <div
+                          className="sticky top-0 z-10 flex items-center gap-2 border-b border-border/40 bg-background/90 px-4 py-2 text-[11px] font-semibold tracking-wide text-muted-foreground backdrop-blur-md md:px-0"
+                          role="heading"
+                          aria-level={3}
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary/70" />
+                          <span>{dateGroupLabel}</span>
+                        </div>
+                      )}
+                      {articleRow}
+                    </Fragment>
                   );
                 })}
                 <div ref={loadMoreSentinelRef} className="h-px" aria-hidden="true" />

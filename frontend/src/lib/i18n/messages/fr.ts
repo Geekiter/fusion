@@ -236,6 +236,8 @@ export const frMessages: PartialMessages = {
   "article.list.endOfList": "Il n’y a plus d’articles",
   "article.list.loading": "Chargement...",
   "article.list.loadedSummary": "{loaded} chargés · {unread} non lus",
+  "article.list.today": "Aujourd’hui",
+  "article.list.yesterday": "Hier",
   "article.list.markAllRead": "Marquer la vue comme lue",
   "article.list.markAllReadSuccess": "{count} articles chargés ont été marqués comme lus",
   "article.list.markAllReadUndone": "Articles restaurés comme non lus",

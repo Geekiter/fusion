@@ -235,6 +235,8 @@ export const enMessages = {
   "article.list.endOfList": "You’re all caught up",
   "article.list.loading": "Loading...",
   "article.list.loadedSummary": "{loaded} loaded · {unread} unread",
+  "article.list.today": "Today",
+  "article.list.yesterday": "Yesterday",
   "article.list.markAllRead": "Mark current as read",
   "article.list.markAllReadSuccess": "Marked {count} loaded articles as read",
   "article.list.markAllReadUndone": "Articles restored as unread",

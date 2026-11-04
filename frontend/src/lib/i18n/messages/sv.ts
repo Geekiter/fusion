@@ -236,6 +236,8 @@ export const svMessages: PartialMessages = {
   "article.list.endOfList": "Det finns inga fler artiklar",
   "article.list.loading": "Laddar...",
   "article.list.loadedSummary": "{loaded} inlästa · {unread} olästa",
+  "article.list.today": "I dag",
+  "article.list.yesterday": "I går",
   "article.list.markAllRead": "Markera aktuella som lästa",
   "article.list.markAllReadSuccess": "Markerade {count} inlästa artiklar som lästa",
   "article.list.markAllReadUndone": "Artiklar återställdes som olästa",
