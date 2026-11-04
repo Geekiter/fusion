@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
@@ -35,10 +35,15 @@ export function ArticleItem({
   const isSelected = selectedArticleId === article.id;
   const safeArticleLink = toSafeExternalUrl(article.link);
   const originalSummary = extractSummary(article.content, 150);
+  const [thumbnailFailed, setThumbnailFailed] = useState(false);
   const thumbnailUrl = useMemo(
     () => extractFirstImage(article.content, article.link),
     [article.content, article.link],
   );
+
+  useEffect(() => {
+    setThumbnailFailed(false);
+  }, [thumbnailUrl]);
 
   const handleToggleRead = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -72,18 +77,21 @@ export function ArticleItem({
         }
       }}
       className={cn(
-        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-[background-color,box-shadow] duration-150 hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
+        "group relative flex w-full cursor-pointer items-start gap-4 border-b px-4 py-4 text-left transition-[background-color,box-shadow,transform] duration-150 hover:bg-accent/50 active:scale-[0.998] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/40",
         isSelected && "bg-accent",
+        article.unread &&
+          "before:absolute before:inset-y-3 before:left-0 before:w-0.5 before:rounded-full before:bg-primary/70",
       )}
     >
       {/* Thumbnail */}
-      {thumbnailUrl && (
+      {thumbnailUrl && !thumbnailFailed && (
         <div className="size-16 shrink-0 overflow-hidden rounded-md bg-muted">
           <img
             src={thumbnailUrl}
             alt=""
             loading="lazy"
             decoding="async"
+            onError={() => setThumbnailFailed(true)}
             className="h-full w-full object-cover"
           />
         </div>
@@ -93,8 +101,10 @@ export function ArticleItem({
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <h3
           className={cn(
-            "line-clamp-2 text-[15px] leading-snug font-medium",
-            article.unread ? "text-foreground" : "text-muted-foreground",
+            "line-clamp-2 text-[15px] leading-snug",
+            article.unread
+              ? "font-semibold text-foreground"
+              : "font-medium text-muted-foreground",
           )}
         >
           {article.translated_title
@@ -153,8 +163,9 @@ export function ArticleItem({
         >
           <Star
             className={cn(
+              "transition-transform duration-150",
               isStarred
-                ? "fill-amber-500 text-amber-500"
+                ? "scale-110 fill-amber-500 text-amber-500"
                 : "text-muted-foreground",
             )}
           />
