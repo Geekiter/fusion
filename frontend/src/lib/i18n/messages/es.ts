@@ -203,6 +203,8 @@ export const esMessages: PartialMessages = {
   "article.groupFallback": "Grupo",
   "article.list.all": "Todos los articulos",
   "article.list.loadMore": "Cargar mas",
+  "article.list.loadMoreConfirm": "Desplázate un poco más o confirma",
+  "article.list.loadMoreNow": "Cargar la página siguiente",
   "article.list.loading": "Cargando...",
   "article.list.markAllRead": "Marcar todo como leido",
   "article.list.noArticles": "No se encontraron articulos",

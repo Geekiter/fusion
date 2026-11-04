@@ -203,6 +203,8 @@ export const svMessages: PartialMessages = {
   "article.groupFallback": "Grupp",
   "article.list.all": "Alla artiklar",
   "article.list.loadMore": "Ladda mer",
+  "article.list.loadMoreConfirm": "Skrolla lite till eller bekräfta",
+  "article.list.loadMoreNow": "Ladda nästa sida",
   "article.list.loading": "Laddar...",
   "article.list.markAllRead": "Markera alla som lasta",
   "article.list.noArticles": "Inga artiklar hittades",

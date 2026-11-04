@@ -148,6 +148,33 @@
   --typeset-flow: 1.25em;
 }
 
+@keyframes fusion-load-more-damp {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  55% {
+    opacity: 1;
+    transform: translateY(2px) scale(1.01);
+  }
+  80% {
+    transform: translateY(-1px) scale(1);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fusion-load-more-prompt {
+  animation: fusion-load-more-damp 480ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fusion-load-more-prompt {
+    animation: none;
+  }
+}
+
 .typeset-article img.fusion-article-image {
   background-color: color-mix(in oklab, var(--muted) 70%, transparent);
   filter: blur(3px);

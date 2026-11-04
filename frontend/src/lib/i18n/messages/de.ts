@@ -203,6 +203,8 @@ export const deMessages: PartialMessages = {
   "article.groupFallback": "Gruppe",
   "article.list.all": "Alle Artikel",
   "article.list.loadMore": "Mehr laden",
+  "article.list.loadMoreConfirm": "Weiter nach unten scrollen oder bestätigen",
+  "article.list.loadMoreNow": "Nächste Seite laden",
   "article.list.loading": "Ladt...",
   "article.list.markAllRead": "Alle als gelesen markieren",
   "article.list.noArticles": "Keine Artikel gefunden",

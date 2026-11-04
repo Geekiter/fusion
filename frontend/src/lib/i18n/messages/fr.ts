@@ -203,6 +203,8 @@ export const frMessages: PartialMessages = {
   "article.groupFallback": "Groupe",
   "article.list.all": "Tous les articles",
   "article.list.loadMore": "Charger davantage",
+  "article.list.loadMoreConfirm": "Faites défiler ou confirmez",
+  "article.list.loadMoreNow": "Charger la page suivante",
   "article.list.loading": "Chargement...",
   "article.list.markAllRead": "Tout marquer comme lu",
   "article.list.noArticles": "Aucun article trouvé",

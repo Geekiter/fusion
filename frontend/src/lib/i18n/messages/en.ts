@@ -202,6 +202,8 @@ export const enMessages = {
   "article.groupFallback": "Group",
   "article.list.all": "All Articles",
   "article.list.loadMore": "Load more",
+  "article.list.loadMoreConfirm": "Scroll a little further or confirm",
+  "article.list.loadMoreNow": "Load next page",
   "article.list.loading": "Loading...",
   "article.list.markAllRead": "Mark all as read",
   "article.list.noArticles": "No articles found",

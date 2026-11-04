@@ -203,6 +203,8 @@ export const ruMessages: PartialMessages = {
   "article.groupFallback": "Группа",
   "article.list.all": "Все статьи",
   "article.list.loadMore": "Загрузить еще",
+  "article.list.loadMoreConfirm": "Прокрутите ниже или подтвердите",
+  "article.list.loadMoreNow": "Загрузить следующую страницу",
   "article.list.loading": "Загрузка...",
   "article.list.markAllRead": "Отметить все как прочитанные",
   "article.list.noArticles": "Статьи не найдены",

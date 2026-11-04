@@ -4,6 +4,7 @@ import {
   ArrowDown,
   ArrowUp,
   CheckCheck,
+  ChevronsDown,
   Languages,
   Loader2,
   RefreshCw,
@@ -78,11 +79,12 @@ export function ArticleList() {
   const isMobile = useIsMobile();
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const loadMoreSentinelRef = useRef<HTMLDivElement>(null);
-  const autoLoadArmedRef = useRef(true);
+  const loadMoreGateRef = useRef<"idle" | "pending" | "cooldown">("idle");
   const lastScrollTopRef = useRef(0);
   const [isCategoryOpen, setCategoryOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [hideMobileActionBar, setHideMobileActionBar] = useState(false);
+  const [isLoadMorePending, setIsLoadMorePending] = useState(false);
 
   const getArticleScrollViewport = useCallback(
     () =>
@@ -120,34 +122,76 @@ export function ArticleList() {
     if (!viewport) return;
 
     viewport.scrollTo({ top: 0, behavior: "instant" });
-    autoLoadArmedRef.current = true;
+    loadMoreGateRef.current = "idle";
     lastScrollTopRef.current = 0;
     setHideMobileActionBar(false);
     setShowScrollTop(false);
+    setIsLoadMorePending(false);
   }, [articleFilter, getArticleScrollViewport, selectedFeedId, selectedGroupId]);
 
   useEffect(() => {
     const sentinel = loadMoreSentinelRef.current;
     const viewport = getArticleScrollViewport();
-    if (!sentinel || !viewport || !hasMore) return;
+    if (!sentinel || !viewport || !hasMore) {
+      setIsLoadMorePending(false);
+      return;
+    }
 
-    const observer = new IntersectionObserver(
+    const offerLoadMore = () => {
+      if (loadMoreGateRef.current !== "idle" || isLoadingMore) return;
+      loadMoreGateRef.current = "pending";
+      setIsLoadMorePending(true);
+      if (typeof navigator !== "undefined" && "vibrate" in navigator) {
+        navigator.vibrate([12, 28, 8]);
+      }
+    };
+
+    const confirmLoadMore = () => {
+      if (loadMoreGateRef.current !== "pending" || isLoadingMore) return;
+      loadMoreGateRef.current = "cooldown";
+      setIsLoadMorePending(false);
+      void fetchNextPage();
+    };
+
+    const nearBottomObserver = new IntersectionObserver(
       ([entry]) => {
         if (!entry.isIntersecting) {
-          autoLoadArmedRef.current = true;
+          loadMoreGateRef.current = "idle";
+          setIsLoadMorePending(false);
           return;
         }
 
-        if (!autoLoadArmedRef.current || isLoadingMore) return;
-        autoLoadArmedRef.current = false;
-        void fetchNextPage();
+        offerLoadMore();
       },
       { root: viewport, rootMargin: "0px 0px 240px", threshold: 0 },
     );
+    const bottomConfirmObserver = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) confirmLoadMore();
+      },
+      { root: viewport, threshold: 0 },
+    );
 
-    observer.observe(sentinel);
-    return () => observer.disconnect();
+    nearBottomObserver.observe(sentinel);
+    bottomConfirmObserver.observe(sentinel);
+    return () => {
+      nearBottomObserver.disconnect();
+      bottomConfirmObserver.disconnect();
+    };
   }, [fetchNextPage, getArticleScrollViewport, hasMore, isLoadingMore]);
+
+  const confirmLoadMore = useCallback(() => {
+    if (
+      !hasMore ||
+      loadMoreGateRef.current === "cooldown" ||
+      isLoadingMore
+    ) {
+      return;
+    }
+    loadMoreGateRef.current = "cooldown";
+    setIsLoadMorePending(false);
+    void fetchNextPage();
+  }, [fetchNextPage, hasMore, isLoadingMore]);
 
   const articleIds = articles.map((a) => a.id);
   useArticleNavigation(articleIds, {
@@ -479,11 +523,26 @@ export function ArticleList() {
                 </div>
                 <div ref={loadMoreSentinelRef} className="h-px" aria-hidden="true" />
                 {hasMore && (
-                  <div className="flex justify-center py-4">
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    {isLoadMorePending && (
+                      <div className="fusion-load-more-prompt flex max-w-sm items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-muted-foreground">
+                        <ChevronsDown className="h-4 w-4 shrink-0 text-primary" />
+                        <span>{t("article.list.loadMoreConfirm")}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={confirmLoadMore}
+                          disabled={isLoadingMore}
+                          className="h-7 rounded-full px-2.5 text-xs text-primary hover:bg-primary/10"
+                        >
+                          {t("article.list.loadMoreNow")}
+                        </Button>
+                      </div>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => fetchNextPage()}
+                      onClick={confirmLoadMore}
                       disabled={isLoadingMore}
                       className="gap-2"
                     >
@@ -558,11 +617,26 @@ export function ArticleList() {
                 })}
                 <div ref={loadMoreSentinelRef} className="h-px" aria-hidden="true" />
                 {hasMore && (
-                  <div className="flex justify-center py-4">
+                  <div className="flex flex-col items-center gap-2 py-4">
+                    {isLoadMorePending && (
+                      <div className="fusion-load-more-prompt flex max-w-sm items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1.5 text-xs text-muted-foreground">
+                        <ChevronsDown className="h-4 w-4 shrink-0 text-primary" />
+                        <span>{t("article.list.loadMoreConfirm")}</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={confirmLoadMore}
+                          disabled={isLoadingMore}
+                          className="h-7 rounded-full px-2.5 text-xs text-primary hover:bg-primary/10"
+                        >
+                          {t("article.list.loadMoreNow")}
+                        </Button>
+                      </div>
+                    )}
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => fetchNextPage()}
+                      onClick={confirmLoadMore}
                       disabled={isLoadingMore}
                       className="gap-2"
                     >
