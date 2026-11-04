@@ -194,6 +194,7 @@ export const deMessages: PartialMessages = {
   "article.summary.title": "AI Summary",
   "article.translate.translation": "Translation",
   "article.readingTime": "Ca. {minutes} Min. Lesezeit",
+  "article.readingProgress": "Lesefortschritt: {percent}%",
   "article.feedFallback": "Feed",
   "article.filter.all": "Alle",
   "article.filter.starred": "Favoriten",

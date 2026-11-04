@@ -194,6 +194,7 @@ export const frMessages: PartialMessages = {
   "article.summary.title": "AI Summary",
   "article.translate.translation": "Translation",
   "article.readingTime": "Environ {minutes} min de lecture",
+  "article.readingProgress": "Progression de lecture : {percent}%",
   "article.feedFallback": "Flux",
   "article.filter.all": "Tous",
   "article.filter.starred": "Favoris",

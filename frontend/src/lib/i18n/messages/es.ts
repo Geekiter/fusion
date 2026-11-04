@@ -194,6 +194,7 @@ export const esMessages: PartialMessages = {
   "article.summary.title": "AI Summary",
   "article.translate.translation": "Translation",
   "article.readingTime": "Unos {minutes} min de lectura",
+  "article.readingProgress": "Progreso de lectura: {percent}%",
   "article.feedFallback": "Feed",
   "article.filter.all": "Todos",
   "article.filter.starred": "Destacados",

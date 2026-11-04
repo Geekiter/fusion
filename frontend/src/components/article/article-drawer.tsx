@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Circle,
   CircleCheck,
@@ -94,6 +94,8 @@ function FullTitleToggle({ title }: { title: string }) {
 
 export function ArticleDrawer() {
   const { t } = useI18n();
+  const articleContentRef = useRef<HTMLElement>(null);
+  const [readingProgress, setReadingProgress] = useState(0);
   const {
     selectedArticleId,
     setSelectedArticle,
@@ -140,6 +142,43 @@ export function ArticleDrawer() {
   const readingMinutes = article
     ? estimateReadingTime(article.extracted_content || article.content)
     : 1;
+
+  useEffect(() => {
+    const content = articleContentRef.current;
+    const viewport = content?.closest<HTMLElement>(
+      '[data-slot="scroll-area-viewport"]',
+    );
+    if (!viewport || !content) {
+      setReadingProgress(0);
+      return;
+    }
+
+    const updateProgress = () => {
+      const scrollableHeight = viewport.scrollHeight - viewport.clientHeight;
+      const nextProgress =
+        scrollableHeight > 0
+          ? Math.round((viewport.scrollTop / scrollableHeight) * 100)
+          : 0;
+      setReadingProgress(Math.min(100, Math.max(0, nextProgress)));
+    };
+
+    viewport.addEventListener("scroll", updateProgress, { passive: true });
+    const resizeObserver = new ResizeObserver(updateProgress);
+    resizeObserver.observe(viewport);
+    resizeObserver.observe(content);
+    updateProgress();
+
+    return () => {
+      viewport.removeEventListener("scroll", updateProgress);
+      resizeObserver.disconnect();
+    };
+  }, [
+    article?.ai_summary,
+    article?.content,
+    article?.extracted_content,
+    article?.id,
+    article?.translated_content,
+  ]);
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -411,8 +450,27 @@ export function ArticleDrawer() {
             </div>
 
             {/* Content */}
-            <ScrollArea className="min-h-0 flex-1">
-              <article className="min-w-0 px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-12 md:py-8">
+            <div className="relative min-h-0 flex-1">
+              <div
+                className="pointer-events-none absolute inset-x-0 top-0 z-10 h-0.5 bg-border/40"
+                role="progressbar"
+                aria-label={t("article.readingProgress", {
+                  percent: readingProgress,
+                })}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={readingProgress}
+              >
+                <div
+                  className="h-full bg-primary transition-[width] duration-150 ease-out"
+                  style={{ width: `${readingProgress}%` }}
+                />
+              </div>
+              <ScrollArea className="min-h-0 h-full">
+                <article
+                  ref={articleContentRef}
+                  className="min-w-0 px-5 pt-6 pb-[calc(env(safe-area-inset-bottom)+6rem)] md:px-12 md:py-8"
+                >
                 <div className="space-y-3">
                   <h1 className="line-clamp-2 text-[28px] font-bold leading-[1.3]">
                     {article.translated_title || article.title}
@@ -537,8 +595,9 @@ export function ArticleDrawer() {
                     <ChevronRight className="h-4 w-4" />
                   </Button>
                 </div>
-              </article>
-            </ScrollArea>
+                </article>
+              </ScrollArea>
+            </div>
 
             <nav
               aria-label={t("article.mobile.actions")}
