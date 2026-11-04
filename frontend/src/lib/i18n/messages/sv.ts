@@ -196,6 +196,7 @@ export const svMessages: PartialMessages = {
   "article.action.markReadAndNext": "Läst och nästa",
   "article.action.markUnread": "Markera som olast",
   "article.action.openInBrowser": "Oppna i webblasaren",
+  "article.action.copyLink": "Kopiera länk",
   "article.action.original": "Original",
   "article.action.star": "Stjarna",
   "article.action.unstar": "Ta bort",

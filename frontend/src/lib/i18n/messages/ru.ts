@@ -196,6 +196,7 @@ export const ruMessages: PartialMessages = {
   "article.action.markReadAndNext": "Прочитано и дальше",
   "article.action.markUnread": "Отметить как непрочитанное",
   "article.action.openInBrowser": "Открыть в браузере",
+  "article.action.copyLink": "Копировать ссылку",
   "article.action.original": "Оригинал",
   "article.action.star": "В избранное",
   "article.action.unstar": "Убрать",

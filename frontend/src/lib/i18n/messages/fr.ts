@@ -196,6 +196,7 @@ export const frMessages: PartialMessages = {
   "article.action.markReadAndNext": "Lu et suivant",
   "article.action.markUnread": "Marquer comme non lu",
   "article.action.openInBrowser": "Ouvrir dans le navigateur",
+  "article.action.copyLink": "Copier le lien",
   "article.action.original": "Article original",
   "article.action.star": "Favori",
   "article.action.unstar": "Retirer des favoris",

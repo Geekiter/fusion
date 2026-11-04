@@ -196,6 +196,7 @@ export const esMessages: PartialMessages = {
   "article.action.markReadAndNext": "Leído y siguiente",
   "article.action.markUnread": "Marcar como no leido",
   "article.action.openInBrowser": "Abrir en el navegador",
+  "article.action.copyLink": "Copiar enlace",
   "article.action.original": "Original",
   "article.action.star": "Destacar",
   "article.action.unstar": "Quitar",

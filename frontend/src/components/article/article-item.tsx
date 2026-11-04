@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
+import { Check, Circle, CircleCheck, Copy, Star, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import {
@@ -13,6 +14,7 @@ import type { Item } from "@/lib/api";
 import type { ArticleListDensity } from "@/store";
 import { FeedFavicon } from "@/components/feed/feed-favicon";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import { copyTextToClipboard } from "@/lib/clipboard";
 import {
   getReadingProgress,
   READING_POSITION_EVENT,
@@ -51,6 +53,7 @@ export function ArticleItem({
   const originalSummary = extractSummary(article.content, 150);
   const readingMinutes = estimateReadingTime(article.content);
   const [thumbnailFailed, setThumbnailFailed] = useState(false);
+  const [isLinkCopied, setIsLinkCopied] = useState(false);
   const [readingProgress, setReadingProgress] = useState(() =>
     getReadingProgress(article.id),
   );
@@ -117,6 +120,21 @@ export function ArticleItem({
       await onToggleStar(article);
     } catch (error) {
       console.error("Failed to toggle star:", error);
+    }
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!safeArticleLink) return;
+
+    try {
+      await copyTextToClipboard(safeArticleLink);
+      setIsLinkCopied(true);
+      toast.success(t("article.share.copied"));
+      window.setTimeout(() => setIsLinkCopied(false), 1800);
+    } catch (error) {
+      console.error("Failed to copy article link:", error);
+      toast.error(t("article.share.failed"));
     }
   };
 
@@ -261,6 +279,22 @@ export function ArticleItem({
             )}
           />
         </Button>
+        {safeArticleLink && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleCopyLink}
+            className={cn(isLinkCopied ? "bg-primary/10" : "bg-muted")}
+            aria-label={t("article.action.copyLink")}
+            title={t("article.action.copyLink")}
+          >
+            {isLinkCopied ? (
+              <Check className="text-primary motion-safe:animate-in motion-safe:zoom-in-75 motion-safe:duration-200" />
+            ) : (
+              <Copy className="text-muted-foreground" />
+            )}
+          </Button>
+        )}
         {safeArticleLink ? (
           <a
             href={safeArticleLink}

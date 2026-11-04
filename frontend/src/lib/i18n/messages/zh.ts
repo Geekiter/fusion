@@ -196,6 +196,7 @@ export const zhMessages: PartialMessages = {
   "article.action.markReadAndNext": "已读并下一篇",
   "article.action.markUnread": "标记为未读",
   "article.action.openInBrowser": "在浏览器中打开",
+  "article.action.copyLink": "复制链接",
   "article.action.original": "跳转",
   "article.action.star": "收藏",
   "article.action.unstar": "取消收藏",

@@ -195,6 +195,7 @@ export const enMessages = {
   "article.action.markReadAndNext": "Read & next",
   "article.action.markUnread": "Mark as unread",
   "article.action.openInBrowser": "Open in browser",
+  "article.action.copyLink": "Copy link",
   "article.action.original": "Original",
   "article.action.star": "Star",
   "article.action.unstar": "Unstar",

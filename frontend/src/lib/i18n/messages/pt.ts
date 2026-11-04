@@ -196,6 +196,7 @@ export const ptMessages: PartialMessages = {
   "article.action.markReadAndNext": "Lido e próximo",
   "article.action.markUnread": "Marcar como nao lido",
   "article.action.openInBrowser": "Abrir no navegador",
+  "article.action.copyLink": "Copiar link",
   "article.action.original": "Original",
   "article.action.star": "Favoritar",
   "article.action.unstar": "Remover",

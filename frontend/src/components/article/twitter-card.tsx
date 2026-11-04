@@ -1,4 +1,5 @@
-import { Circle, CircleCheck, Star, ExternalLink } from "lucide-react";
+import { Circle, CircleCheck, Copy, Star, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useI18n } from "@/lib/i18n";
 import { cn, formatRelativeTime, extractSummary } from "@/lib/utils";
@@ -6,6 +7,7 @@ import type { Item } from "@/lib/api";
 import type { ArticleListDensity } from "@/store";
 import { parseTweet } from "@/lib/twitter";
 import { toSafeExternalUrl } from "@/lib/safe-url";
+import { copyTextToClipboard } from "@/lib/clipboard";
 
 interface TwitterCardProps {
   article: Item;
@@ -61,6 +63,19 @@ export function TwitterCard({
       await onToggleStar(article);
     } catch (error) {
       console.error("Failed to toggle star status:", error);
+    }
+  };
+
+  const handleCopyLink = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!safeLink) return;
+
+    try {
+      await copyTextToClipboard(safeLink);
+      toast.success(t("article.share.copied"));
+    } catch (error) {
+      console.error("Failed to copy article link:", error);
+      toast.error(t("article.share.failed"));
     }
   };
 
@@ -120,6 +135,17 @@ export function TwitterCard({
             )}
           />
         </Button>
+        {safeLink && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={handleCopyLink}
+            className="h-7 w-7 rounded-md"
+            aria-label={t("article.action.copyLink")}
+          >
+            <Copy className="h-3.5 w-3.5 text-muted-foreground" />
+          </Button>
+        )}
         {safeLink && (
           <Button
             nativeButton={false}
